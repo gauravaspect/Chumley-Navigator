@@ -1,10 +1,16 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/routes.dart';
+import 'package:chumley_navigator/widgets/profile/profile_info_row.dart';
+import 'package:chumley_navigator/widgets/profile/profile_stat_grid_card.dart';
+import 'package:chumley_navigator/widgets/ui/elevated_surface.dart';
+import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
+import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
+import 'package:chumley_navigator/widgets/ui/outlined_cta_button.dart';
+import 'package:chumley_navigator/widgets/ui/soft_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-import '../../utils/colors.dart';
-import '../../utils/routes.dart';
 
 class _GridItem {
   const _GridItem({
@@ -19,26 +25,20 @@ class _GridItem {
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
   static const _gridData = [
-    _GridItem(
-      icon: LucideIcons.star,
-      title: 'Engineer Satisfaction',
-      body: '4.4',
-    ),
+    _GridItem(icon: LucideIcons.star, title: 'Engineer Satisfaction', body: '4.4'),
     _GridItem(icon: LucideIcons.lightbulb, title: 'Skills', body: '14'),
     _GridItem(icon: LucideIcons.lightbulb, title: 'Sites Covered', body: '38'),
     _GridItem(icon: LucideIcons.lightbulb, title: 'Qualified Wts', body: '9'),
-    _GridItem(
-      icon: LucideIcons.lightbulb,
-      title: 'Manager',
-      body: 'Sarah Johnson',
-    ),
+    _GridItem(icon: LucideIcons.lightbulb, title: 'Manager', body: 'Sarah Johnson'),
     _GridItem(
       icon: LucideIcons.lightbulb,
       title: 'Years of Experience',
       body: '8 Years, 4 months',
     ),
   ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,106 +52,78 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Align(
                   alignment: Alignment.topLeft,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.popAndPushNamed(context, AppRoutes.home);
-                    },
-                    child: Icon(
-                      Icons.arrow_back_ios,
+                  child: SoftIconButton(
+                    alignment: Alignment.topLeft,
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    iconSize: 16.sp,
+                    size: 34.r,
+                    onTap: () =>
+                        Navigator.popAndPushNamed(context, AppRoutes.home),
+                  ),
+                ),
+                const AspectBranding(),
+                SizedBox(height: 20.h),
+                FadeSlideIn(
+                  child: Text(
+                    'User Profile',
+                    style: TextStyle(
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.35,
                       color: AppColors.textDarkBlue,
-                      fontWeight: FontWeight.bold,
-                      size: 14.sp,
                     ),
                   ),
                 ),
-                AspectBranding(),
-                SizedBox(height: 20.h),
+                SizedBox(height: 16.h),
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 50),
+                  child: _ProfileAvatar(),
+                ),
+                SizedBox(height: 12.h),
                 Text(
-                  "User Profile",
+                  'Test User',
                   style: TextStyle(
-                    fontSize: 24.sp,
+                    fontSize: 26.sp,
                     fontWeight: FontWeight.w700,
+                    letterSpacing: -0.4,
                     color: AppColors.textDarkBlue,
                   ),
                 ),
+                ProfileInfoRow(label: 'Trade', value: 'Electrician'),
+                ProfileInfoRow(label: 'Van Number', value: 'WX23 ELT'),
                 SizedBox(height: 4.h),
-                SizedBox(
-                  width: 110.w,
-                  height: 110.w,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: 100.w,
-                        height: 100.w,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryBlue,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          "GP",
-                          style: TextStyle(
-                            fontSize: 32.sp,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.white,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 6.w,
-                        top: 4.w,
-                        child: GestureDetector(
-                          onTap: () {},
-                          child: Container(
-                            width: 26.w,
-                            height: 26.w,
-                            decoration: BoxDecoration(
-                              color: AppColors.chartFillBlue,
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
-                            child: Icon(
-                              Icons.edit,
-                              color: AppColors.textDarkBlue,
-                              size: 18.sp,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  "Test User",
-                  style: TextStyle(
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textDarkBlue,
-                  ),
-                ),
-                _tradeCard("Trade", "Electrician"),
-                _tradeCard("Van Number", "WX23 ELT"),
                 GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 10.h,
                     crossAxisSpacing: 10.w,
-                    childAspectRatio: 1.1,
+                    childAspectRatio: 1.08,
                   ),
                   shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
+                  physics: const NeverScrollableScrollPhysics(),
                   itemCount: _gridData.length,
                   itemBuilder: (context, index) {
                     final data = _gridData[index];
-                    return _gridCard(data);
+                    return FadeSlideIn(
+                      delay: Duration(milliseconds: 40 * index),
+                      offsetY: 8,
+                      child: ProfileStatGridCard(
+                        icon: data.icon,
+                        title: data.title,
+                        body: data.body,
+                      ),
+                    );
                   },
                 ),
-                _addressTile(),
-                _logoutButton(context),
+                _AddressTile(),
+                SizedBox(height: 4.h),
+                OutlinedCtaButton(
+                  label: 'Log Out',
+                  icon: Icons.logout_rounded,
+                  onTap: () =>
+                      Navigator.pushReplacementNamed(context, AppRoutes.login),
+                ),
+                SizedBox(height: 12.h),
               ],
             ),
           ),
@@ -159,163 +131,111 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _tradeCard(String title, String subtitle) {
-    return Container(
-      padding: EdgeInsets.all(12.h),
-      margin: EdgeInsets.symmetric(vertical: 10.h),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.all(Radius.circular(16.r)),
-        border: Border.all(width: 1, color: AppColors.textDarkBlue),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDarkBlue,
-            ),
-          ),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDarkBlue,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _gridCard(_GridItem data) {
-    return Container(
-      padding: EdgeInsets.all(21.r),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.all(Radius.circular(16.r)),
-        border: Border.all(width: 1, color: AppColors.textDarkBlue),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(6.r),
-                margin: EdgeInsets.only(right: 10.w),
-                decoration: BoxDecoration(
-                  color: AppColors.highlightYellow,
-                  borderRadius: BorderRadius.all(Radius.circular(8.r)),
-                  border: Border.all(color: AppColors.textDarkBlue, width: 1),
-                ),
-                child: Icon(
-                  data.icon,
-                  color: AppColors.textDarkBlue,
-                  size: 20.sp,
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  data.title,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textDarkBlue,
-                  ),
-                  maxLines: 2,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Expanded(
-            child: Text(
-              data.body,
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textDarkBlue,
-              ),
-              maxLines: 2,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _addressTile() {
-    return Container(
-      padding: EdgeInsets.all(12.h),
-      margin: EdgeInsets.symmetric(vertical: 10.h),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.all(Radius.circular(16.r)),
-        border: Border.all(width: 1, color: AppColors.textDarkBlue),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+class _ProfileAvatar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 110.w,
+      height: 110.w,
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
           Container(
-            padding: EdgeInsets.all(6.r),
-            margin: EdgeInsets.only(right: 10.w),
+            width: 100.w,
+            height: 100.w,
             decoration: BoxDecoration(
-              color: AppColors.highlightYellow,
-              borderRadius: BorderRadius.all(Radius.circular(8.r)),
-              border: Border.all(color: AppColors.textDarkBlue, width: 1),
+              color: AppColors.primaryBlue,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.white.withValues(alpha: 0.9),
+                width: 2,
+              ),
+              boxShadow: ElevatedSurface.softShadows(elevation: 0.9),
             ),
-            child: Icon(
-              Icons.location_on,
-              color: AppColors.textDarkBlue,
-              size: 20.sp,
+            alignment: Alignment.center,
+            child: Text(
+              'GP',
+              style: TextStyle(
+                fontSize: 32.sp,
+                fontWeight: FontWeight.w700,
+                color: AppColors.white,
+              ),
             ),
           ),
-          Text(
-            "14 Maple Close, Cheshunt, EN8 9QR",
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDarkBlue,
+          Positioned(
+            right: 4.w,
+            top: 2.w,
+            child: PressableScale(
+              onTap: () {},
+              scale: 0.9,
+              child: Container(
+                width: 28.w,
+                height: 28.w,
+                decoration: BoxDecoration(
+                  color: ElevatedSurface.tintedFill,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.borderLightBlue.withValues(alpha: 0.5),
+                  ),
+                  boxShadow: ElevatedSurface.softShadows(elevation: 0.5),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.edit_outlined,
+                  color: AppColors.textDarkBlue,
+                  size: 16.sp,
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _logoutButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushReplacementNamed(context, AppRoutes.login);
-      },
-      child: Container(
+class _AddressTile extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      onTap: () {},
+      scale: 0.99,
+      child: ElevatedSurface(
         padding: EdgeInsets.all(14.r),
-        margin: EdgeInsets.only(bottom: 8.h),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(16.r)),
-          border: Border.all(width: 1, color: AppColors.streakOrange),
-          color: AppColors.white,
-        ),
+        margin: EdgeInsets.symmetric(vertical: 8.h),
+        borderRadius: 18.r,
+        borderColor: AppColors.textDarkBlue.withValues(alpha: 0.1),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.logout, color: AppColors.streakOrange, size: 20.sp),
-            SizedBox(width: 6.w),
-            Text(
-              "Log Out",
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 16.sp,
-                color: AppColors.streakOrange,
+            Container(
+              padding: EdgeInsets.all(8.r),
+              decoration: BoxDecoration(
+                color: AppColors.highlightYellow.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(
+                  color: AppColors.textDarkBlue.withValues(alpha: 0.15),
+                  width: 0.75,
+                ),
+              ),
+              child: Icon(
+                Icons.location_on_outlined,
+                color: AppColors.textDarkBlue,
+                size: 18.sp,
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Text(
+                '14 Maple Close, Cheshunt, EN8 9QR',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                  color: AppColors.textDarkBlue,
+                ),
               ),
             ),
           ],

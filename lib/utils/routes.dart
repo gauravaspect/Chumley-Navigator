@@ -2,6 +2,7 @@ import 'package:chumley_navigator/screens/dashboard/dashboard_screen.dart';
 import 'package:chumley_navigator/screens/dashboard/goals_targets_screen.dart';
 import 'package:chumley_navigator/screens/notifications/notification_screen.dart';
 import 'package:chumley_navigator/screens/redeemPoints/redeem_points.dart';
+import 'package:chumley_navigator/screens/vehicle_check/vehicle_form.dart';
 import 'package:flutter/cupertino.dart';
 
 import '../screens/home/home.dart';
@@ -18,6 +19,7 @@ class AppRoutes {
   static const goals = "/goals";
   static const redeemPoints = "/redeemPoints";
   static const profile = "/profile";
+  static const vehicleForm = "/vehicleForm";
 
   static Map<String, WidgetBuilder> routes = {
     AppRoutes.splash: (context) => SplashScreen(),
@@ -28,5 +30,6 @@ class AppRoutes {
     AppRoutes.goals: (context) => GoalsTargetsScreen(),
     AppRoutes.redeemPoints: (context) => RedeemPointsScreen(),
     AppRoutes.profile: (context) => ProfileScreen(),
+    AppRoutes.vehicleForm: (context) => const VehicleForm(),
   };
 }

@@ -3,6 +3,11 @@ import 'dart:math';
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/routes.dart';
+import 'package:chumley_navigator/widgets/ui/elevated_surface.dart';
+import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
+import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
+import 'package:chumley_navigator/widgets/ui/screen_title_block.dart';
+import 'package:chumley_navigator/widgets/ui/soft_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -41,47 +46,31 @@ class GoalsTargetsScreen extends StatelessWidget {
             children: [
               Align(
                 alignment: Alignment.topRight,
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.popAndPushNamed(context, AppRoutes.home);
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(6.r),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.backgroundWhite,
-                      border: Border.all(color: AppColors.borderLightBlue, width: 1.5),
-                    ),
-                    child: Icon(Icons.close),
-                  ),
+                child: SoftIconButton(
+                  icon: Icons.close_rounded,
+                  onTap: () =>
+                      Navigator.popAndPushNamed(context, AppRoutes.home),
                 ),
               ),
-              AspectBranding(),
-              SizedBox(height: 20.h),
-              Text(
-                "Goal & Targets",
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryBlueDark,
+              const AspectBranding(),
+              SizedBox(height: 24.h),
+              const FadeSlideIn(
+                child: ScreenTitleBlock(
+                  title: 'Goal & Targets',
+                  subtitle: 'Tap a pool to see your KPI Background',
                 ),
               ),
-              SizedBox(height: 4.h),
-              Text(
-                "Tap a pool to see your KPI Background",
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              SizedBox(height: 16.h),
               Expanded(
-                child: ListView.builder(
-                  shrinkWrap: true,
+                child: ListView.separated(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.only(bottom: 16.h),
                   itemCount: _cards.length,
-                  itemBuilder: (_, index) {
-                    return _KpiCard(data: _cards[index]);
-                  },
+                  separatorBuilder: (_, index) => SizedBox(height: 4.h),
+                  itemBuilder: (_, index) => FadeSlideIn(
+                    delay: Duration(milliseconds: 60 * index),
+                    child: _KpiCard(data: _cards[index]),
+                  ),
                 ),
               ),
             ],
@@ -91,10 +80,6 @@ class GoalsTargetsScreen extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────
-// KPI CARD
-// ─────────────────────────────────────────────────────────────
 
 class _KpiCard extends StatelessWidget {
   const _KpiCard({required this.data});
@@ -109,89 +94,75 @@ class _KpiCard extends StatelessWidget {
         ? '${data.value.toInt()}/${data.max.toInt()}'
         : '${data.value}/${data.max.toInt()}';
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-      margin: EdgeInsets.symmetric(vertical: 10.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: AppColors.accentBlue, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10.r,
-            offset: Offset(0, 4.h),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // ─────────────────────────────────────────
-          // PROGRESS ARC
-          // ─────────────────────────────────────────
-          SizedBox(
-            width: 72.w,
-            height: 72.w,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CustomPaint(
-                  size: Size(92.w, 92.w),
-                  painter: _ArcPainter(progress: progress),
-                ),
-
-                Icon(
-                  Icons.trending_up_rounded,
-                  size: 26.sp,
-                  color: AppColors.primaryBlue,
-                ),
-              ],
+    return PressableScale(
+      onTap: () {},
+      scale: 0.985,
+      child: ElevatedSurface(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        borderRadius: 22.r,
+        borderColor: AppColors.accentBlue.withValues(alpha: 0.35),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 72.w,
+              height: 72.w,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CustomPaint(
+                    size: Size(92.w, 92.w),
+                    painter: _ArcPainter(progress: progress),
+                  ),
+                  Icon(
+                    Icons.trending_up_rounded,
+                    size: 26.sp,
+                    color: AppColors.primaryBlue,
+                  ),
+                ],
+              ),
             ),
-          ),
-          SizedBox(width: 6.w),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ─────────────────────────────────────────
-              // LABEL
-              // ─────────────────────────────────────────
-              Text(
-                data.label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  height: 1.3,
-                  color: AppColors.textDarkBlue,
-                ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data.label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                      letterSpacing: -0.15,
+                      color: AppColors.textDarkBlue,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    valueText,
+                    style: TextStyle(
+                      fontSize: 28.sp,
+                      fontWeight: FontWeight.w700,
+                      height: 1.1,
+                      letterSpacing: -0.5,
+                      color: AppColors.textDarkBlue,
+                    ),
+                  ),
+                ],
               ),
-
-              // ─────────────────────────────────────────
-              // SCORE
-              // ─────────────────────────────────────────
-              Text(
-                valueText,
-                style: TextStyle(
-                  fontSize: 28.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDarkBlue,
-                ),
-              ),
-            ],
-          ),
-          Spacer(),
-          IconButton(onPressed: () {}, icon: Icon(Icons.arrow_forward_ios)),
-        ],
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 22.sp,
+              color: AppColors.textPlaceholder,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────
-// ARC PAINTER
-// ─────────────────────────────────────────────────────────────
 
 class _ArcPainter extends CustomPainter {
   const _ArcPainter({required this.progress});
@@ -204,15 +175,10 @@ class _ArcPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final scale = size.width / 102;
-
     final radius = 42 * scale;
     final strokeWidth = 7 * scale;
-
     final center = Offset(size.width / 2, size.height / 2);
-
     final rect = Rect.fromCircle(center: center, radius: radius);
-
-    // BACKGROUND ARC
 
     canvas.drawArc(
       rect,
@@ -225,8 +191,6 @@ class _ArcPainter extends CustomPainter {
         ..strokeWidth = strokeWidth
         ..strokeCap = StrokeCap.round,
     );
-
-    // PROGRESS ARC
 
     canvas.drawArc(
       rect,

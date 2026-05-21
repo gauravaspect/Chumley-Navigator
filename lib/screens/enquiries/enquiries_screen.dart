@@ -1,12 +1,15 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/widgets/ui/elevated_surface.dart';
+import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
+import 'package:chumley_navigator/widgets/ui/primary_cta_button.dart';
+import 'package:chumley_navigator/widgets/ui/screen_title_block.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'package:dropdown_button2/dropdown_button2.dart';
 
 class EnquiriesScreen extends StatefulWidget {
-  EnquiriesScreen({super.key});
+  const EnquiriesScreen({super.key});
 
   @override
   State<EnquiriesScreen> createState() => _EnquiriesScreenState();
@@ -14,16 +17,17 @@ class EnquiriesScreen extends StatefulWidget {
 
 class _EnquiriesScreenState extends State<EnquiriesScreen> {
   final List<String> _enquiryCategory = [
-    "job Issue",
-    "Payment Query",
-    "Equipment Problem",
-    "Safety Concern",
-    "IT Support",
-    "HR Matter",
-    "Other",
+    'job Issue',
+    'Payment Query',
+    'Equipment Problem',
+    'Safety Concern',
+    'IT Support',
+    'HR Matter',
+    'Other',
   ];
   String? _selectedCategory;
   final _descriptionController = TextEditingController();
+  bool _descriptionFocused = false;
 
   @override
   void dispose() {
@@ -36,69 +40,62 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundBlue,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 18.h),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 18.h),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AspectBranding(),
+              const AspectBranding(),
               SizedBox(height: 20.h),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(18.r),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(
-                    color: AppColors.chartFillBlue,
-                    width: 0.5,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Submit an Enquiry",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16.sp,
-                        color: AppColors.textDarkBlue,
+              FadeSlideIn(
+                child: ElevatedSurface(
+                  padding: EdgeInsets.all(20.r),
+                  borderRadius: 22.r,
+                  borderColor: AppColors.chartFillBlue.withValues(alpha: 0.5),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ScreenTitleBlock(
+                        title: 'Submit an Enquiry',
+                        subtitle: "We're here to help with any issue",
+                        titleSize: 18.sp,
                       ),
-                    ),
-                    Text(
-                      "We\'re here to help with any issue",
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12.sp,
+                      SizedBox(height: 18.h),
+                      _issueDropdown(),
+                      SizedBox(height: 16.h),
+                      Text(
+                        'Detailed Description',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 12.h),
-                    _issueDropdown(),
-                    SizedBox(height: 12.h),
-                    Text(
-                      "Detailed Description",
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14.sp,
+                      SizedBox(height: 8.h),
+                      _descriptionField(),
+                      SizedBox(height: 20.h),
+                      PrimaryCtaButton(
+                        label: 'Submit Enquiry',
+                        icon: Icons.send_rounded,
+                        onTap: () {},
                       ),
-                    ),
-                    _descriptionField(),
-                    SizedBox(height: 12.h),
-                    _submitButton(() {}),
-                  ],
-                ),
-              ),
-              SizedBox(height: 14.h),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Active Enquiries",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 20.sp,
-                    color: AppColors.textDarkBlue,
+                    ],
                   ),
                 ),
               ),
+              SizedBox(height: 24.h),
+              Text(
+                'Active Enquiries',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18.sp,
+                  letterSpacing: -0.2,
+                  color: AppColors.textDarkBlue,
+                ),
+              ),
+              SizedBox(height: 12.h),
             ],
           ),
         ),
@@ -106,130 +103,113 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
     );
   }
 
-  // ── Issue dropdown ─────────────────────────────────────────────────
-
+  InputBorder _fieldBorder({bool focused = false}) {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14.r),
+      borderSide: BorderSide(
+        color: focused
+            ? AppColors.accentBlue.withValues(alpha: 0.65)
+            : AppColors.chartFillBlue.withValues(alpha: 0.55),
+        width: focused ? 1 : 0.5,
+      ),
+    );
+  }
 
   Widget _issueDropdown() {
     return DropdownButtonFormField2<String>(
       value: _selectedCategory,
       isExpanded: true,
-
-      // ── Field border (outer) ─────────────────────────────────
       decoration: InputDecoration(
-        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(color: AppColors.chartFillBlue, width: 0.5),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(color: AppColors.chartFillBlue, width: 0.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(color: AppColors.chartFillBlue, width: 0.5),
-        ),
+        filled: true,
+        fillColor: AppColors.surfaceLightBlue.withValues(alpha: 0.5),
+        contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+        border: _fieldBorder(),
+        enabledBorder: _fieldBorder(),
+        focusedBorder: _fieldBorder(focused: true),
       ),
-
       hint: Row(
         children: [
-          Icon(Icons.info_outline, color: AppColors.textSecondary, size: 16.sp),
-          SizedBox(width: 4.w),
+          Icon(
+            Icons.info_outline_rounded,
+            color: AppColors.textSecondary,
+            size: 16.sp,
+          ),
+          SizedBox(width: 6.w),
           Text(
             'Select a category',
-            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
-
-      // ── Dropdown arrow icon ──────────────────────────────────
       iconStyleData: IconStyleData(
         icon: Icon(
           Icons.keyboard_arrow_down_rounded,
           color: AppColors.textDarkBlue,
-          size: 20.sp,
+          size: 22.sp,
         ),
       ),
-
-      // ── Popup menu styling ───────────────────────────────────
       dropdownStyleData: DropdownStyleData(
-        elevation: 2,
+        elevation: 8,
         decoration: BoxDecoration(
-          color: AppColors.white,
-          border: Border.all(color: AppColors.chartFillBlue, width: 0.5),
-          borderRadius: BorderRadius.circular(12.r),
+          color: ElevatedSurface.tintedFill,
+          border: Border.all(
+            color: AppColors.borderDefault.withValues(alpha: 0.5),
+          ),
+          borderRadius: BorderRadius.circular(14.r),
+          boxShadow: ElevatedSurface.softShadows(),
         ),
       ),
-
-      // ── Each menu item padding ───────────────────────────────
       menuItemStyleData: MenuItemStyleData(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
-        height: 42.h,
+        height: 44.h,
       ),
-
       style: TextStyle(
-        fontSize: 13.sp,
+        fontSize: 14.sp,
         fontWeight: FontWeight.w600,
         color: AppColors.textDarkBlue,
       ),
-
       items: _enquiryCategory
           .map((cat) => DropdownMenuItem<String>(value: cat, child: Text(cat)))
           .toList(),
-
       onChanged: (val) => setState(() => _selectedCategory = val),
     );
   }
 
-  // ── Description text field ─────────────────────────────────────────────────
   Widget _descriptionField() {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.chartFillBlue, width: 0.8),
-        borderRadius: BorderRadius.circular(12.r),
+        color: AppColors.surfaceLightBlue.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(
+          color: _descriptionFocused
+              ? AppColors.accentBlue.withValues(alpha: 0.55)
+              : AppColors.chartFillBlue.withValues(alpha: 0.5),
+          width: _descriptionFocused ? 1 : 0.5,
+        ),
       ),
       child: TextField(
         controller: _descriptionController,
         maxLines: 5,
-        style: TextStyle(fontSize: 13.sp, color: AppColors.textDarkBlue),
+        onTap: () => setState(() => _descriptionFocused = true),
+        onTapOutside: (_) => setState(() => _descriptionFocused = false),
+        style: TextStyle(
+          fontSize: 14.sp,
+          height: 1.45,
+          color: AppColors.textDarkBlue,
+        ),
         decoration: InputDecoration(
           hintText: 'Describe your issue in detail…',
-          hintStyle: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+          hintStyle: TextStyle(
+            fontSize: 14.sp,
+            color: AppColors.textPlaceholder,
+          ),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.all(12.r),
-        ),
-      ),
-    );
-  }
-
-  Widget _submitButton(GestureTapCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 44.h,
-        decoration: BoxDecoration(
-          color: AppColors.primaryBlue,
-          borderRadius: BorderRadius.circular(8.r),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Submit Enquiry',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16.sp,
-                color: AppColors.highlightYellow,
-              ),
-            ),
-            SizedBox(width: 8.w),
-            Icon(
-              Icons.note_add_outlined,
-              size: 20.sp,
-              color: AppColors.highlightYellow,
-            ),
-          ],
+          contentPadding: EdgeInsets.all(14.r),
         ),
       ),
     );

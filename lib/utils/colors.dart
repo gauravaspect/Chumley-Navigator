@@ -65,6 +65,12 @@ class AppColors {
   static const errorBackground = Color(0xFFFDECEC);
   static const errorBorder = Color(0xFFFCA5A5);
   static const errorText = Color(0xFFB91C1C);
+  static const vcrWarningBackground = Color(0xFFFDEDEA);
+  static const vcrWarningBorder = Color(0xFFFFC0B6);
+  static const vcrWarningText = Color(0xFFB62D00);
+  static const vcrWarningIcon = Color(0xFFE8520A);
+  static const inputPlaceholder = Color(0xFFCDD1DA);
+  static const buttonDisabledBackground = Color(0xFFE8EAEE);
   static const pendingBackground = Color(0xFFFFF5D6);
   static const pendingText = Color(0xFF8A6D00);
   static const streakOrange = Color(0xFFFD541C);

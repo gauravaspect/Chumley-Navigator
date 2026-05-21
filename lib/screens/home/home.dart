@@ -1,6 +1,9 @@
+import 'package:chumley_navigator/screens/absences/absences_screen.dart';
 import 'package:chumley_navigator/screens/enquiries/enquiries_screen.dart';
+import 'package:chumley_navigator/screens/forms/forms_screen.dart';
 import 'package:chumley_navigator/screens/leaderboard/leaderboard_screen.dart';
 import 'package:chumley_navigator/screens/milestones/milestone_screen.dart';
+import 'package:chumley_navigator/screens/vehicle_check/vehile_check_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -40,13 +43,13 @@ class _HomeState extends State<Home> {
       label: 'Vehicle Check',
       icon: Icons.flag_outlined,
       activeIcon: Icons.flag_rounded,
-      screen: const TargetsScreen(),
+      screen: const VehileCheckScreen(),
     ),
     _NavItem(
       label: 'Forms',
       icon: Icons.task_alt_outlined,
       activeIcon: Icons.task_alt,
-      screen: const TasksScreen(),
+      screen: const FormsScreen(),
     ),
     _NavItem(
       label: 'Enquiries',
@@ -58,7 +61,7 @@ class _HomeState extends State<Home> {
       label: 'Absences',
       icon: Icons.calendar_month_outlined,
       activeIcon: Icons.calendar_month,
-      screen: const CalendarScreen(),
+      screen: AbsencesScreen(),
     ),
   ];
 
@@ -194,95 +197,4 @@ class _NavItem {
     required this.activeIcon,
     required this.screen,
   });
-}
-
-// ─────────────────────────────────────────────────────────────
-// SCREENS
-// ─────────────────────────────────────────────────────────────
-
-class AnalyticsScreen extends StatelessWidget {
-  const AnalyticsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return _BaseScreen(
-      title: 'Analytics',
-    );
-  }
-}
-
-class FavoritesScreen extends StatelessWidget {
-  const FavoritesScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return _BaseScreen(
-      title: 'Favorites',
-    );
-  }
-}
-
-class TargetsScreen extends StatelessWidget {
-  const TargetsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return _BaseScreen(
-      title: 'Targets',
-    );
-  }
-}
-
-class TasksScreen extends StatelessWidget {
-  const TasksScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return _BaseScreen(
-      title: 'Tasks',
-    );
-  }
-}
-
-class CalendarScreen extends StatelessWidget {
-  const CalendarScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return _BaseScreen(
-      title: 'Calendar',
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// COMMON SCREEN UI
-// ─────────────────────────────────────────────────────────────
-
-class _BaseScreen extends StatelessWidget {
-  final String title;
-
-  const _BaseScreen({
-    required this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundGray,
-
-      body: SafeArea(
-        child: Center(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 28.sp,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textHeadingDark,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
