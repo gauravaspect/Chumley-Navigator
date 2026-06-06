@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:chumley_navigator/widgets/vehicle/vcr_dashed_border.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,8 @@ class VcrCaptureSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return SizedBox(
       width: 114.w,
       child: Column(
@@ -29,45 +32,45 @@ class VcrCaptureSlot extends StatelessWidget {
             onTap: onTap,
             scale: 0.98,
             child: VcrDashedBorder(
-              color: AppColors.borderAccentBlue,
-              borderRadius: 16.r,
+              color: theme.border,
+              borderRadius: 12.r,
               strokeWidth: 1.36,
               child: Container(
                 width: double.infinity,
                 height: 113.h,
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceLightBlue,
-                  borderRadius: BorderRadius.circular(16.r),
+                  color: theme.surfaceDeep,
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: imageFile != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(14.r),
-                      child: Image.file(
-                        imageFile!,
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.photo_camera_outlined,
-                          size: 24.sp,
-                          color: AppColors.primaryBlue,
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(10.r),
+                        child: Image.file(
+                          imageFile!,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
                         ),
-                        SizedBox(height: 6.h),
-                        Text(
-                          'Tap to Capture',
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primaryBlue,
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.photo_camera_outlined,
+                            size: 24.sp,
+                            color: AppColors.brandRed,
                           ),
-                        ),
-                      ],
-                    ),
+                          SizedBox(height: 6.h),
+                          Text(
+                            'Tap to Capture',
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.brandRed,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
           ),
@@ -79,7 +82,7 @@ class VcrCaptureSlot extends StatelessWidget {
             style: TextStyle(
               fontSize: 10.sp,
               fontWeight: FontWeight.w600,
-              color: AppColors.textDarkBlue,
+              color: theme.textMuted,
             ),
           ),
         ],

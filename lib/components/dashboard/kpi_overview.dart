@@ -1,69 +1,61 @@
 import 'dart:math';
+
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/utils/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-// ─────────────────────────────────────────────────────────────
-// DATA MODEL
-// ─────────────────────────────────────────────────────────────
 
 class _CardData {
   const _CardData({
     required this.label,
     required this.value,
     required this.max,
+    required this.asset,
   });
 
   final String label;
   final double value;
   final double max;
+  final String asset;
 }
 
 const List<_CardData> _cards = [
-  _CardData(label: 'Conversion Pool', value: 8.1, max: 20),
-  _CardData(label: 'Productivity Pool', value: 12.1, max: 20),
-  _CardData(label: 'Procedural Pool', value: 14.2, max: 20),
-  _CardData(label: 'Vehicular Pool', value: 18.1, max: 20),
-  _CardData(label: 'Satisfaction Pool', value: 16.7, max: 20),
+  _CardData(label: 'Conversion Pool', value: 8.1, max: 20, asset: 'assets/icons/conversion_pool.png'),
+  _CardData(label: 'Productivity Pool', value: 12.1, max: 20,asset: 'assets/icons/productivity_pool.png'),
+  _CardData(label: 'Procedural Pool', value: 14.2, max: 20,asset: 'assets/icons/procedural_pool.png'),
+  _CardData(label: 'Vehicular Pool', value: 18.1, max: 20,asset: 'assets/icons/vehicular_pool.png'),
+  _CardData(label: 'Satisfaction Pool', value: 16.7, max: 20,asset: 'assets/icons/star.png'),
 ];
-
-// ─────────────────────────────────────────────────────────────
-// KPI OVERVIEW
-// ─────────────────────────────────────────────────────────────
 
 class KpiOverview extends StatelessWidget {
   const KpiOverview({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only( bottom:14.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    final theme = DashboardTheme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
           Text(
             'Personal KPI Overview',
             style: TextStyle(
               fontSize: 20.sp,
               fontWeight: FontWeight.bold,
-              color: AppColors.primaryBlueDark,
+              color: theme.dashHeading,
             ),
           ),
-
           SizedBox(height: 4.h),
-
           Text(
             'Your real-time performance summary and safety analytics',
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              color: theme.dashSubtitle,
             ),
           ),
-
           SizedBox(height: 20.h),
-
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -75,27 +67,34 @@ class KpiOverview extends StatelessWidget {
               childAspectRatio: 0.7,
             ),
             itemBuilder: (_, index) {
-              return GestureDetector(
-                  onTap: (){Navigator.pushNamed(context, AppRoutes.goals);},
-                  child: _KpiCard(data: _cards[index]));
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.goals);
+                  },
+                  borderRadius: BorderRadius.circular(18.r),
+                  child: _KpiCard(
+                    data: _cards[index],
+                    theme: theme,
+                  ),
+                ),
+              );
             },
           ),
         ],
-      ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// KPI CARD
-// ─────────────────────────────────────────────────────────────
-
 class _KpiCard extends StatelessWidget {
   const _KpiCard({
     required this.data,
+    required this.theme,
   });
 
   final _CardData data;
+  final DashboardTheme theme;
 
   @override
   Widget build(BuildContext context) {
@@ -105,70 +104,50 @@ class _KpiCard extends StatelessWidget {
         ? '${data.value.toInt()}/${data.max.toInt()}'
         : '${data.value}/${data.max.toInt()}';
 
-    return Container(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18.r),
+      child: Container(
       padding: EdgeInsets.symmetric(
         horizontal: 14.w,
         vertical: 18.h,
       ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(
-          color: AppColors.accentBlue,
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10.r,
-            offset: Offset(0, 4.h),
-          ),
-        ],
-      ),
+      decoration: theme.dashCardDecoration(radius: 18, softBorder: true),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // ─────────────────────────────────────────
-          // PROGRESS ARC
-          // ─────────────────────────────────────────
-
           SizedBox(
             width: 92.w,
             height: 92.w,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                CustomPaint(
-                  size: Size(92.w, 92.w),
-                  painter: _ArcPainter(progress: progress),
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: progress),
+                  duration: const Duration(milliseconds: 900),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, animatedProgress, _) {
+                    return CustomPaint(
+                      size: Size(92.w, 92.w),
+                      painter: _ArcPainter(
+                        progress: animatedProgress,
+                        trackColor: theme.dashChartTrack,
+                        progressColor: theme.dashPrimary,
+                      ),
+                    );
+                  },
                 ),
-
-                Icon(
-                  Icons.trending_up_rounded,
-                  size: 26.sp,
-                  color: AppColors.primaryBlue,
-                ),
+                Image.asset(data.asset,height:24.h,color: AppColors.brandRed,)
               ],
             ),
           ),
-
-          // ─────────────────────────────────────────
-          // SCORE
-          // ─────────────────────────────────────────
-
           Text(
             valueText,
             style: TextStyle(
               fontSize: 28.sp,
               fontWeight: FontWeight.w700,
-              color: AppColors.textDarkBlue,
+              color: theme.dashTitle,
             ),
           ),
-
-          // ─────────────────────────────────────────
-          // LABEL
-          // ─────────────────────────────────────────
-
           Text(
             data.label,
             textAlign: TextAlign.center,
@@ -178,25 +157,26 @@ class _KpiCard extends StatelessWidget {
               fontSize: 18.sp,
               fontWeight: FontWeight.w700,
               height: 1.3,
-              color: AppColors.textDarkBlue,
+              color: theme.dashTitle,
             ),
           ),
         ],
       ),
+    ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// ARC PAINTER
-// ─────────────────────────────────────────────────────────────
-
 class _ArcPainter extends CustomPainter {
   const _ArcPainter({
     required this.progress,
+    required this.trackColor,
+    required this.progressColor,
   });
 
   final double progress;
+  final Color trackColor;
+  final Color progressColor;
 
   static const double _startAngle = 135 * pi / 180;
   static const double _sweepAngle = 270 * pi / 180;
@@ -204,21 +184,10 @@ class _ArcPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final scale = size.width / 102;
-
     final radius = 42 * scale;
     final strokeWidth = 7 * scale;
-
-    final center = Offset(
-      size.width / 2,
-      size.height / 2,
-    );
-
-    final rect = Rect.fromCircle(
-      center: center,
-      radius: radius,
-    );
-
-    // BACKGROUND ARC
+    final center = Offset(size.width / 2, size.height / 2);
+    final rect = Rect.fromCircle(center: center, radius: radius);
 
     canvas.drawArc(
       rect,
@@ -226,13 +195,11 @@ class _ArcPainter extends CustomPainter {
       _sweepAngle,
       false,
       Paint()
-        ..color = AppColors.chartTrackBlue
+        ..color = trackColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth
         ..strokeCap = StrokeCap.round,
     );
-
-    // PROGRESS ARC
 
     canvas.drawArc(
       rect,
@@ -240,7 +207,7 @@ class _ArcPainter extends CustomPainter {
       _sweepAngle * progress,
       false,
       Paint()
-        ..color = AppColors.primaryBlue
+        ..color = progressColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth
         ..strokeCap = StrokeCap.round,
@@ -249,6 +216,8 @@ class _ArcPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ArcPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress ||
+        oldDelegate.trackColor != trackColor ||
+        oldDelegate.progressColor != progressColor;
   }
 }

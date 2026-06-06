@@ -1,30 +1,25 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:chumley_navigator/models/user_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:chumley_navigator/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('UserModel serializes backend auth payload fields', () {
+    final user = UserModel.fromJson(const {
+      'id': 'user_id',
+      'email': 'user@example.com',
+      'name': 'John Doe',
+      'role': 'engineer',
+      'azureOid': 'azure_oid',
+      'engineerId': 'engineer_id',
+      'tradeGroups': ['Plumbing'],
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(user.id, 'user_id');
+    expect(user.email, 'user@example.com');
+    expect(user.displayName, 'John Doe');
+    expect(user.role, 'engineer');
+    expect(user.azureOid, 'azure_oid');
+    expect(user.engineerId, 'engineer_id');
+    expect(user.tradeGroups, ['Plumbing']);
+    expect(UserModel.fromJson(user.toJson()), user);
   });
 }

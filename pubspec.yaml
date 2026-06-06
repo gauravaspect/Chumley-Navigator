@@ -40,6 +40,13 @@ dependencies:
   flutter_lucide: ^1.11.0
   dropdown_button2: ^2.3.9
   image_picker: ^1.1.2
+  google_fonts: ^6.3.1
+  shared_preferences: ^2.5.3
+  flutter_secure_storage: ^9.2.4
+  dio: ^5.9.2
+  aad_oauth: ^1.0.1
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.8
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -67,6 +74,7 @@ flutter:
      - assets/images/
      - assets/videos/
      - assets/brands/
+     - assets/icons/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

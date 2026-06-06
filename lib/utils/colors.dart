@@ -14,7 +14,16 @@ class AppColors {
   static const surfaceBlueTint = Color(0xFFEEF4FF);
   static const progressTrackBackground = Color(0xFFEAF1FB);
 
-  // Primary blues (interactive, headings)
+  // Brand red (dashboard primary accent)
+  static const brandRed = Color(0xFFAC3232);
+  static const brandRedDark = Color(0xFF8D2A2A);
+  static const brandRedDeep = Color(0xFF6A2020);
+  static const brandRedSoft = Color(0xFFC94A4A);
+  static const brandRedFill = Color(0xFFF5DEDE);
+  static const brandRedTrack = Color(0xFFF0E0E0);
+  static const brandRedBorderLight = Color(0xFFE8C4C4);
+
+  // Primary blues (interactive, headings — rest of app)
   static const primaryBlue = Color(0xFF27549D);
   static const primaryBlueDark = Color(0xFF1A4781);
   static const primaryBlueCalendar = Color(0xFF27449D);
@@ -52,7 +61,7 @@ class AppColors {
   // Highlights (points, nav)
   static const highlightYellow = Color(0xFFF1FF24);
   static const accentLime = Color(0xFFF4FF7F);
-  static const starIconBorder = Color(0xFF0F3A67);
+  static const starIconBorder = brandRedDeep;
 
   // Borders & dividers
   static const borderDefault = Color(0xFFE5E5EF);
@@ -90,4 +99,48 @@ class AppColors {
   // Card shine overlay gradient
   static const cardShineStart = Color(0xD9FFD778);
   static const cardShineEnd = Color(0x66FFFFFF);
+
+  // Shadows (black at fixed opacity — prefer these over inline withOpacity)
+  static const shadowSubtle = Color(0x0A000000); // ~4% black
+  static const shadowSoft = Color(0x14000000); // ~8% black
+  static const shadowMedium = Color(0x1F000000); // ~12% black
+
+  // Dark mode surfaces (dashboard command centre)
+  static const darkBase = Color(0xFF0D0D12);
+  static const darkSurface = Color(0xFF1A1A28);
+  static const darkSurfaceDeep = Color(0xFF13131E);
+  static const darkBorder = Color(0xFF2A2A3A);
+  static const darkText = Color(0xFFF5F5F5);
+  static const darkTextMuted = Color(0xFF6B7280);
+  static const darkTextBody = Color(0xFFD1D5DB);
+  static const darkProgressTrack = Color(0xFF1E1E2E);
+
+  // Light mode surfaces (dashboard — warm red-forward)
+  static const lightBase = Color(0xFFF7F6F3);
+  static const lightSurface = Color(0xFFFFFFFF);
+  static const lightSurfaceDeep = Color(0xFFFFF4F4);
+  static const lightBorder = Color(0xFFE3D8D8);
+  static const lightText = brandRedDeep;
+  static const lightTextMuted = Color(0xFF9A7A7A);
+  static const lightProgressTrack = brandRedTrack;
+
+  /// Light-mode notification bell background (header).
+  static const lightHeaderBellBg = Color(0xFFFFF4F4);
+
+  // Dashboard semantic (shared)
+  static const kpiBarLow = Color(0xFF378ADD);
+  static const kpiBarHigh = Color(0xFF4ADE80);
+  static const kpiBarHighLight = Color(0xFF166534);
+  static const trendUpDark = Color(0xFF4ADE80);
+  static const trendUpBgDark = Color(0xFF1B3A2A);
+  static const trendUpLight = Color(0xFF166534);
+  static const trendUpBgLight = Color(0xFFDCF5E8);
+  static const trendDownLight = Color(0xFFA32D2D);
+
+  // Leaderboard podium (1st place accents)
+  static const podiumFirstDarkBorder = Color(0xFF2A3A2A);
+  static const podiumFirstLightBg = Color(0xFFEAF3DE);
+  static const podiumFirstLightBorder = Color(0xFFC0DD97);
+  static const podiumFirstLightGreen = Color(0xFF27500A);
+  static const podiumFirstLightBadgeGreen = Color(0xFF3B6D11);
 }

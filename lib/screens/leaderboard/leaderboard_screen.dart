@@ -1,6 +1,7 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/utils/colors.dart';
-import 'package:chumley_navigator/widgets/ui/elevated_surface.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
 import 'package:chumley_navigator/widgets/ui/podium_column.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
@@ -60,111 +61,133 @@ class LeaderboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundBlue,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 16.h),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              children: [
-                const AspectBranding(),
-                SizedBox(height: 8.h),
-                Text(
-                  'Electrician Leaderboard',
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.25,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                SizedBox(height: 18.h),
-                FadeSlideIn(child: _leaderboardCard()),
-                SizedBox(height: 12.h),
-                _leaderboardTable(),
-                SizedBox(height: 24.h),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+    return ListenableBuilder(
+      listenable: ThemeScope.of(context),
+      builder: (context, _) {
+        final theme = DashboardTheme.of(context);
 
-  Widget _leaderboardCard() {
-    return ElevatedSurface(
-      padding: EdgeInsets.only(
-        left: 12.w,
-        right: 12.w,
-        top: 28.h,
-        bottom: 14.h,
-      ),
-      borderRadius: 20.r,
-      borderColor: AppColors.borderLightBlue.withValues(alpha: 0.4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(child: PodiumColumn(entry: _podium[0])),
-          SizedBox(width: 12.w),
-          Expanded(child: PodiumColumn(entry: _podium[1])),
-          SizedBox(width: 12.w),
-          Expanded(child: PodiumColumn(entry: _podium[2])),
-        ],
-      ),
-    );
-  }
-
-  Widget _leaderboardTable() {
-    return Column(
-      children: [
-        _leaderboardHeader(),
-        SizedBox(height: 6.h),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.zero,
-          itemCount: _rows.length,
-          separatorBuilder: (_, index) => SizedBox(height: 6.h),
-          itemBuilder: (_, index) => FadeSlideIn(
-            delay: Duration(milliseconds: 35 * index),
-            offsetY: 8,
-            child: _LeaderboardRowTile(row: _rows[index]),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _leaderboardHeader() {
-    return Container(
-      height: 40.h,
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: AppColors.accentBlue,
-        borderRadius: BorderRadius.circular(14.r),
-        boxShadow: ElevatedSurface.softShadows(elevation: 0.65),
-      ),
-      child: Row(
-        children: [
-          _headerCell('Rank', width: 28.w, align: TextAlign.center),
-          _headerCell('Trend', width: 52.w, align: TextAlign.center),
-          Expanded(
+        return Scaffold(
+          backgroundColor: theme.base,
+          body: SafeArea(
             child: Padding(
-              padding: EdgeInsets.only(left: 8.w),
-              child: Text(
-                'Engineer',
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.highlightYellow,
+              padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 16.h),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AspectBranding(),
+                    SizedBox(height: 14.h),
+                    Text(
+                      'Electrician leaderboard',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.6,
+                        color: theme.textMuted,
+                      ),
+                    ),
+                    SizedBox(height: 14.h),
+                    FadeSlideIn(
+                      child: _PodiumCard(
+                        theme: theme,
+                        entries: _podium,
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    _LeaderboardHeader(theme: theme),
+                    SizedBox(height: 6.h),
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      itemCount: _rows.length,
+                      separatorBuilder: (_, index) => SizedBox(height: 6.h),
+                      itemBuilder: (_, index) => FadeSlideIn(
+                        delay: Duration(milliseconds: 35 * index),
+                        offsetY: 8,
+                        child: _LeaderboardRowTile(
+                          theme: theme,
+                          row: _rows[index],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                  ],
                 ),
               ),
             ),
           ),
-          _headerCell('Overall KPI', width: 130.w, align: TextAlign.right),
+        );
+      },
+    );
+  }
+}
+
+class _PodiumCard extends StatelessWidget {
+  const _PodiumCard({
+    required this.theme,
+    required this.entries,
+  });
+
+  final DashboardTheme theme;
+  final List<PodiumEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 10.w,
+        right: 10.w,
+        top: 14.h,
+        bottom: 12.h,
+      ),
+      decoration: BoxDecoration(
+        color: theme.surface,
+        border: Border.all(color: theme.border, width: 0.5),
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(child: PodiumColumn(entry: entries[0])),
+          SizedBox(width: 6.w),
+          Expanded(child: PodiumColumn(entry: entries[1])),
+          SizedBox(width: 6.w),
+          Expanded(child: PodiumColumn(entry: entries[2])),
+        ],
+      ),
+    );
+  }
+}
+
+class _LeaderboardHeader extends StatelessWidget {
+  const _LeaderboardHeader({required this.theme});
+
+  final DashboardTheme theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 36.h,
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
+      decoration: BoxDecoration(
+        color: theme.surface,
+        border: Border.all(color: theme.border, width: 0.5),
+        borderRadius: BorderRadius.circular(10.r),
+      ),
+      child: Row(
+        children: [
+          _headerCell('Rank', width: 24.w, align: TextAlign.center),
+          _headerCell('Trend', width: 40.w, align: TextAlign.center),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(left: 8.w),
+              child: _headerCell('Engineer', align: TextAlign.left),
+            ),
+          ),
+          _headerCell('KPI', width: 80.w, align: TextAlign.right),
         ],
       ),
     );
@@ -172,78 +195,88 @@ class LeaderboardScreen extends StatelessWidget {
 
   Widget _headerCell(
     String text, {
-    required double width,
+    double? width,
     required TextAlign align,
   }) {
-    return SizedBox(
-      width: width,
-      child: Text(
-        text,
-        textAlign: align,
-        style: TextStyle(
-          fontSize: 11.sp,
-          fontWeight: FontWeight.w600,
-          color: AppColors.highlightYellow,
-        ),
-      ),
+    final style = TextStyle(
+      fontSize: 10.sp,
+      fontWeight: FontWeight.w500,
+      color: theme.textMuted,
     );
+
+    if (width != null) {
+      return SizedBox(
+        width: width,
+        child: Text(text, textAlign: align, style: style),
+      );
+    }
+    return Text(text, textAlign: align, style: style);
   }
 }
 
 class _LeaderboardRowTile extends StatelessWidget {
-  const _LeaderboardRowTile({required this.row});
+  const _LeaderboardRowTile({
+    required this.theme,
+    required this.row,
+  });
 
+  final DashboardTheme theme;
   final _LeaderboardRow row;
 
   @override
   Widget build(BuildContext context) {
-    return PressableScale(
-      onTap: () {},
-      scale: 0.99,
-      child: Container(
-        height: 40.h,
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        decoration: BoxDecoration(
-          color: AppColors.chartFillBlue.withValues(alpha: 0.22),
-          border: Border.all(
-            color: AppColors.borderLightBlue.withValues(alpha: 0.45),
-            width: 0.5,
+    return Semantics(
+      label: 'Rank ${row.rank}, ${row.engineer}, KPI ${row.kpi}',
+      child: PressableScale(
+        onTap: () {},
+        scale: 0.99,
+        child: Container(
+          height: 40.h,
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          decoration: BoxDecoration(
+            color: theme.surfaceDeep,
+            border: Border.all(color: theme.border, width: 0.5),
+            borderRadius: BorderRadius.circular(10.r),
           ),
-          borderRadius: BorderRadius.circular(14.r),
-          boxShadow: ElevatedSurface.softShadows(elevation: 0.45),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 28.w,
-              child: Text(
-                '${row.rank}',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primaryBlueDark,
-                ),
-              ),
-            ),
-            SizedBox(width: 52.w, child: _TrendCell(trend: row.trend)),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(left: 8.w),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 24.w,
                 child: Text(
-                  row.engineer,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  '${row.rank}',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 10.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryBlueDark,
+                    fontWeight: FontWeight.w500,
+                    color: theme.textMuted,
                   ),
                 ),
               ),
-            ),
-            SizedBox(width: 130.w, child: _KpiCell(kpi: row.kpi)),
-          ],
+              SizedBox(
+                width: 40.w,
+                child: _TrendCell(theme: theme, trend: row.trend),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(left: 8.w),
+                  child: Text(
+                    row.engineer,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w500,
+                      color: theme.text,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 80.w,
+                child: _KpiCell(theme: theme, kpi: row.kpi),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -251,67 +284,84 @@ class _LeaderboardRowTile extends StatelessWidget {
 }
 
 class _TrendCell extends StatelessWidget {
-  const _TrendCell({required this.trend});
+  const _TrendCell({
+    required this.theme,
+    required this.trend,
+  });
 
+  final DashboardTheme theme;
   final int trend;
+
+  Color get _color {
+    if (trend > 0) {
+      return theme.isDark ? AppColors.kpiBarHigh : AppColors.trendUpLight;
+    }
+    if (trend < 0) {
+      return theme.isDark ? AppColors.streakOrange : AppColors.trendDownLight;
+    }
+    return theme.textMuted;
+  }
+
+  IconData get _icon {
+    if (trend > 0) return Icons.arrow_upward_rounded;
+    if (trend < 0) return Icons.arrow_downward_rounded;
+    return Icons.remove_rounded;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isDown = trend < 0;
-    final color = isDown ? AppColors.streakOrange : const Color(0xFF1CB814);
-    final arrow = isDown ? '▼' : '▲';
-    final label = isDown ? '↓ $trend' : '↑ +$trend';
+    final color = _color;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          arrow,
-          style: TextStyle(fontSize: 7.sp, color: color, height: 1),
-        ),
-        SizedBox(width: 2.w),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10.sp,
-            fontWeight: FontWeight.w600,
-            color: color,
+        Icon(_icon, size: 10.sp, color: color),
+        if (trend != 0) ...[
+          SizedBox(width: 2.w),
+          Text(
+            '${trend.abs()}',
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
 }
 
 class _KpiCell extends StatelessWidget {
-  const _KpiCell({required this.kpi});
+  const _KpiCell({
+    required this.theme,
+    required this.kpi,
+  });
 
+  final DashboardTheme theme;
   final double kpi;
 
   @override
   Widget build(BuildContext context) {
+    final fill = kpi >= 56
+        ? theme.kpiBarHighColor
+        : AppColors.kpiBarLow;
+    final progress = (kpi / 80).clamp(0.0, 1.0);
+
     return Row(
       children: [
         Expanded(
-          child: Container(
-            height: 12.h,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: ElevatedSurface.tintedFill,
-              border: Border.all(
-                color: AppColors.borderLightBlue.withValues(alpha: 0.4),
-                width: 0.35,
-              ),
-              borderRadius: BorderRadius.circular(999.r),
-            ),
-            child: FractionallySizedBox(
-              widthFactor: (kpi / 80).clamp(0.0, 1.0),
-              alignment: Alignment.centerLeft,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1CB814),
-                  borderRadius: BorderRadius.circular(999.r),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2.r),
+            child: SizedBox(
+              height: 3.h,
+              child: ColoredBox(
+                color: theme.progressTrack,
+                child: FractionallySizedBox(
+                  widthFactor: progress,
+                  alignment: Alignment.centerLeft,
+                  child: ColoredBox(color: fill),
                 ),
               ),
             ),
@@ -325,8 +375,8 @@ class _KpiCell extends StatelessWidget {
             textAlign: TextAlign.right,
             style: TextStyle(
               fontSize: 10.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryBlueDark,
+              fontWeight: FontWeight.w500,
+              color: theme.textMuted,
             ),
           ),
         ),

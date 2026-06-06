@@ -1,8 +1,7 @@
-import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// White VCR panel with light blue border and soft shadow per design.
 class VcrFormCard extends StatelessWidget {
   const VcrFormCard({
     super.key,
@@ -13,28 +12,18 @@ class VcrFormCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
 
-  static BoxDecoration decoration() => BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: AppColors.borderLightBlue,
-          width: 0.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textShadow.withValues(alpha: 0.04),
-            blurRadius: 4.r,
-            offset: Offset(0, 2.h),
-          ),
-        ],
-      );
-
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Container(
       width: double.infinity,
-      padding: padding ?? EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-      decoration: decoration(),
+      padding: padding ?? EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        color: theme.surface,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: theme.border, width: 0.5),
+      ),
       child: child,
     );
   }

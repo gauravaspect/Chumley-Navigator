@@ -1,14 +1,13 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
-import 'package:chumley_navigator/widgets/ui/elevated_surface.dart';
+import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/widgets/theme_scope.dart';
+import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
 import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
-import 'package:chumley_navigator/widgets/ui/soft_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../utils/colors.dart';
-
-// ── Assumes AppColors is imported from 'app_colors.dart' ──────
 
 // ─────────────────────────────────────────────────────────────
 // Enums & Models
@@ -191,8 +190,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
   final Map<int, String?> _hseValues = {};
   final Map<String, SeqStatus> _seqStatus = {};
 
-  List<BoxShadow> get _cardShadow =>
-      ElevatedSurface.softShadows(elevation: 0.65);
+  DashboardTheme get _t => DashboardTheme.of(context);
 
   @override
   void initState() {
@@ -245,7 +243,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           style: TextStyle(fontSize: 14.sp),
         ),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: AppColors.brandRed,
       ),
     );
   }
@@ -265,15 +263,11 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.white,
-        border: Border.all(
-          color: AppColors.borderLightBlue.withValues(alpha: 0.5),
-          width: 0.5,
-        ),
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: _cardShadow,
+        color: backgroundColor ?? _t.surface,
+        border: Border.all(color: _t.border, width: 0.5),
+        borderRadius: BorderRadius.circular(12.r),
       ),
-      padding: padding ?? EdgeInsets.all(18.r),
+      padding: padding ?? EdgeInsets.all(14.r),
       child: child,
     );
   }
@@ -290,7 +284,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                 Text(
                   'Inspection Report',
                   style: TextStyle(
-                    color: AppColors.textDarkBlue,
+                    color: _t.text,
                     fontSize: 22.sp,
                     fontWeight: FontWeight.w700,
                     height: 1.25,
@@ -300,7 +294,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                 Text(
                   _c.pageSubtitle,
                   style: TextStyle(
-                    color: AppColors.textBodyMuted,
+                    color: _t.textMuted,
                     fontSize: 13.sp,
                     height: 1.4,
                   ),
@@ -312,17 +306,14 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
             decoration: BoxDecoration(
-              color: AppColors.white,
-              border: Border.all(
-                color: AppColors.borderLightBlue.withValues(alpha: 0.5),
-              ),
-              borderRadius: BorderRadius.circular(12.r),
-              boxShadow: _cardShadow,
+              color: _t.surfaceDeep,
+              border: Border.all(color: _t.border, width: 0.5),
+              borderRadius: BorderRadius.circular(10.r),
             ),
             child: Text(
               _c.badge,
               style: TextStyle(
-                color: AppColors.primaryBlue,
+                color: AppColors.brandRed,
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
               ),
@@ -388,13 +379,13 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                   '$ppeDone / $ppeTotal confirmed',
                   ppeDone == ppeTotal,
                 ),
-                Divider(height: 20.h, color: AppColors.borderDefault),
+                Divider(height: 20.h, color: _t.border),
                 _reviewRow(
                   'HSE gatekeeper',
                   '$hseDone / $hseTotal answered',
                   hseDone == hseTotal,
                 ),
-                Divider(height: 20.h, color: AppColors.borderDefault),
+                Divider(height: 20.h, color: _t.border),
                 _reviewRow(
                   'Work sequence',
                   '$_confirmedSeqCount / $_totalSeqItems confirmed',
@@ -405,13 +396,13 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           ),
           SizedBox(height: 12.h),
           _formCard(
-            backgroundColor: AppColors.surfaceLightBlue,
+            backgroundColor: _t.surfaceDeep,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   LucideIcons.circleAlert,
-                  color: AppColors.primaryBlue,
+                  color: AppColors.brandRed,
                   size: 20.sp,
                 ),
                 SizedBox(width: 10.w),
@@ -421,7 +412,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                     style: TextStyle(
                       fontSize: 13.sp,
                       height: 1.45,
-                      color: AppColors.textBodyMuted,
+                      color: _t.textMuted,
                     ),
                   ),
                 ),
@@ -438,7 +429,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
       children: [
         Icon(
           complete ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
-          color: complete ? AppColors.successText : AppColors.textPlaceholder,
+          color: complete ? AppColors.successText : _t.textMuted,
           size: 20.sp,
         ),
         SizedBox(width: 10.w),
@@ -448,7 +439,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
-              color: AppColors.textDarkBlue,
+              color: _t.text,
             ),
           ),
         ),
@@ -457,7 +448,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+            color: _t.textMuted,
           ),
         ),
       ],
@@ -472,7 +463,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
     return PreferredSize(
       preferredSize: Size.fromHeight(88.h),
       child: AppBar(
-        backgroundColor: AppColors.backgroundBlue,
+        backgroundColor: _t.base,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
@@ -483,10 +474,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           padding: EdgeInsets.only(left: 16.w),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: SoftIconButton(
-              icon: Icons.arrow_back_ios_new_rounded,
-              iconSize: 16.sp,
-              size: 40.r,
+            child: CommandCentreBackButton(
               onTap: () => Navigator.maybePop(context),
             ),
           ),
@@ -541,7 +529,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           style: TextStyle(
             fontSize: 11.sp,
             fontWeight: FontWeight.w600,
-            color: AppColors.textShadow,
+            color: _t.textMuted,
             letterSpacing: 0.3,
           ),
         ),
@@ -553,7 +541,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           style: TextStyle(
             fontSize: mono ? 16.sp : 15.sp,
             fontWeight: FontWeight.w700,
-            color: AppColors.textDarkBlue,
+            color: _t.text,
             fontFamily: mono ? 'monospace' : null,
             height: 1.35,
           ),
@@ -575,7 +563,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           style: TextStyle(
             fontSize: 16.sp,
             fontWeight: FontWeight.w700,
-            color: AppColors.textDarkBlue,
+            color: _t.text,
             height: 1.25,
           ),
         ),
@@ -584,7 +572,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           Text(subtitle,
               style: TextStyle(
                   fontSize: 13.sp,
-                  color: AppColors.textBodyMuted,
+                  color: _t.textMuted,
                   height: 1.35)),
         ],
       ],
@@ -610,7 +598,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                   _c.scopeBody,
                   style: TextStyle(
                     fontSize: 14.sp,
-                    color: AppColors.textShadow,
+                    color: _t.textMuted,
                     height: 1.6,
                   ),
                 ),
@@ -619,7 +607,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                   _c.scopeRefs,
                   style: TextStyle(
                     fontSize: 12.sp,
-                    color: AppColors.textSecondary,
+                    color: _t.textMuted,
                     height: 1.5,
                   ),
                 ),
@@ -664,15 +652,12 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
-          color: confirmed ? AppColors.surfaceLightBlue : AppColors.white,
+          color: confirmed ? _t.surfaceDeep : _t.surface,
           border: Border.all(
-            color: confirmed
-                ? AppColors.primaryBlue.withValues(alpha: 0.45)
-                : AppColors.borderLightBlue.withValues(alpha: 0.5),
+            color: confirmed ? AppColors.brandRed : _t.border,
             width: 0.5,
           ),
-          borderRadius: BorderRadius.circular(18.r),
-          boxShadow: _cardShadow,
+          borderRadius: BorderRadius.circular(12.r),
         ),
         padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
         child: Row(
@@ -682,7 +667,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                 label,
                 style: TextStyle(
                     fontSize: 14.sp,
-                    color: const Color(0xFF1A1D23),
+                    color: _t.text,
                     height: 1.45),
               ),
             ),
@@ -693,13 +678,9 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
               height: 40.h,
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               decoration: BoxDecoration(
-                color: confirmed
-                    ? AppColors.primaryBlue
-                    : AppColors.surfaceLightBlue,
+                color: confirmed ? AppColors.brandRed : _t.surfaceDeep,
                 border: Border.all(
-                  color: confirmed
-                      ? AppColors.primaryBlue
-                      : AppColors.primaryBlue.withValues(alpha: 0.33),
+                  color: confirmed ? AppColors.brandRed : _t.border,
                 ),
                 borderRadius: BorderRadius.circular(999),
               ),
@@ -716,7 +697,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                     style: TextStyle(
                       color: confirmed
                           ? AppColors.white
-                          : AppColors.primaryBlue,
+                          : AppColors.brandRed,
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w700,
                     ),
@@ -766,7 +747,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
             q.label,
             style: TextStyle(
               fontSize: 14.sp,
-              color: const Color(0xFF1A1D23),
+              color: _t.text,
               fontWeight: FontWeight.w500,
               height: 1.45,
             ),
@@ -775,9 +756,8 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           // ── styled dropdown ───────────────────────────
           Container(
             decoration: BoxDecoration(
-              color: AppColors.white,
-              border: Border.all(
-                  color: AppColors.textPlaceholder, width: 0.5),
+              color: _t.surfaceDeep,
+              border: Border.all(color: _t.border, width: 0.5),
               borderRadius: BorderRadius.circular(10.r),
             ),
             padding: EdgeInsets.only(left: 14.w, right: 10.w),
@@ -789,13 +769,13 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                   'Select response…',
                   style: TextStyle(
                       fontSize: 13.sp,
-                      color: AppColors.textPlaceholder),
+                      color: _t.textMuted),
                 ),
                 icon: Icon(LucideIcons.chevronDown,
-                    color: AppColors.textPlaceholder, size: 16.sp),
+                    color: _t.textMuted, size: 16.sp),
                 style: TextStyle(
                     fontSize: 13.sp,
-                    color: const Color(0xFF1A1D23)),
+                    color: _t.text),
                 borderRadius: BorderRadius.circular(12.r),
                 onChanged: (val) =>
                     setState(() => _hseValues[i] = val),
@@ -839,7 +819,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textShadow,
+                      color: _t.textMuted,
                     ),
                   ),
                 ),
@@ -872,7 +852,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                 label,
                 style: TextStyle(
                     fontSize: 14.sp,
-                    color: const Color(0xFF1A1D23),
+                    color: _t.text,
                     height: 1.45),
               ),
             ),
@@ -902,15 +882,15 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
     final Color border;
 
     if (!sel) {
-      bg = AppColors.white;
-      fg = AppColors.textShadow;
-      border = AppColors.textPlaceholder;
+      bg = _t.surface;
+      fg = _t.textMuted;
+      border = _t.border;
     } else {
       switch (target) {
         case SeqStatus.confirmed:
-          bg = AppColors.primaryBlue;
+          bg = AppColors.brandRed;
           fg = AppColors.white;
-          border = AppColors.primaryBlue;
+          border = AppColors.brandRed;
           break;
         case SeqStatus.rejected:
           bg = AppColors.errorBackground;
@@ -918,14 +898,14 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           border = AppColors.errorBorder;
           break;
         case SeqStatus.na:
-          bg = AppColors.backgroundGray;
-          fg = AppColors.textBodyMuted;
-          border = AppColors.textPlaceholder;
+          bg = _t.surfaceDeep;
+          fg = _t.textMuted;
+          border = _t.border;
           break;
         default:
-          bg = AppColors.white;
-          fg = AppColors.textShadow;
-          border = AppColors.textPlaceholder;
+          bg = _t.surface;
+          fg = _t.textMuted;
+          border = _t.border;
       }
     }
 
@@ -965,15 +945,8 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
-        border: Border(top: BorderSide(color: AppColors.chartFillBlue)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryBlue.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        color: _t.surface,
+        border: Border(top: BorderSide(color: _t.border, width: 0.5)),
       ),
       child: SafeArea(
         top: false,
@@ -996,8 +969,8 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                           height: 3.h,
                           decoration: BoxDecoration(
                             color: active
-                                ? AppColors.primaryBlue
-                                : AppColors.chartFillBlue,
+                                ? AppColors.brandRed
+                                : _t.progressTrack,
                             borderRadius: BorderRadius.circular(3.r),
                           ),
                         ),
@@ -1009,7 +982,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                     text: TextSpan(
                       style: TextStyle(
                         fontSize: 11.sp,
-                        color: AppColors.textSecondary,
+                        color: _t.textMuted,
                       ),
                       children: [
                         TextSpan(
@@ -1019,7 +992,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                         TextSpan(
                           text: _stepTitles[_currentStep],
                           style: TextStyle(
-                            color: AppColors.primaryBlue,
+                            color: AppColors.brandRed,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -1037,9 +1010,9 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                     icon: LucideIcons.arrowLeft,
                     label: 'Prev',
                     onTap: isFirst ? null : _onPrev,
-                    bg: AppColors.surfaceBlueTint,
-                    fg: AppColors.primaryBlue,
-                    border: AppColors.chartFillBlue,
+                    bg: _t.surfaceDeep,
+                    fg: AppColors.brandRed,
+                    border: _t.border,
                     disabled: isFirst,
                   ),
                   SizedBox(width: 8.w),
@@ -1047,9 +1020,9 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                     icon: LucideIcons.save,
                     label: 'Save draft',
                     onTap: _submitForm,
-                    bg: AppColors.surfaceBlueTint,
-                    fg: AppColors.primaryBlue,
-                    border: AppColors.chartFillBlue,
+                    bg: _t.surfaceDeep,
+                    fg: AppColors.brandRed,
+                    border: _t.border,
                   ),
                   const Spacer(),
                   _buildFooterBtn(
@@ -1057,9 +1030,9 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                     icon: isLast ? LucideIcons.send : LucideIcons.arrowRight,
                     iconTrailing: true,
                     onTap: _onNext,
-                    bg: AppColors.highlightYellow,
-                    fg: AppColors.textDarkBlue,
-                    border: Colors.transparent,
+                    bg: AppColors.brandRed,
+                    fg: Colors.white,
+                    border: AppColors.brandRed,
                   ),
                 ],
               ),
@@ -1130,10 +1103,13 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundBlue,
-      appBar: _buildAppBar(),
-      body: Column(
+    return ListenableBuilder(
+      listenable: ThemeScope.of(context),
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: _t.base,
+          appBar: _buildAppBar(),
+          body: Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
@@ -1171,6 +1147,8 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           _buildStickyFooter(),
         ],
       ),
+        );
+      },
     );
   }
 }

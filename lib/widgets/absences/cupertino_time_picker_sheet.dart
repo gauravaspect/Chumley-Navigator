@@ -1,4 +1,4 @@
-import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,6 +9,7 @@ Future<TimeOfDay?> showCupertinoTimePickerSheet({
   required TimeOfDay initialTime,
   String title = 'Select time',
 }) async {
+  final theme = DashboardTheme.of(context);
   var selected = initialTime;
   final initialDateTime = DateTime(
     2020,
@@ -24,7 +25,7 @@ Future<TimeOfDay?> showCupertinoTimePickerSheet({
       return Container(
         height: 320.h,
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: theme.dashCardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
         ),
         child: Column(
@@ -33,9 +34,7 @@ Future<TimeOfDay?> showCupertinoTimePickerSheet({
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
               decoration: BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(
-                    color: AppColors.borderDefault.withValues(alpha: 0.6),
-                  ),
+                  bottom: BorderSide(color: theme.dashBorderLight),
                 ),
               ),
               child: Row(
@@ -48,7 +47,7 @@ Future<TimeOfDay?> showCupertinoTimePickerSheet({
                       'Cancel',
                       style: TextStyle(
                         fontSize: 16.sp,
-                        color: AppColors.textSecondary,
+                        color: theme.dashSubtitle,
                       ),
                     ),
                   ),
@@ -57,7 +56,7 @@ Future<TimeOfDay?> showCupertinoTimePickerSheet({
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textDarkBlue,
+                      color: theme.dashTitle,
                     ),
                   ),
                   CupertinoButton(
@@ -68,7 +67,7 @@ Future<TimeOfDay?> showCupertinoTimePickerSheet({
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primaryBlue,
+                        color: theme.dashPrimary,
                       ),
                     ),
                   ),
@@ -81,14 +80,14 @@ Future<TimeOfDay?> showCupertinoTimePickerSheet({
                   textTheme: CupertinoTextThemeData(
                     dateTimePickerTextStyle: TextStyle(
                       fontSize: 22.sp,
-                      color: AppColors.textDarkBlue,
+                      color: theme.dashTitle,
                     ),
                   ),
                 ),
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.time,
                   initialDateTime: initialDateTime,
-                  use24hFormat: false,
+                  use24hFormat: true,
                   onDateTimeChanged: (value) {
                     selected = TimeOfDay(
                       hour: value.hour,

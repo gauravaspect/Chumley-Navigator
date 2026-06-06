@@ -1,5 +1,4 @@
-import 'package:chumley_navigator/utils/colors.dart';
-import 'package:chumley_navigator/widgets/ui/elevated_surface.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -18,23 +17,28 @@ class ProfileInfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return PressableScale(
       onTap: onTap,
       scale: 0.99,
-      child: ElevatedSurface(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        margin: EdgeInsets.symmetric(vertical: 8.h),
-        borderRadius: 18.r,
-        borderColor: AppColors.textDarkBlue.withValues(alpha: 0.12),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+        margin: EdgeInsets.only(bottom: 6.h),
+        decoration: BoxDecoration(
+          color: theme.surfaceDeep,
+          border: Border.all(color: theme.border, width: 0.5),
+          borderRadius: BorderRadius.circular(10.r),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               label,
               style: TextStyle(
-                fontSize: 15.sp,
+                fontSize: 10.sp,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
+                color: theme.textMuted,
               ),
             ),
             Flexible(
@@ -42,9 +46,9 @@ class ProfileInfoRow extends StatelessWidget {
                 value,
                 textAlign: TextAlign.right,
                 style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textDarkBlue,
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w500,
+                  color: theme.text,
                 ),
               ),
             ),

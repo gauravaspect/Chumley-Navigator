@@ -1,9 +1,11 @@
-import 'package:chumley_navigator/screens/dashboard/dashboard_screen.dart';
+import 'package:chumley_navigator/core/app_dependencies.dart';
+import 'package:chumley_navigator/screens/dashboard/earnings_detail_screen.dart';
 import 'package:chumley_navigator/screens/dashboard/goals_targets_screen.dart';
 import 'package:chumley_navigator/screens/notifications/notification_screen.dart';
 import 'package:chumley_navigator/screens/redeemPoints/redeem_points.dart';
 import 'package:chumley_navigator/screens/vehicle_check/vehicle_form.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../screens/home/home.dart';
 import '../screens/login/login_screen.dart';
@@ -20,16 +22,21 @@ class AppRoutes {
   static const redeemPoints = "/redeemPoints";
   static const profile = "/profile";
   static const vehicleForm = "/vehicleForm";
+  static const earningsDetail = "/earningsDetail";
 
   static Map<String, WidgetBuilder> routes = {
     AppRoutes.splash: (context) => SplashScreen(),
     AppRoutes.login: (context) => LoginScreen(),
-    AppRoutes.dashboard: (context)=> DashboardScreen(),
+    AppRoutes.dashboard: (context) => const Home(),
     AppRoutes.home : (context)=>Home(),
     AppRoutes.notifications: (context)=>NotificationScreen(),
     AppRoutes.goals: (context) => GoalsTargetsScreen(),
     AppRoutes.redeemPoints: (context) => RedeemPointsScreen(),
-    AppRoutes.profile: (context) => ProfileScreen(),
+    AppRoutes.profile: (context) => BlocProvider(
+      create: (_) => AppDependencies.createDashboardCubit()..load(),
+      child: const ProfileScreen(),
+    ),
     AppRoutes.vehicleForm: (context) => const VehicleForm(),
+    AppRoutes.earningsDetail: (context) => const EarningsDetailScreen(),
   };
 }

@@ -1,197 +1,221 @@
+import 'package:chumley_navigator/components/redeem_points/redeem_cards.dart';
+import 'package:chumley_navigator/components/redeem_points/redeem_points_bottom_model.dart';
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/utils/routes.dart';
+import 'package:chumley_navigator/widgets/theme_scope.dart';
+import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-import '../../components/redeem_points/redeem_cards.dart';
-import '../../components/redeem_points/redeem_points_bottom_model.dart';
-import '../../utils/routes.dart';
 
 class RedeemPointsScreen extends StatelessWidget {
   const RedeemPointsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundBlue,
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundBlue,
-        automaticallyImplyLeading: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Your Rewards Journey",
-              style: TextStyle(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryBlueDark,
-              ),
-            ),
-            Text(
-              "Earn points, unlock rewards",
-              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
-            ),
-          ],
-        ),
-        actions: [
-          _customIconButton(() {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (context) => SizedBox(
-                height: MediaQuery.of(context).size.height * 0.90,
-                child: const RedeemPointsBottomModal(),
-              ),
-            );
-          }, LucideIcons.clipboard_list),
-          _customIconButton(() {
-            Navigator.popAndPushNamed(context, AppRoutes.home);
-          }, Icons.close),
-        ],
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsetsGeometry.symmetric(horizontal: 18.w),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
+    return ListenableBuilder(
+      listenable: ThemeScope.of(context),
+      builder: (context, _) {
+        final theme = DashboardTheme.of(context);
+
+        return Scaffold(
+          backgroundColor: theme.base,
+          body: SafeArea(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _availablePoints(),
-                GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    width: double.infinity,
-                    height: 44.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryBlue,
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Your rewards journey',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w500,
+                                color: theme.text,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              'Earn points, unlock rewards',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: theme.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _HeaderIconButton(
+                        theme: theme,
+                        icon: LucideIcons.clipboard_list,
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.90,
+                              child: const RedeemPointsBottomModal(),
+                            ),
+                          );
+                        },
+                      ),
+                      SizedBox(width: 6.w),
+                      _HeaderIconButton(
+                        theme: theme,
+                        icon: Icons.close,
+                        onTap: () =>
+                            Navigator.popAndPushNamed(context, AppRoutes.home),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Icon(
-                          Icons.card_giftcard,
-                          size: 20.sp,
-                          color: AppColors.highlightYellow,
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          'Redeem Points',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16.sp,
-                            color: AppColors.highlightYellow,
-                          ),
-                        ),
+                        _AvailablePointsCard(theme: theme),
+                        SizedBox(height: 10.h),
+                        _RedeemCta(theme: theme),
+                        const RewardsJourneyList(),
+                        _ClaimedRewards(theme: theme),
+                        SizedBox(height: 24.h),
                       ],
                     ),
                   ),
                 ),
-                RewardsJourneyList(),
-                _claimedRewards(),
               ],
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
+}
 
-  Widget _customIconButton(Function() onTap, IconData icon) {
-    return GestureDetector(
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton({
+    required this.theme,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final DashboardTheme theme;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
       onTap: onTap,
+      scale: 0.92,
       child: Container(
-        margin: EdgeInsets.only(right: 10.r),
-        padding: EdgeInsets.all(6.r),
+        width: 32.w,
+        height: 32.w,
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: theme.surface,
           shape: BoxShape.circle,
-          border: Border.all(width: 0.25, color: AppColors.textSecondary),
+          border: Border.all(color: theme.border, width: 0.5),
         ),
-        child: Icon(icon),
+        alignment: Alignment.center,
+        child: Icon(icon, size: 16.sp, color: theme.textMuted),
       ),
     );
   }
+}
 
-  Widget _availablePoints() {
+class _AvailablePointsCard extends StatelessWidget {
+  const _AvailablePointsCard({required this.theme});
+
+  final DashboardTheme theme;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 200.h,
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.only(
-        left: 24.w,
-        right: 24.w,
-        top: 20.h,
-        bottom: 24.h,
-      ),
+      margin: EdgeInsets.only(top: 12.h, bottom: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.all(Radius.circular(18.r)),
-        color: AppColors.primaryBlue,
+        color: AppColors.brandRed,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: AppColors.brandRedDark,
+          width: 0.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Text(
-            "AVAILABLE POINTS",
+            'AVAILABLE POINTS',
             style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColors.white.withValues(alpha: 0.65),
-              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.white,
+              fontSize: 10.sp,
+              letterSpacing: 0.4,
             ),
           ),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: "0",
-                  style: TextStyle(
-                    fontSize: 76.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white,
-                    height: 1,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
+          SizedBox(height: 8.h),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '0',
+                style: TextStyle(
+                  fontSize: 48.sp,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.white,
+                  height: 1,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
-                WidgetSpan(child: SizedBox(width: 4.w)),
-                TextSpan(
-                  text: 'pts',
-                  style: TextStyle(
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.accentLime,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
-            decoration: BoxDecoration(
-              color: AppColors.accentLime.withOpacity(0.15),
-              border: Border.all(
-                color: AppColors.accentLime.withOpacity(0.4),
-                width: 0.5,
               ),
-              borderRadius: BorderRadius.circular(999.r),
+              Padding(
+                padding: EdgeInsets.only(left: 4.w, bottom: 6.h),
+                child: Text(
+                  'pts',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.kpiBarHigh,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: AppColors.brandRedDark,
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(color: AppColors.brandRedDeep, width: 0.5),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.arrow_upward_rounded,
+                  Icons.trending_up_rounded,
                   size: 11.sp,
-                  color: AppColors.accentLime,
+                  color: AppColors.kpiBarHigh,
                 ),
                 SizedBox(width: 4.w),
                 Text(
                   '+220 this week',
                   style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.accentLime,
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.kpiBarHigh,
                   ),
                 ),
               ],
@@ -201,127 +225,162 @@ class RedeemPointsScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _claimedRewards() {
-    final data = [
-      {
-        "image": "assets/brands/tesco.png",
-        "reward": "Tesco",
-        "amount": "£10",
-        "pts": "1,000",
-        "redeem_date": "12 Apr 2026",
-        "background_color": "0xFF005EB8",
-      },
-      {
-        "image": "assets/brands/costa.png",
-        "reward": "Costa Coffee",
-        "amount": "£5",
-        "pts": "500",
-        "redeem_date": "02 Mar 2026",
-        "background_color": "0xFF6E1F2A",
-      },
-      {
-        "image": "assets/brands/amazon.png",
-        "reward": "Amazon.co.uk",
-        "amount": "£15",
-        "pts": "1,500",
-        "redeem_date": "18 Feb 2026",
-        "background_color": "0xFF232F3E",
-      },
-      {
-        "image": "assets/brands/sainsburys.png",
-        "reward": "Sainsbury\'s",
-        "amount": "£20",
-        "pts": "2,000",
-        "redeem_date": "05 Jan 2026",
-        "background_color": "0xFFF06C00",
-      },
-    ];
+class _RedeemCta extends StatelessWidget {
+  const _RedeemCta({required this.theme});
 
+  final DashboardTheme theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      onTap: () {},
+      scale: 0.98,
+      child: Container(
+        width: double.infinity,
+        height: 40.h,
+        margin: EdgeInsets.only(bottom: 10.h),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.brandRed,
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.card_giftcard, size: 16.sp, color: AppColors.white),
+            SizedBox(width: 6.w),
+            Text(
+              'Redeem points',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12.sp,
+                color: AppColors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ClaimedRewards extends StatelessWidget {
+  const _ClaimedRewards({required this.theme});
+
+  final DashboardTheme theme;
+
+  static final _data = [
+    (
+      image: 'assets/brands/tesco.png',
+      reward: 'Tesco',
+      amount: '£10',
+      pts: '1,000',
+      redeemDate: '12 Apr 2026',
+      backgroundColor: AppColors.giftCardNhsBg,
+    ),
+    (
+      image: 'assets/brands/costa.png',
+      reward: 'Costa Coffee',
+      amount: '£5',
+      pts: '500',
+      redeemDate: '02 Mar 2026',
+      backgroundColor: AppColors.giftCardTargetBg,
+    ),
+    (
+      image: 'assets/brands/amazon.png',
+      reward: 'Amazon.co.uk',
+      amount: '£15',
+      pts: '1,500',
+      redeemDate: '18 Feb 2026',
+      backgroundColor: AppColors.giftCardAmazonBg,
+    ),
+    (
+      image: 'assets/brands/sainsburys.png',
+      reward: "Sainsbury's",
+      amount: '£20',
+      pts: '2,000',
+      redeemDate: '05 Jan 2026',
+      backgroundColor: AppColors.giftCardSainsburysBg,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SizedBox(height: 8.h),
         Text(
-          "Claimed Rewards",
+          'CLAIMED REWARDS',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16.sp,
-            color: AppColors.textDarkBlue,
+            fontWeight: FontWeight.w600,
+            fontSize: 10.sp,
+            letterSpacing: 0.4,
+            color: theme.textMuted,
           ),
         ),
-
-        SizedBox(height: 10.h),
-
-        // ── Card container ───────────────────────────────────────
+        SizedBox(height: 8.h),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: AppColors.borderDefault, width: 0.5),
-            borderRadius: BorderRadius.circular(16.r),
+            color: theme.surface,
+            border: Border.all(color: theme.border, width: 0.5),
+            borderRadius: BorderRadius.circular(12.r),
           ),
           clipBehavior: Clip.hardEdge,
           child: ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: data.length,
+            itemCount: _data.length,
             separatorBuilder: (_, __) => Divider(
               height: 0,
               thickness: 0.5,
-              color: AppColors.borderDefault,
+              color: theme.border,
             ),
             itemBuilder: (_, index) {
-              final item = data[index];
-              final bgColor = Color(int.parse(item["background_color"]!));
-
+              final item = _data[index];
               return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
                 child: Row(
                   children: [
-                    // ── Brand card ─────────────────────────────────
-                    _brandCard(
-                      imagePath: item["image"]!,
-                      amount: item["amount"]!,
-                      backgroundColor: bgColor,
+                    _BrandCard(
+                      imagePath: item.image,
+                      amount: item.amount,
+                      backgroundColor: item.backgroundColor,
                     ),
-
-                    SizedBox(width: 12.w),
-
-                    // ── Title + date ───────────────────────────────
+                    SizedBox(width: 10.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${item["reward"]} ${item["amount"]}',
+                            '${item.reward} ${item.amount}',
                             style: TextStyle(
-                              fontSize: 12.5.sp,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textDarkBlue,
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w500,
+                              color: theme.text,
                               height: 1.2,
                             ),
                           ),
                           SizedBox(height: 2.h),
                           Text(
-                            'Redeemed · ${item["redeem_date"]}',
+                            'Redeemed · ${item.redeemDate}',
                             style: TextStyle(
-                              fontSize: 10.5.sp,
-                              fontWeight: FontWeight.normal,
-                              color: AppColors.textPlaceholder,
+                              fontSize: 10.sp,
+                              color: theme.textMuted,
                             ),
                           ),
                         ],
                       ),
                     ),
-
-                    SizedBox(width: 8.w),
-
-                    // ── Points ─────────────────────────────────────
                     Text(
-                      '−${item["pts"]} pts',
+                      '−${item.pts} pts',
                       style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textBodyMuted,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w500,
+                        color: theme.textMuted,
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
@@ -334,77 +393,49 @@ class RedeemPointsScreen extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _brandCard({
-    required String imagePath,
-    required String amount,
-    required Color backgroundColor,
-  }) {
+class _BrandCard extends StatelessWidget {
+  const _BrandCard({
+    required this.imagePath,
+    required this.amount,
+    required this.backgroundColor,
+  });
+
+  final String imagePath;
+  final String amount;
+  final Color backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: 88.w,
-      height: 56.h,
-      padding: EdgeInsets.all(8.r),
+      width: 72.w,
+      height: 48.h,
+      padding: EdgeInsets.all(6.r),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(10.r),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textDarkBlue.withOpacity(0.18),
-            offset: Offset(0, 2.h),
-            blurRadius: 6.r,
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.12),
-            offset: Offset(0, 1.h),
-            blurRadius: 0,
-          ),
-        ],
+        borderRadius: BorderRadius.circular(8.r),
       ),
       clipBehavior: Clip.hardEdge,
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // ── Gradient shimmer overlay ──────────────────────────
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.18),
-                    Colors.transparent,
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.10),
-                  ],
-                  stops: const [0.0, 0.45, 0.70, 1.0],
-                ),
-              ),
-            ),
+          Image.asset(
+            imagePath,
+            height: 14.h,
+            fit: BoxFit.contain,
+            color: AppColors.white,
+            colorBlendMode: BlendMode.srcIn,
           ),
-
-          // ── Logo + amount ─────────────────────────────────────
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Brand logo — white-filtered via colorBlendMode
-              Image.asset(
-                imagePath,
-                height: 16.h,
-                fit: BoxFit.contain,
-                color: Colors.white,
-                colorBlendMode: BlendMode.srcIn,
-              ),
-              Text(
-                amount,
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  height: 1,
-                ),
-              ),
-            ],
+          Text(
+            amount,
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.white,
+              height: 1,
+            ),
           ),
         ],
       ),

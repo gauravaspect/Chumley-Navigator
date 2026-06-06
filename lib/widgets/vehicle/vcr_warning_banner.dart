@@ -1,4 +1,5 @@
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -12,10 +13,14 @@ class VcrWarningBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Container(
       padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
-        color: AppColors.vcrWarningBackground,
+        color: AppColors.vcrWarningBackground.withValues(
+          alpha: theme.isDark ? 0.35 : 1,
+        ),
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: AppColors.vcrWarningBorder,
@@ -34,7 +39,7 @@ class VcrWarningBanner extends StatelessWidget {
             ),
             child: Icon(
               Icons.info_outline_rounded,
-              color: AppColors.white,
+              color: Colors.white,
               size: 18.sp,
             ),
           ),
@@ -46,7 +51,7 @@ class VcrWarningBanner extends StatelessWidget {
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w400,
                 height: 1.35,
-                color: AppColors.vcrWarningText,
+                color: theme.isDark ? theme.text : AppColors.vcrWarningText,
               ),
             ),
           ),

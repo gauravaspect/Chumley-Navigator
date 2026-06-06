@@ -1,13 +1,11 @@
 import 'dart:math';
 
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
-import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/utils/routes.dart';
-import 'package:chumley_navigator/widgets/ui/elevated_surface.dart';
+import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
-import 'package:chumley_navigator/widgets/ui/screen_title_block.dart';
-import 'package:chumley_navigator/widgets/ui/soft_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -36,45 +34,106 @@ class GoalsTargetsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundBlue,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: SoftIconButton(
-                  icon: Icons.close_rounded,
-                  onTap: () =>
-                      Navigator.popAndPushNamed(context, AppRoutes.home),
-                ),
-              ),
-              const AspectBranding(),
-              SizedBox(height: 24.h),
-              const FadeSlideIn(
-                child: ScreenTitleBlock(
-                  title: 'Goal & Targets',
-                  subtitle: 'Tap a pool to see your KPI Background',
-                ),
-              ),
-              SizedBox(height: 16.h),
-              Expanded(
-                child: ListView.separated(
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.only(bottom: 16.h),
-                  itemCount: _cards.length,
-                  separatorBuilder: (_, index) => SizedBox(height: 4.h),
-                  itemBuilder: (_, index) => FadeSlideIn(
-                    delay: Duration(milliseconds: 60 * index),
-                    child: _KpiCard(data: _cards[index]),
+    return ListenableBuilder(
+      listenable: ThemeScope.of(context),
+      builder: (context, _) {
+        final theme = DashboardTheme.of(context);
+
+        return Scaffold(
+          backgroundColor: theme.base,
+          body: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: _CloseButton(theme: theme),
                   ),
-                ),
+                  const AspectBranding(),
+                  SizedBox(height: 14.h),
+                  Text(
+                    'Goals & targets',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.6,
+                      color: theme.textMuted,
+                    ),
+                  ),
+                  SizedBox(height: 14.h),
+                  FadeSlideIn(
+                    child: Text(
+                      'KPI pools',
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w500,
+                        height: 1.2,
+                        color: theme.text,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 40),
+                    child: Text(
+                      'Tap a pool to see your KPI background',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        height: 1.35,
+                        color: theme.textMuted,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 14.h),
+                  Expanded(
+                    child: ListView.separated(
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.only(bottom: 16.h),
+                      itemCount: _cards.length,
+                      separatorBuilder: (context, _) =>
+                          SizedBox(height: 8.h),
+                      itemBuilder: (_, index) => FadeSlideIn(
+                        delay: Duration(milliseconds: 50 * index),
+                        child: _KpiCard(theme: theme, data: _cards[index]),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
+        );
+      },
+    );
+  }
+}
+
+class _CloseButton extends StatelessWidget {
+  const _CloseButton({required this.theme});
+
+  final DashboardTheme theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      onTap: () => Navigator.popAndPushNamed(context, AppRoutes.home),
+      scale: 0.92,
+      child: Container(
+        width: 32.w,
+        height: 32.w,
+        decoration: BoxDecoration(
+          color: theme.surface,
+          shape: BoxShape.circle,
+          border: Border.all(color: theme.border, width: 0.5),
+        ),
+        alignment: Alignment.center,
+        child: Icon(
+          Icons.close_rounded,
+          size: 16.sp,
+          color: theme.textMuted,
         ),
       ),
     );
@@ -82,13 +141,16 @@ class GoalsTargetsScreen extends StatelessWidget {
 }
 
 class _KpiCard extends StatelessWidget {
-  const _KpiCard({required this.data});
+  const _KpiCard({required this.theme, required this.data});
 
+  final DashboardTheme theme;
   final _CardData data;
 
   @override
   Widget build(BuildContext context) {
     final progress = (data.value / data.max).clamp(0.0, 1.0);
+    final arcColor =
+        progress >= 0.7 ? theme.kpiBarHighColor : theme.accent;
 
     final valueText = data.value % 1 == 0
         ? '${data.value.toInt()}/${data.max.toInt()}'
@@ -97,10 +159,13 @@ class _KpiCard extends StatelessWidget {
     return PressableScale(
       onTap: () {},
       scale: 0.985,
-      child: ElevatedSurface(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        borderRadius: 22.r,
-        borderColor: AppColors.accentBlue.withValues(alpha: 0.35),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: theme.surface,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: theme.border, width: 0.5),
+        ),
         child: Row(
           children: [
             SizedBox(
@@ -110,13 +175,17 @@ class _KpiCard extends StatelessWidget {
                 alignment: Alignment.center,
                 children: [
                   CustomPaint(
-                    size: Size(92.w, 92.w),
-                    painter: _ArcPainter(progress: progress),
+                    size: Size(72.w, 72.w),
+                    painter: _ArcPainter(
+                      progress: progress,
+                      trackColor: theme.progressTrack,
+                      fillColor: arcColor,
+                    ),
                   ),
                   Icon(
                     Icons.trending_up_rounded,
-                    size: 26.sp,
-                    color: AppColors.primaryBlue,
+                    size: 22.sp,
+                    color: arcColor,
                   ),
                 ],
               ),
@@ -127,26 +196,27 @@ class _KpiCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    data.label,
+                    data.label.toUpperCase(),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: 10.sp,
                       fontWeight: FontWeight.w600,
+                      letterSpacing: 0.4,
                       height: 1.3,
-                      letterSpacing: -0.15,
-                      color: AppColors.textDarkBlue,
+                      color: theme.textMuted,
                     ),
                   ),
                   SizedBox(height: 4.h),
                   Text(
                     valueText,
                     style: TextStyle(
-                      fontSize: 28.sp,
+                      fontSize: 24.sp,
                       fontWeight: FontWeight.w700,
                       height: 1.1,
                       letterSpacing: -0.5,
-                      color: AppColors.textDarkBlue,
+                      color: theme.text,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ],
@@ -154,8 +224,8 @@ class _KpiCard extends StatelessWidget {
             ),
             Icon(
               Icons.chevron_right_rounded,
-              size: 22.sp,
-              color: AppColors.textPlaceholder,
+              size: 20.sp,
+              color: theme.textMuted,
             ),
           ],
         ),
@@ -165,9 +235,15 @@ class _KpiCard extends StatelessWidget {
 }
 
 class _ArcPainter extends CustomPainter {
-  const _ArcPainter({required this.progress});
+  const _ArcPainter({
+    required this.progress,
+    required this.trackColor,
+    required this.fillColor,
+  });
 
   final double progress;
+  final Color trackColor;
+  final Color fillColor;
 
   static const double _startAngle = 135 * pi / 180;
   static const double _sweepAngle = 270 * pi / 180;
@@ -186,7 +262,7 @@ class _ArcPainter extends CustomPainter {
       _sweepAngle,
       false,
       Paint()
-        ..color = AppColors.chartTrackBlue
+        ..color = trackColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth
         ..strokeCap = StrokeCap.round,
@@ -198,7 +274,7 @@ class _ArcPainter extends CustomPainter {
       _sweepAngle * progress,
       false,
       Paint()
-        ..color = AppColors.primaryBlue
+        ..color = fillColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth
         ..strokeCap = StrokeCap.round,
@@ -207,6 +283,8 @@ class _ArcPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ArcPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress ||
+        oldDelegate.trackColor != trackColor ||
+        oldDelegate.fillColor != fillColor;
   }
 }

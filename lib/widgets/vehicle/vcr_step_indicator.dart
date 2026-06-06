@@ -1,4 +1,5 @@
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,15 +18,14 @@ class VcrStepIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Container(
-      padding: EdgeInsets.all(10.r),
+      padding: EdgeInsets.all(8.r),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLightBlue,
-        borderRadius: BorderRadius.circular(15.r),
-        border: Border.all(
-          color: AppColors.borderLightBlue.withValues(alpha: 0.46),
-          width: 0.46,
-        ),
+        color: theme.surfaceDeep,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: theme.border, width: 0.5),
       ),
       child: Row(
         children: List.generate(totalSteps * 2 - 1, (index) {
@@ -35,7 +35,7 @@ class VcrStepIndicator extends StatelessWidget {
                 height: 2.h,
                 margin: EdgeInsets.symmetric(horizontal: 4.w),
                 decoration: BoxDecoration(
-                  color: AppColors.borderLightBlue,
+                  color: theme.border,
                   borderRadius: BorderRadius.circular(100.r),
                 ),
               ),
@@ -61,36 +61,33 @@ class VcrStepIndicator extends StatelessWidget {
 }
 
 class _StepDot extends StatelessWidget {
-  const _StepDot({
-    required this.label,
-    required this.isActive,
-  });
+  const _StepDot({required this.label, required this.isActive});
 
   final String label;
   final bool isActive;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      width: 26.r,
-      height: 26.r,
-      alignment: Alignment.center,
+    final theme = DashboardTheme.of(context);
+
+    return Container(
+      width: 28.w,
+      height: 28.w,
       decoration: BoxDecoration(
+        color: isActive ? AppColors.brandRed : theme.surface,
         shape: BoxShape.circle,
-        color: isActive ? AppColors.accentLime : AppColors.white,
         border: Border.all(
-          color: isActive ? AppColors.starIconBorder : AppColors.borderLightBlue,
-          width: isActive ? 0.15 : 1,
+          color: isActive ? AppColors.brandRed : theme.border,
+          width: 0.5,
         ),
       ),
+      alignment: Alignment.center,
       child: Text(
         label,
         style: TextStyle(
           fontSize: 11.sp,
-          fontWeight: FontWeight.w700,
-          color: isActive ? AppColors.textDarkBlue : AppColors.textSecondary,
+          fontWeight: FontWeight.w600,
+          color: isActive ? AppColors.white : theme.textMuted,
         ),
       ),
     );

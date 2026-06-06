@@ -1,4 +1,5 @@
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,6 +18,8 @@ class VcrExamplePhotoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return PressableScale(
       onTap: onTap,
       scale: 0.99,
@@ -24,12 +27,9 @@ class VcrExamplePhotoCard extends StatelessWidget {
         width: 116.w,
         padding: EdgeInsets.all(10.r),
         decoration: BoxDecoration(
-          color: AppColors.surfaceLightBlue,
+          color: theme.surface,
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: AppColors.borderLightBlue,
-            width: 0.5,
-          ),
+          border: Border.all(color: theme.border, width: 0.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,10 +44,10 @@ class VcrExamplePhotoCard extends StatelessWidget {
                 errorBuilder: (context, error, stackTrace) => Container(
                   width: 100.w,
                   height: 98.h,
-                  color: AppColors.chartFillBlue,
+                  color: theme.surfaceDeep,
                   child: Icon(
                     Icons.image_outlined,
-                    color: AppColors.textPlaceholder,
+                    color: theme.textMuted,
                     size: 28.sp,
                   ),
                 ),
@@ -56,14 +56,14 @@ class VcrExamplePhotoCard extends StatelessWidget {
                   return Container(
                     width: 100.w,
                     height: 98.h,
-                    color: AppColors.chartFillBlue,
+                    color: theme.surfaceDeep,
                     child: Center(
                       child: SizedBox(
                         width: 20.r,
                         height: 20.r,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.primaryBlue,
+                          color: AppColors.brandRed,
                           value: progress.expectedTotalBytes != null
                               ? progress.cumulativeBytesLoaded /
                                   progress.expectedTotalBytes!
@@ -82,7 +82,7 @@ class VcrExamplePhotoCard extends StatelessWidget {
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w600,
                 height: 1.25,
-                color: AppColors.textDarkBlue,
+                color: theme.text,
               ),
             ),
           ],

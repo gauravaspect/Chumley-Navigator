@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/screens/vehicle_check/vcr_step_data.dart';
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:chumley_navigator/widgets/vehicle/vcr_capture_slot.dart';
@@ -35,7 +37,6 @@ class _VehicleFormState extends State<VehicleForm> {
   String? _selectedVan;
   bool _notesFocused = false;
 
-  /// Empty — matches design warning state.
   final List<String> _allocatedVans = const [];
 
   VcrStepData get _step => vcrSteps[_currentStepIndex];
@@ -75,246 +76,261 @@ class _VehicleFormState extends State<VehicleForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundBlue,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const AspectBranding(),
-              SizedBox(height: 16.h),
-              _buildHeader(),
-              SizedBox(height: 16.h),
-              const VcrWarningBanner(message: _noVehiclesMessage),
-              SizedBox(height: 16.h),
-              _buildVehicleDetailsCard(),
-              SizedBox(height: 16.h),
-              _buildInspectionCard(),
-              SizedBox(height: 24.h),
-            ],
+    return ListenableBuilder(
+      listenable: ThemeScope.of(context),
+      builder: (context, _) {
+        final theme = DashboardTheme.of(context);
+
+        return Scaffold(
+          backgroundColor: theme.base,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.only(
+                left: 16.w,
+                right: 16.w,
+                top: 16.h,
+                bottom: 24.h,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const AspectBranding(),
+                  SizedBox(height: 14.h),
+                  Text(
+                    'Vehicle details',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.6,
+                      color: theme.textMuted,
+                    ),
+                  ),
+                  SizedBox(height: 14.h),
+                  const FadeSlideIn(child: VcrPageHeader()),
+                  SizedBox(height: 12.h),
+                  const VcrWarningBanner(message: _noVehiclesMessage),
+                  SizedBox(height: 12.h),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 50),
+                    child: _buildVehicleDetailsCard(theme),
+                  ),
+                  SizedBox(height: 10.h),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 100),
+                    child: _buildInspectionCard(theme),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
+        );
+      },
+    );
+  }
+
+  Widget _buildVehicleDetailsCard(DashboardTheme theme) {
+    return VcrFormCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'VEHICLE DETAILS',
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.4,
+              color: theme.textMuted,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            'Select your allocated vehicle and record inspection details',
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w500,
+              color: theme.textMuted,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Text(
+            'Van number',
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w500,
+              color: theme.textMuted,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          _vanDropdown(theme),
+          SizedBox(height: 12.h),
+          Text(
+            'Dashboard notes',
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w500,
+              color: theme.textMuted,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          _notesField(theme),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return const FadeSlideIn(child: VcrPageHeader());
-  }
-
-  Widget _buildVehicleDetailsCard() {
-    return FadeSlideIn(
-      delay: const Duration(milliseconds: 50),
-      child: VcrFormCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Vehicle Details',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textDarkBlue,
-              ),
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              'Select your allocated vehicle and record inspection details',
-              style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textBodyMuted,
-              ),
-            ),
-            SizedBox(height: 20.h),
-            _fieldLabel('Van Number'),
-            SizedBox(height: 8.h),
-            _vanDropdown(),
-            SizedBox(height: 16.h),
-            _fieldLabel('Dashboard Notes'),
-            SizedBox(height: 8.h),
-            _notesField(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInspectionCard() {
+  Widget _buildInspectionCard(DashboardTheme theme) {
     final step = _step;
     final canGoBack = _currentStepIndex > 0;
     final isLastStep = _currentStepIndex >= vcrSteps.length - 1;
 
-    return FadeSlideIn(
-      delay: const Duration(milliseconds: 100),
-      child: VcrFormCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            VcrStepIndicator(
-              totalSteps: vcrSteps.length,
-              currentStep: _currentStepIndex,
-              onStepTap: _goToStep,
-            ),
-            SizedBox(height: 20.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  step.title,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textDarkBlue,
-                  ),
-                ),
-                Text(
-                  '$_capturedCount/${step.captures.length} captured',
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textBodyMuted,
-                  ),
-                ),
-              ],
-            ),
-            if (step.examples.isNotEmpty) ...[
-              SizedBox(height: 16.h),
-              RichText(
-                text: TextSpan(
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textBodyMuted,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: 'Example Photos ',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    TextSpan(
-                      text: '(Use these as a guide)',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ],
+    return VcrFormCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          VcrStepIndicator(
+            totalSteps: vcrSteps.length,
+            currentStep: _currentStepIndex,
+            onStepTap: _goToStep,
+          ),
+          SizedBox(height: 14.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                step.title,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w500,
+                  color: theme.text,
                 ),
               ),
-              SizedBox(height: 10.h),
-              SizedBox(
-                height: 140.h,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: step.examples.length,
-                  separatorBuilder: (_, index) => SizedBox(width: 12.w),
-                  itemBuilder: (_, index) {
-                    final example = step.examples[index];
-                    return VcrExamplePhotoCard(
-                      imageUrl: example.imageUrl,
-                      label: example.label,
-                    );
-                  },
+              Text(
+                '$_capturedCount/${step.captures.length} captured',
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w500,
+                  color: theme.textMuted,
                 ),
               ),
             ],
-            SizedBox(height: 16.h),
+          ),
+          if (step.examples.isNotEmpty) ...[
+            SizedBox(height: 12.h),
             Text(
-              'Your Photos',
+              'Example photos (use as a guide)',
               style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textBodyMuted,
+                fontSize: 10.sp,
+                fontWeight: FontWeight.w500,
+                color: theme.textMuted,
               ),
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: 8.h),
             SizedBox(
-              height: 140.h,
+              height: 130.h,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
-                itemCount: step.captures.length,
-                separatorBuilder: (_, index) => SizedBox(width: 14.w),
+                itemCount: step.examples.length,
+                separatorBuilder: (_, index) => SizedBox(width: 10.w),
                 itemBuilder: (_, index) {
-                  final slot = step.captures[index];
-                  return VcrCaptureSlot(
-                    label: slot.label,
-                    imageFile: _captures[slot.id],
-                    onTap: () => _pickPhoto(slot.id),
+                  final example = step.examples[index];
+                  return VcrExamplePhotoCard(
+                    imageUrl: example.imageUrl,
+                    label: example.label,
                   );
                 },
               ),
             ),
-            SizedBox(height: 20.h),
-            Row(
-              children: [
-                Expanded(child: _navButton(
+          ],
+          SizedBox(height: 12.h),
+          Text(
+            'Your photos',
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w600,
+              color: theme.textMuted,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          SizedBox(
+            height: 130.h,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: step.captures.length,
+              separatorBuilder: (_, index) => SizedBox(width: 12.w),
+              itemBuilder: (_, index) {
+                final slot = step.captures[index];
+                return VcrCaptureSlot(
+                  label: slot.label,
+                  imageFile: _captures[slot.id],
+                  onTap: () => _pickPhoto(slot.id),
+                );
+              },
+            ),
+          ),
+          SizedBox(height: 14.h),
+          Row(
+            children: [
+              Expanded(
+                child: _navButton(
+                  theme: theme,
                   label: 'Back',
                   enabled: canGoBack,
                   onTap: canGoBack ? _onBack : null,
                   isPrimary: false,
-                )),
-                SizedBox(width: 9.w),
-                Expanded(child: _navButton(
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: _navButton(
+                  theme: theme,
                   label: isLastStep ? 'Submit' : 'Next',
                   enabled: true,
                   onTap: _onNext,
                   isPrimary: true,
-                )),
-              ],
-            ),
-          ],
-        ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _fieldLabel(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 13.sp,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textBodyMuted,
-      ),
-    );
-  }
-
-  Widget _vanDropdown() {
+  Widget _vanDropdown(DashboardTheme theme) {
     return DropdownButtonFormField2<String>(
       value: _selectedVan,
       isExpanded: true,
       decoration: InputDecoration(
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         filled: true,
-        fillColor: AppColors.white,
-        border: _inputBorder(),
-        enabledBorder: _inputBorder(),
-        focusedBorder: _inputBorder(focused: true),
+        fillColor: theme.surfaceDeep,
+        border: _inputBorder(theme),
+        enabledBorder: _inputBorder(theme),
+        focusedBorder: _inputBorder(theme, focused: true),
       ),
       hint: Text(
         'Select van',
-        style: TextStyle(fontSize: 13.sp, color: AppColors.textDarkBlue),
+        style: TextStyle(fontSize: 11.sp, color: theme.textMuted),
       ),
       iconStyleData: IconStyleData(
         icon: Icon(
           Icons.keyboard_arrow_down_rounded,
-          color: AppColors.textDarkBlue,
-          size: 22.sp,
+          color: theme.textMuted,
+          size: 20.sp,
         ),
       ),
       dropdownStyleData: DropdownStyleData(
         decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: AppColors.textPlaceholder),
+          color: theme.surface,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: theme.border, width: 0.5),
         ),
       ),
-      style: TextStyle(
-        fontSize: 13.sp,
-        color: AppColors.textDarkBlue,
-      ),
+      style: TextStyle(fontSize: 11.sp, color: theme.text),
       items: _allocatedVans
           .map((van) => DropdownMenuItem(value: van, child: Text(van)))
           .toList(),
@@ -324,18 +340,16 @@ class _VehicleFormState extends State<VehicleForm> {
     );
   }
 
-  Widget _notesField() {
+  Widget _notesField(DashboardTheme theme) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(8.r),
+        color: theme.surfaceDeep,
+        borderRadius: BorderRadius.circular(10.r),
         border: Border.all(
-          color: _notesFocused
-              ? AppColors.accentBlue
-              : AppColors.textPlaceholder,
-          width: _notesFocused ? 1 : 0.5,
+          color: _notesFocused ? theme.accent : theme.border,
+          width: 0.5,
         ),
       ),
       child: TextField(
@@ -343,31 +357,29 @@ class _VehicleFormState extends State<VehicleForm> {
         maxLines: 3,
         onTap: () => setState(() => _notesFocused = true),
         onTapOutside: (_) => setState(() => _notesFocused = false),
-        style: TextStyle(fontSize: 13.sp, color: AppColors.textDarkBlue),
+        style: TextStyle(fontSize: 11.sp, color: theme.text),
         decoration: InputDecoration(
           hintText: 'Quick notes...',
-          hintStyle: TextStyle(
-            fontSize: 13.sp,
-            color: AppColors.inputPlaceholder,
-          ),
+          hintStyle: TextStyle(fontSize: 11.sp, color: theme.textMuted),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
+          contentPadding: EdgeInsets.all(12.r),
         ),
       ),
     );
   }
 
-  OutlineInputBorder _inputBorder({bool focused = false}) {
+  OutlineInputBorder _inputBorder(DashboardTheme theme, {bool focused = false}) {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8.r),
+      borderRadius: BorderRadius.circular(10.r),
       borderSide: BorderSide(
-        color: focused ? AppColors.accentBlue : AppColors.textPlaceholder,
-        width: focused ? 1 : 1,
+        color: focused ? theme.accent : theme.border,
+        width: 0.5,
       ),
     );
   }
 
   Widget _navButton({
+    required DashboardTheme theme,
     required String label,
     required bool enabled,
     required VoidCallback? onTap,
@@ -379,33 +391,28 @@ class _VehicleFormState extends State<VehicleForm> {
       scale: 0.98,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 44.h,
+        height: 40.h,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: isPrimary
-              ? AppColors.primaryBlue
-              : (enabled
-                  ? AppColors.white
-                  : AppColors.buttonDisabledBackground),
-          borderRadius: BorderRadius.circular(8.r),
+              ? AppColors.brandRed
+              : (enabled ? theme.surfaceDeep : theme.progressTrack),
+          borderRadius: BorderRadius.circular(10.r),
           border: isPrimary
               ? null
               : Border.all(
-                  color: enabled
-                      ? AppColors.textPlaceholder
-                      : Colors.transparent,
+                  color: enabled ? theme.border : Colors.transparent,
+                  width: 0.5,
                 ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w700,
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
             color: isPrimary
-                ? AppColors.highlightYellow
-                : (enabled
-                    ? AppColors.textDarkBlue
-                    : AppColors.inputPlaceholder),
+                ? AppColors.white
+                : (enabled ? theme.text : theme.textMuted),
           ),
         ),
       ),

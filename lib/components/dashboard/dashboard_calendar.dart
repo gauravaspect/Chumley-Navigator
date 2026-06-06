@@ -1,5 +1,6 @@
 import 'package:chumley_navigator/components/calendar/calendar_bottom_sheet.dart';
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -26,19 +27,14 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
     'July', 'August', 'September', 'October', 'November', 'December',
   ];
 
-  /// Returns all cells to display: trailing days of prev month,
-  /// all days of focused month, leading days of next month.
   List<_CalendarDay> _buildCalendarDays() {
     final firstOfMonth = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
-    final lastOfMonth  = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 0);
-
-    // Sunday = 0 in DateTime.weekday is 7, so:
-    final int leadingBlanks = firstOfMonth.weekday % 7; // Sun→0, Mon→1 … Sat→6
+    final lastOfMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 0);
+    final int leadingBlanks = firstOfMonth.weekday % 7;
     final int trailingBlanks = 6 - (lastOfMonth.weekday % 7);
 
     final days = <_CalendarDay>[];
 
-    // Prev-month overflow
     for (int i = leadingBlanks; i > 0; i--) {
       days.add(_CalendarDay(
         date: firstOfMonth.subtract(Duration(days: i)),
@@ -46,7 +42,6 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
       ));
     }
 
-    // Current month
     for (int d = 1; d <= lastOfMonth.day; d++) {
       days.add(_CalendarDay(
         date: DateTime(_focusedMonth.year, _focusedMonth.month, d),
@@ -54,7 +49,6 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
       ));
     }
 
-    // Next-month overflow
     for (int i = 1; i <= trailingBlanks; i++) {
       days.add(_CalendarDay(
         date: DateTime(_focusedMonth.year, _focusedMonth.month + 1, i),
@@ -66,13 +60,11 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
   }
 
   void _prevMonth() => setState(() {
-    _focusedMonth =
-        DateTime(_focusedMonth.year, _focusedMonth.month - 1);
+    _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1);
   });
 
   void _nextMonth() => setState(() {
-    _focusedMonth =
-        DateTime(_focusedMonth.year, _focusedMonth.month + 1);
+    _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1);
   });
 
   bool _isToday(DateTime date) => date == _today;
@@ -81,14 +73,14 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
     final calendarDays = _buildCalendarDays();
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 14.h),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Section header ─────────────────────────────────────
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -98,7 +90,7 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                 style: TextStyle(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primaryBlueDark,
+                  color: theme.dashHeading,
                 ),
               ),
               TextButton(
@@ -118,56 +110,72 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     fontSize: 14.sp,
-                    color: AppColors.primaryBlueCalendar,
+                    color: theme.dashPrimaryCalendar,
                   ),
                 ),
               ),
             ],
           ),
-
-          // ── Calendar card ──────────────────────────────────────
-          Container(
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20.r),
+            child: Container(
             padding: EdgeInsets.all(20.r),
             decoration: BoxDecoration(
-              color: AppColors.surfaceLightBlue,
-              border: Border.all(color: AppColors.borderLightBlue, width: 1.25),
+              color: theme.dashSurfaceTint,
+              border: Border.all(color: theme.dashBorderLight, width: 1.25),
               borderRadius: BorderRadius.circular(20.r),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.textShadow.withOpacity(0.04),
-                  offset: Offset(0, 2.h),
-                  blurRadius: 4.r,
-                ),
-              ],
+              boxShadow: theme.isDark
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: AppColors.textShadow.withValues(alpha: 0.04),
+                        offset: Offset(0, 2.h),
+                        blurRadius: 8.r,
+                      ),
+                    ],
             ),
             child: Column(
               children: [
-                // ── Month navigation ─────────────────────────────
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _NavButton(
                       onTap: _prevMonth,
-                      icon: Icon(Icons.arrow_back),
+                      icon: Icon(Icons.arrow_back, color: theme.dashPrimary),
                     ),
-                    Text(
-                      '${_monthNames[_focusedMonth.month - 1]} ${_focusedMonth.year}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 19.sp,
-                        color: AppColors.textDarkBlue,
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 280),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) => FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.12),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      ),
+                      child: Text(
+                        key: ValueKey(
+                          '${_focusedMonth.year}-${_focusedMonth.month}',
+                        ),
+                        '${_monthNames[_focusedMonth.month - 1]} ${_focusedMonth.year}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 19.sp,
+                          color: theme.dashTitle,
+                        ),
                       ),
                     ),
                     _NavButton(
                       onTap: _nextMonth,
-                      icon: Icon(Icons.arrow_forward),
+                      icon: Icon(Icons.arrow_forward, color: theme.dashPrimary),
                     ),
                   ],
                 ),
-
                 SizedBox(height: 16.h),
-
-                // ── Weekday headers ──────────────────────────────
                 Row(
                   children: _weekDays.map((label) {
                     return Expanded(
@@ -177,17 +185,14 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16.sp,
-                            color: AppColors.primaryBlue,
+                            color: theme.dashPrimary,
                           ),
                         ),
                       ),
                     );
                   }).toList(),
                 ),
-
                 SizedBox(height: 8.h),
-
-                // ── Day grid ─────────────────────────────────────
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -195,27 +200,29 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                     crossAxisCount: 7,
                     mainAxisSpacing: 4,
                     crossAxisSpacing: 0,
-                    childAspectRatio: 32 / 28, // mirrors w-[32px] h-[28px]
+                    childAspectRatio: 32 / 28,
                   ),
                   itemCount: calendarDays.length,
                   itemBuilder: (_, index) {
                     final day = calendarDays[index];
-                    final isToday    = _isToday(day.date);
+                    final isToday = _isToday(day.date);
                     final isSelected = _isSelected(day.date);
 
-                    Color bgColor     = Colors.transparent;
-                    Color textColor   = day.isCurrentMonth
-                        ? AppColors.textCalendarDay
-                        : AppColors.textCalendarDisabled;
+                    Color bgColor = Colors.transparent;
+                    Color textColor = day.isCurrentMonth
+                        ? theme.dashCalendarDay
+                        : theme.dashCalendarDisabled;
 
-                    if (isToday)    bgColor = AppColors.borderLightBlue;
-                    if (isSelected) bgColor = AppColors.primaryBlue;
-                    if (isSelected) textColor = Colors.white;
+                    if (isToday) bgColor = theme.dashTodayBg;
+                    if (isSelected) bgColor = theme.dashPrimary;
+                    if (isSelected) textColor = AppColors.white;
 
                     return GestureDetector(
                       onTap: () => setState(() => _selectedDate = day.date),
                       child: Center(
-                        child: Container(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutCubic,
                           width: 32.w,
                           height: 28.h,
                           decoration: BoxDecoration(
@@ -223,13 +230,15 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                             borderRadius: BorderRadius.circular(999.r),
                           ),
                           alignment: Alignment.center,
-                          child: Text(
-                            '${day.date.day}',
+                          child: AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeOutCubic,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 16.sp,
                               color: textColor,
                             ),
+                            child: Text('${day.date.day}'),
                           ),
                         ),
                       ),
@@ -239,21 +248,18 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
               ],
             ),
           ),
+          ),
         ],
       ),
     );
   }
 }
 
-// ── Data model ────────────────────────────────────────────────────────────────
-
 class _CalendarDay {
   const _CalendarDay({required this.date, required this.isCurrentMonth});
   final DateTime date;
   final bool isCurrentMonth;
 }
-
-// ── Navigation button ─────────────────────────────────────────────────────────
 
 class _NavButton extends StatelessWidget {
   const _NavButton({required this.onTap, required this.icon});
@@ -262,14 +268,17 @@ class _NavButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: SizedBox(
-        width: 32.w,
-        height: 32.w,
-        child: icon,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8.r),
+        child: SizedBox(
+          width: 32.w,
+          height: 32.w,
+          child: icon,
+        ),
       ),
     );
   }
 }
-

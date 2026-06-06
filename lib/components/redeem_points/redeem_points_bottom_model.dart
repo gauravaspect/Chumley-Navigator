@@ -1,11 +1,17 @@
-import 'package:flutter/material.dart';
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/widgets/theme_scope.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // ── Section data ──────────────────────────────────────────────────────────────
 
 class _Section {
-  const _Section({required this.title, required this.subtitle, this.points = 0});
+  const _Section({
+    required this.title,
+    required this.subtitle,
+    this.points = 0,
+  });
   final String title;
   final String subtitle;
   final int points;
@@ -53,151 +59,149 @@ class RedeemPointsBottomModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24.r),
-          topRight: Radius.circular(24.r),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textDarkBlue.withOpacity(0.45),
-            offset: Offset(0, 20.h),
-            blurRadius: 50.r,
-            spreadRadius: -10.r,
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── Header ──────────────────────────────────────────────
-          Padding(
-            padding: EdgeInsets.only(
-              left: 24.w,
-              right: 24.w,
-              top: 20.h,
-              bottom: 12.h,
+    return ListenableBuilder(
+      listenable: ThemeScope.of(context),
+      builder: (context, _) {
+        final theme = DashboardTheme.of(context);
+
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.surface,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20.r),
+              topRight: Radius.circular(20.r),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
+            border: Border(
+              top: BorderSide(color: theme.border, width: 0.5),
+              left: BorderSide(color: theme.border, width: 0.5),
+              right: BorderSide(color: theme.border, width: 0.5),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(
+                  left: 20.w,
+                  right: 20.w,
+                  top: 16.h,
+                  bottom: 12.h,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'WHERE YOUR POINTS CAME FROM',
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.6,
+                              color: theme.textMuted,
+                            ),
+                          ),
+                          SizedBox(height: 6.h),
+                          Text(
+                            'Points breakdown',
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w600,
+                              color: theme.text,
+                              height: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        width: 36.w,
+                        height: 36.w,
+                        decoration: BoxDecoration(
+                          color: theme.surfaceDeep,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: theme.border, width: 0.5),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 16.sp,
+                          color: theme.text,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 0, thickness: 0.5, color: theme.border),
+              Flexible(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Where your points came from',
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textDarkBlue,
-                          height: 1.2,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _SummaryCard(
+                              theme: theme,
+                              title: 'All points',
+                              points: 0,
+                              body: 'last 0 months',
+                              emphasized: true,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: _SummaryCard(
+                              theme: theme,
+                              title: 'This month',
+                              points: 0,
+                              body: 'live, updates daily',
+                              emphasized: false,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10.h),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 8.h,
                         ),
+                        decoration: BoxDecoration(
+                          color: theme.surfaceDeep,
+                          border: Border.all(color: theme.border, width: 0.5),
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Text(
+                          'Loading months…',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: theme.textMuted,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      ..._sections.map(
+                        (s) => _SectionItem(theme: theme, section: s),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(width: 12.w),
-                // Close button
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Container(
-                    width: 36.w,
-                    height: 36.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceLightBlue,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.borderDefault,
-                        width: 0.5,
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.close_rounded,
-                      size: 16.sp,
-                      color: AppColors.textDarkBlue,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Divider(
-            height: 0,
-            thickness: 0.5,
-            color: AppColors.borderDefault,
-          ),
-
-          // ── Scrollable body ─────────────────────────────────────
-          Flexible(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Summary cards ────────────────────────────────
-                  Row(
-                    children: [
-                      // Dark card — All points
-                      Expanded(
-                        child: _SummaryCard(
-                          title: 'All points',
-                          points: 0,
-                          body: 'last 0 months',
-                          isDark: true,
-                        ),
-                      ),
-                      SizedBox(width: 10.w),
-                      // Light card — This month
-                      Expanded(
-                        child: _SummaryCard(
-                          title: 'This month',
-                          points: 0,
-                          body: 'live, updates daily',
-                          isDark: false,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  // ── Loading pill ─────────────────────────────────
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 12.w, vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceLightBlue,
-                      border: Border.all(
-                          color: AppColors.borderDefault, width: 0.5),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Text(
-                      'Loading months…',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.textPlaceholder,
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  // ── Section list ─────────────────────────────────
-                  ..._sections.map((s) => _SectionItem(section: s)),
-                ],
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -206,55 +210,46 @@ class RedeemPointsBottomModal extends StatelessWidget {
 
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({
+    required this.theme,
     required this.title,
     required this.points,
     required this.body,
-    required this.isDark,
+    required this.emphasized,
   });
 
+  final DashboardTheme theme;
   final String title;
   final int points;
   final String body;
-  final bool isDark;
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.primaryBlue : Colors.white,
-        border: isDark
-            ? null
-            : Border.all(color: AppColors.borderDefault, width: 0.5),
-        borderRadius: BorderRadius.circular(14.r),
-        boxShadow: isDark
-            ? [
-          BoxShadow(
-            color: AppColors.primaryBlue.withOpacity(0.5),
-            offset: Offset(0, 6.h),
-            blurRadius: 16.r,
-            spreadRadius: -8.r,
-          ),
-        ]
-            : null,
+        color: emphasized ? AppColors.brandRed : theme.surfaceDeep,
+        border: Border.all(
+          color: emphasized ? AppColors.brandRed : theme.border,
+          width: 0.5,
+        ),
+        borderRadius: BorderRadius.circular(12.r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
           Text(
             title.toUpperCase(),
             style: TextStyle(
-              fontSize: 10.5.sp,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.08 * 10.5,
-              color: isDark
-                  ? Colors.white.withOpacity(0.65)
-                  : AppColors.textSecondary,
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+              color: emphasized
+                  ? Colors.white.withValues(alpha: 0.7)
+                  : theme.textMuted,
             ),
           ),
           SizedBox(height: 4.h),
-          // Points
           RichText(
             text: TextSpan(
               children: [
@@ -262,10 +257,8 @@ class _SummaryCard extends StatelessWidget {
                   text: '$points',
                   style: TextStyle(
                     fontSize: 24.sp,
-                    fontWeight: FontWeight.bold,
-                    color: isDark
-                        ? Colors.white
-                        : AppColors.textDarkBlue,
+                    fontWeight: FontWeight.w700,
+                    color: emphasized ? Colors.white : theme.text,
                     height: 1,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
@@ -275,24 +268,23 @@ class _SummaryCard extends StatelessWidget {
                   text: 'pts',
                   style: TextStyle(
                     fontSize: 11.sp,
-                    fontWeight: FontWeight.bold,
-                    color: isDark
-                        ? AppColors.accentLime
-                        : AppColors.textBodyMuted,
+                    fontWeight: FontWeight.w600,
+                    color: emphasized
+                        ? Colors.white.withValues(alpha: 0.85)
+                        : theme.textMuted,
                   ),
                 ),
               ],
             ),
           ),
           SizedBox(height: 6.h),
-          // Body
           Text(
             body,
             style: TextStyle(
               fontSize: 10.sp,
-              color: isDark
-                  ? Colors.white.withOpacity(0.55)
-                  : AppColors.textPlaceholder,
+              color: emphasized
+                  ? Colors.white.withValues(alpha: 0.55)
+                  : theme.textMuted,
             ),
           ),
         ],
@@ -304,7 +296,9 @@ class _SummaryCard extends StatelessWidget {
 // ── Section item ──────────────────────────────────────────────────────────────
 
 class _SectionItem extends StatelessWidget {
-  const _SectionItem({required this.section});
+  const _SectionItem({required this.theme, required this.section});
+
+  final DashboardTheme theme;
   final _Section section;
 
   @override
@@ -314,7 +308,6 @@ class _SectionItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row: title + subtitle | points badge
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -326,8 +319,8 @@ class _SectionItem extends StatelessWidget {
                       section.title,
                       style: TextStyle(
                         fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textDarkBlue,
+                        fontWeight: FontWeight.w600,
+                        color: theme.text,
                         height: 1.2,
                       ),
                     ),
@@ -336,53 +329,46 @@ class _SectionItem extends StatelessWidget {
                       section.subtitle,
                       style: TextStyle(
                         fontSize: 11.sp,
-                        fontWeight: FontWeight.normal,
-                        color: AppColors.textSecondary,
+                        color: theme.textMuted,
                       ),
                     ),
                   ],
                 ),
               ),
               SizedBox(width: 8.w),
-              // Points badge
               Container(
-                padding: EdgeInsets.symmetric(
-                    horizontal: 10.w, vertical: 2.h),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 2.h),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceBlueTint,
+                  color: theme.surfaceDeep,
+                  border: Border.all(color: theme.border, width: 0.5),
                   borderRadius: BorderRadius.circular(999.r),
                 ),
                 child: Text(
                   '${section.points}',
                   style: TextStyle(
                     fontSize: 11.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDarkBlue,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.brandRed,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ),
             ],
           ),
-
           SizedBox(height: 6.h),
-
-          // Content area
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(
-                horizontal: 12.w, vertical: 10.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
             decoration: BoxDecoration(
-              color: AppColors.surfaceLightBlue,
-              border: Border.all(
-                  color: AppColors.borderDefault, width: 0.5),
+              color: theme.surfaceDeep,
+              border: Border.all(color: theme.border, width: 0.5),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Text(
               '—',
               style: TextStyle(
                 fontSize: 11.5.sp,
-                color: AppColors.textPlaceholder,
+                color: theme.textMuted,
               ),
             ),
           ),

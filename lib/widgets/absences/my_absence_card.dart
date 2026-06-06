@@ -1,5 +1,4 @@
-import 'package:chumley_navigator/utils/colors.dart';
-import 'package:chumley_navigator/widgets/absences/absence_form_card.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -26,34 +25,34 @@ class MyAbsenceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.all(14.r),
+      margin: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.all(12.r),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLightBlue.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(
-          color: AppColors.borderLightBlue.withValues(alpha: 0.45),
-          width: 0.5,
-        ),
+        color: theme.dashCardBg,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: theme.dashCardBorderSoft, width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 40.w,
-            height: 40.w,
+            width: 36.w,
+            height: 36.w,
             decoration: BoxDecoration(
-              color: AppColors.chartFillBlue,
-              borderRadius: BorderRadius.circular(10.r),
+              color: theme.dashSurfaceTint,
+              borderRadius: BorderRadius.circular(8.r),
             ),
+            alignment: Alignment.center,
             child: Icon(
               Icons.event_busy_rounded,
-              color: AppColors.primaryBlue,
-              size: 22.sp,
+              color: theme.dashPrimary,
+              size: 18.sp,
             ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 10.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,34 +60,34 @@ class MyAbsenceCard extends StatelessWidget {
                 Text(
                   record.reason,
                   style: TextStyle(
-                    fontSize: 14.sp,
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textDarkBlue,
+                    color: theme.dashTitle,
                   ),
                 ),
-                SizedBox(height: 4.h),
+                SizedBox(height: 2.h),
                 Text(
                   record.dateRange,
                   style: TextStyle(
-                    fontSize: 12.sp,
+                    fontSize: 11.sp,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.textBodyMuted,
+                    color: theme.dashSubtitle,
                   ),
                 ),
               ],
             ),
           ),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
             decoration: BoxDecoration(
               color: record.statusBackground,
-              borderRadius: BorderRadius.circular(100.r),
+              borderRadius: BorderRadius.circular(20.r),
             ),
             child: Text(
               record.status,
               style: TextStyle(
                 fontSize: 10.sp,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 color: record.statusColor,
               ),
             ),
@@ -100,36 +99,51 @@ class MyAbsenceCard extends StatelessWidget {
 }
 
 class MyAbsencesSection extends StatelessWidget {
-  const MyAbsencesSection({super.key, required this.records});
+  const MyAbsencesSection({
+    super.key,
+    required this.records,
+    this.loadFailed = false,
+  });
 
   final List<MyAbsenceRecord> records;
+  final bool loadFailed;
 
   @override
   Widget build(BuildContext context) {
-    return AbsenceFormCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'My Absences',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDarkBlue,
-            ),
+    final theme = DashboardTheme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'My Absences',
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+            color: theme.dashHeading,
           ),
-          SizedBox(height: 4.h),
+        ),
+        SizedBox(height: 12.h),
+        if (loadFailed)
           Text(
-            'Recent requests and approvals',
+            'Could not load your absences.',
             style: TextStyle(
-              fontSize: 11.sp,
-              color: AppColors.textBodyMuted,
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              color: theme.accent,
             ),
-          ),
-          SizedBox(height: 14.h),
+          )
+        else if (records.isEmpty)
+          Text(
+            'No absences yet.',
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: theme.dashSubtitle,
+            ),
+          )
+        else
           ...records.map((r) => MyAbsenceCard(record: r)),
-        ],
-      ),
+      ],
     );
   }
 }

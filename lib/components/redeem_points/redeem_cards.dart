@@ -1,4 +1,5 @@
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -114,13 +115,26 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Padding(
       padding: EdgeInsets.only(top: 12.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Gift Cards",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16.sp, color: AppColors.textDarkBlue),),
-          Text("0 ready . 2 almost there . 4 locked",style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),),
+          Text(
+            'GIFT CARDS',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 10.sp,
+              letterSpacing: 0.4,
+              color: theme.textMuted,
+            ),
+          ),
+          Text(
+            '0 ready · 2 almost there · 4 locked',
+            style: TextStyle(fontSize: 11.sp, color: theme.textMuted),
+          ),
           SizedBox(height: 12.h),
           ListView.builder(
             shrinkWrap: true,
@@ -128,7 +142,7 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
             itemCount: _rewards.length,
             itemBuilder: (_, i) => Padding(
               padding: EdgeInsets.only(bottom: 12.h),
-              child: _rewardCard(item: _rewards[i]),
+              child: _rewardCard(theme: theme, item: _rewards[i]),
             ),
           ),
         ],
@@ -138,30 +152,20 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
 
   // ── Reward card ────────────────────────────────────────────────────────────
 
-  Widget _rewardCard({required RewardItem item}) {
+  Widget _rewardCard({
+    required DashboardTheme theme,
+    required RewardItem item,
+  }) {
     final isLocked = item.status == RewardStatus.locked;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.surface,
         border: Border.all(
-          color: isLocked ? AppColors.borderDefault : AppColors.accentBlue,
+          color: isLocked ? theme.border : theme.accent,
           width: 0.5,
         ),
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textDarkBlue.withOpacity(0.25),
-            offset: Offset(0, 6.h),
-            blurRadius: 20.r,
-            spreadRadius: -10.r,
-          ),
-          BoxShadow(
-            color: AppColors.textDarkBlue.withOpacity(0.06),
-            offset: Offset(0, 1.h),
-            blurRadius: 2.r,
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12.r),
       ),
       padding: EdgeInsets.all(12.r),
       child: Column(
@@ -173,7 +177,7 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
           SizedBox(height: 8.h),
 
           // Status badge
-          _statusBadge(item: item, isLocked: isLocked),
+          _statusBadge(theme: theme, item: item, isLocked: isLocked),
 
           SizedBox(height: 6.h),
 
@@ -190,7 +194,7 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textDarkBlue,
+                        color: theme.text,
                         height: 1.2,
                       ),
                     ),
@@ -200,7 +204,7 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
                       style: TextStyle(
                         fontSize: 10.sp,
                         fontWeight: FontWeight.normal,
-                        color: AppColors.textSecondary,
+                        color: theme.textMuted,
                         height: 1.3,
                       ),
                     ),
@@ -216,9 +220,7 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.bold,
-                      color: isLocked
-                          ? AppColors.textSecondary
-                          : AppColors.textDarkBlue,
+                      color: theme.textMuted,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
@@ -226,7 +228,7 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
                     'pts',
                     style: TextStyle(
                       fontSize: 9.sp,
-                      color: AppColors.textPlaceholder,
+                      color: theme.textMuted,
                     ),
                   ),
                 ],
@@ -243,10 +245,8 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
                 height: 6.h,
                 child: LinearProgressIndicator(
                   value: item.progress,
-                  backgroundColor: AppColors.progressTrackBackground,
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    AppColors.accentBlue,
-                  ),
+                  backgroundColor: theme.progressTrack,
+                  valueColor: AlwaysStoppedAnimation<Color>(theme.accent),
                 ),
               ),
             ),
@@ -379,18 +379,24 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
 
   // ── Status badge ───────────────────────────────────────────────────────────
 
-  Widget _statusBadge({required RewardItem item, required bool isLocked}) {
+  Widget _statusBadge({
+    required DashboardTheme theme,
+    required RewardItem item,
+    required bool isLocked,
+  }) {
     if (isLocked) {
       return _badge(
-        bgColor: AppColors.surfaceLightBlue,
-        icon: Icon(Icons.lock_rounded, size: 11.sp, color: AppColors.textSecondary),
+        bgColor: theme.surfaceDeep,
+        borderColor: theme.border,
+        icon: Icon(Icons.lock_rounded, size: 11.sp, color: theme.textMuted),
         label: 'Locked',
-        labelColor: AppColors.textSecondary,
+        labelColor: theme.textMuted,
       );
     }
 
     return _badge(
       bgColor: AppColors.pendingBackground,
+      borderColor: AppColors.pendingText.withValues(alpha: 0.25),
       icon: Icon(Icons.access_time_rounded, size: 11.sp, color: AppColors.pendingText),
       label: '${item.ptsToGo} pts to go',
       labelColor: AppColors.pendingText,
@@ -401,6 +407,7 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
 
   Widget _badge({
     required Color bgColor,
+    required Color borderColor,
     required Widget icon,
     required String label,
     required Color labelColor,
@@ -409,7 +416,7 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
         color: bgColor,
-        border: Border.all(color: AppColors.borderDefault, width: 0.5),
+        border: Border.all(color: borderColor, width: 0.5),
         borderRadius: BorderRadius.circular(999.r),
       ),
       child: Row(

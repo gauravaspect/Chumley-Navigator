@@ -1,5 +1,5 @@
 import 'package:chumley_navigator/utils/colors.dart';
-import 'package:chumley_navigator/widgets/ui/elevated_surface.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -25,96 +25,179 @@ class PodiumColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+    final isDark = theme.isDark;
     final isFirst = entry.position == '1st';
     final cardH = isFirst ? 175.h : 145.h;
-    final nameSize = isFirst ? 14.sp : 12.sp;
-    final iconSize = isFirst ? 42.sp : 32.sp;
-    final scoreSize = isFirst ? 24.sp : 20.sp;
+    final nameSize = isFirst ? 12.sp : 10.sp;
+    final iconSize = isFirst ? 30.sp : 22.sp;
+    final scoreSize = isFirst ? 18.sp : 14.sp;
 
-    final cardColor = AppColors.accentLime.withValues(alpha: 0.55);
-    final borderColor = AppColors.accentBlue.withValues(alpha: 0.35);
+    final cardBg = _cardBackground(isDark, isFirst);
+    final cardBorder = _cardBorder(isDark, isFirst);
+    final nameColor = _nameColor(isDark, isFirst);
+    final iconColor = _iconColor(isDark, isFirst);
+    final scoreColor = _scoreColor(isDark, isFirst);
+    final badgeStyle = _badgeStyle(isDark, isFirst);
 
-    return PressableScale(
-      onTap: () {},
-      scale: 0.98,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 240),
-            curve: Curves.easeOutCubic,
-            width: double.infinity,
-            height: cardH,
-            decoration: BoxDecoration(
-              color: cardColor,
-              border: Border.all(color: borderColor, width: 0.5),
-              borderRadius: BorderRadius.circular(16.r),
-              boxShadow: ElevatedSurface.softShadows(elevation: 0.7),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  entry.firstName,
-                  style: TextStyle(
-                    fontSize: nameSize,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryBlueDark,
-                    height: 1.2,
+    return Semantics(
+      label:
+          '${entry.position} place, ${entry.firstName} ${entry.lastName}, score ${entry.score}',
+      child: PressableScale(
+        onTap: () {},
+        scale: 0.98,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              width: double.infinity,
+              height: cardH,
+              decoration: BoxDecoration(
+                color: cardBg,
+                border: Border.all(color: cardBorder, width: 0.5),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    entry.firstName,
+                    style: TextStyle(
+                      fontSize: nameSize,
+                      fontWeight: FontWeight.w500,
+                      color: nameColor,
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                Text(
-                  entry.lastName,
-                  style: TextStyle(
-                    fontSize: nameSize,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryBlueDark,
-                    height: 1.2,
+                  Text(
+                    entry.lastName,
+                    style: TextStyle(
+                      fontSize: nameSize,
+                      fontWeight: FontWeight.w500,
+                      color: nameColor,
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 9.h),
-                Icon(
-                  Icons.emoji_events_outlined,
-                  size: iconSize,
-                  color: AppColors.primaryBlueDark,
-                ),
-                SizedBox(height: 9.h),
-                Text(
-                  entry.score,
-                  style: TextStyle(
-                    fontSize: scoreSize,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                    color: AppColors.primaryBlueDark,
+                  SizedBox(height: 8.h),
+                  Icon(
+                    Icons.emoji_events_outlined,
+                    size: iconSize,
+                    color: iconColor,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 6.h),
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 8.h),
-            decoration: BoxDecoration(
-              color: cardColor,
-              border: Border.all(color: borderColor, width: 0.5),
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '${entry.position} Place',
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primaryBlue,
+                  SizedBox(height: 6.h),
+                  Text(
+                    entry.score,
+                    style: TextStyle(
+                      fontSize: scoreSize,
+                      fontWeight: FontWeight.w500,
+                      color: scoreColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            SizedBox(height: 5.h),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 6.h),
+              decoration: BoxDecoration(
+                color: badgeStyle.background,
+                border: Border.all(color: badgeStyle.border, width: 0.5),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                entry.position,
+                style: TextStyle(
+                  fontSize: 9.sp,
+                  fontWeight: FontWeight.w500,
+                  color: badgeStyle.text,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  static Color _cardBackground(bool isDark, bool isFirst) {
+    if (isDark) {
+      return isFirst ? AppColors.trendUpBgDark : AppColors.darkSurfaceDeep;
+    }
+    return isFirst ? AppColors.podiumFirstLightBg : AppColors.lightSurfaceDeep;
+  }
+
+  static Color _cardBorder(bool isDark, bool isFirst) {
+    if (isDark) {
+      return isFirst ? AppColors.podiumFirstDarkBorder : AppColors.darkBorder;
+    }
+    return isFirst ? AppColors.podiumFirstLightBorder : AppColors.lightBorder;
+  }
+
+  static Color _nameColor(bool isDark, bool isFirst) {
+    if (isDark) return AppColors.darkText;
+    if (isFirst) return AppColors.podiumFirstLightGreen;
+    return AppColors.lightText;
+  }
+
+  static Color _iconColor(bool isDark, bool isFirst) {
+    if (isDark) {
+      return isFirst ? AppColors.kpiBarHigh : AppColors.darkTextMuted;
+    }
+    if (isFirst) return AppColors.podiumFirstLightGreen;
+    return AppColors.lightTextMuted;
+  }
+
+  static Color _scoreColor(bool isDark, bool isFirst) {
+    if (isDark) return AppColors.darkText;
+    if (isFirst) return AppColors.podiumFirstLightGreen;
+    return AppColors.lightText;
+  }
+
+  static _BadgeStyle _badgeStyle(bool isDark, bool isFirst) {
+    if (isDark) {
+      if (isFirst) {
+        return const _BadgeStyle(
+          background: AppColors.trendUpBgDark,
+          border: AppColors.podiumFirstDarkBorder,
+          text: AppColors.kpiBarHigh,
+        );
+      }
+      return const _BadgeStyle(
+        background: AppColors.darkSurfaceDeep,
+        border: AppColors.darkBorder,
+        text: AppColors.darkTextMuted,
+      );
+    }
+    if (isFirst) {
+      return const _BadgeStyle(
+        background: AppColors.podiumFirstLightBg,
+        border: AppColors.podiumFirstLightBorder,
+        text: AppColors.podiumFirstLightBadgeGreen,
+      );
+    }
+    return const _BadgeStyle(
+      background: AppColors.lightSurfaceDeep,
+      border: AppColors.lightBorder,
+      text: AppColors.lightTextMuted,
+    );
+  }
+}
+
+class _BadgeStyle {
+  const _BadgeStyle({
+    required this.background,
+    required this.border,
+    required this.text,
+  });
+
+  final Color background;
+  final Color border;
+  final Color text;
 }

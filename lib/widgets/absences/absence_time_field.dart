@@ -1,5 +1,4 @@
-import 'package:chumley_navigator/utils/colors.dart';
-import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -18,76 +17,64 @@ class AbsenceTimeField extends StatelessWidget {
   final bool enabled;
 
   String get _display {
-    if (time == null) return 'Select time';
-    final hour = time!.hourOfPeriod == 0 ? 12 : time!.hourOfPeriod;
+    if (time == null) return '--:--';
+    final hour = time!.hour.toString().padLeft(2, '0');
     final minute = time!.minute.toString().padLeft(2, '0');
-    final period = time!.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$hour:$minute $period';
+    return '$hour:$minute';
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textBodyMuted,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        PressableScale(
-          onTap: enabled ? onTap : null,
-          enabled: enabled,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 200),
-            opacity: enabled ? 1 : 0.5,
-            child: Container(
-              height: 44.h,
-              padding: EdgeInsets.symmetric(horizontal: 14.w),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(8.r),
-                border: Border.all(
-                  color: enabled
-                      ? AppColors.textPlaceholder
-                      : AppColors.borderDefault,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.schedule_rounded,
-                    size: 18.sp,
-                    color: AppColors.primaryBlue,
+    final theme = DashboardTheme.of(context);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(12.r),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: enabled ? 1 : 0.5,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              color: theme.dashPrimary,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: theme.dashCardBg,
                   ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: Text(
-                      _display,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: time != null
-                            ? AppColors.textDarkBlue
-                            : AppColors.inputPlaceholder,
-                      ),
+                ),
+                SizedBox(height: 8.h),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color: theme.dashSurfaceTint,
+                    borderRadius: BorderRadius.circular(999.r),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    _display,
+                    style: TextStyle(
+                      fontSize: 28.sp,
+                      fontWeight: FontWeight.w600,
+                      color: theme.dashTitle,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: 20.sp,
-                    color: AppColors.textDarkBlue,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }

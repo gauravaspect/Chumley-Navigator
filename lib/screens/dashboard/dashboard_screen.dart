@@ -1,53 +1,294 @@
 import 'package:chumley_navigator/components/dashboard/earnings_card.dart';
 import 'package:chumley_navigator/components/dashboard/kpi_overview.dart';
 import 'package:chumley_navigator/components/dashboard/points_card.dart';
-import 'package:chumley_navigator/components/dashboard/profle_card.dart';
+import 'package:chumley_navigator/core/app_dependencies.dart';
+import 'package:chumley_navigator/models/user_model.dart';
+import 'package:chumley_navigator/screens/dashboard/cubit/dashboard_cubit.dart';
+import 'package:chumley_navigator/screens/dashboard/cubit/dashboard_state.dart';
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/screens/profile/profile_screen.dart';
+import 'package:chumley_navigator/utils/routes.dart';
+import 'package:chumley_navigator/utils/user_display.dart';
+import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../components/dashboard/dashboard_calendar.dart';
 import '../../components/dashboard/earning_graph.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
   static const _sectionGap = 14.0;
+
+  late final DashboardCubit _cubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _cubit = AppDependencies.createDashboardCubit()..load();
+  }
+
+  @override
+  void dispose() {
+    _cubit.close();
+    super.dispose();
+  }
+
+  UserModel? _userFromState(DashboardState state) => state.userOrNull;
 
   @override
   Widget build(BuildContext context) {
-    final sections = <Widget>[
-      const ProfileCard(),
-      const PointsCard(),
-      const EarningCard(),
-      const DashboardCalendar(),
-      const KpiOverview(),
-      const EarningGraph(),
-    ];
+    return BlocProvider.value(
+      value: _cubit,
+      child: ListenableBuilder(
+        listenable: ThemeScope.of(context),
+        builder: (context, _) {
+          final theme = DashboardTheme.of(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundBlue,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: Theme.of(context).colorScheme.copyWith(
+                primary: AppColors.brandRed,
+                secondary: AppColors.brandRedSoft,
+              ),
+              iconTheme: IconThemeData(color: theme.dashPrimary),
             ),
-            child: Column(
-              children: [
-                for (var i = 0; i < sections.length; i++) ...[
-                  FadeSlideIn(
-                    delay: Duration(milliseconds: 50 * i),
-                    child: sections[i],
+            child: BlocConsumer<DashboardCubit, DashboardState>(
+              listener: (context, state) {
+                if (state is DashboardError && state.cachedUser == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(state.message)),
+                  );
+                }
+              },
+              builder: (context, state) {
+                final user = _userFromState(state);
+                final isLoading = state is DashboardLoading && user == null;
+
+                return Scaffold(
+                  backgroundColor: theme.base,
+                  appBar: _buildAppBar(context, theme, user),
+                  body: SafeArea(
+                    child: RefreshIndicator(
+                      color: theme.dashPrimary,
+                      onRefresh: _cubit.refresh,
+                      child: isLoading
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              children: [
+                                SizedBox(height: 120.h),
+                                Center(
+                                  child: CircularProgressIndicator(
+                                    color: theme.dashPrimary,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : _buildBody(context, theme, state),
+                    ),
                   ),
-                  if (i < sections.length - 1) SizedBox(height: _sectionGap.h),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context,
+    DashboardTheme theme,
+    UserModel? user,
+  ) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      title: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: theme.dashHeaderBorder, width: 0.8),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            GestureDetector(
+              onTap: () => ProfileScreen.open(context, _cubit),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36.w,
+                    height: 36.w,
+                    decoration: BoxDecoration(
+                      color: theme.dashPrimary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: theme.dashCardBg, width: 1),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      user != null ? userInitials(user) : '?',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.white,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14.sp,
+                        color: theme.dashTitle,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Hi, '),
+                        TextSpan(
+                          text: user != null ? userFirstName(user) : 'there',
+                          style: TextStyle(color: theme.dashPrimaryCalendar),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
-                SizedBox(height: 8.h),
+              ),
+            ),
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pushReplacementNamed(
+                    context,
+                    AppRoutes.notifications,
+                  ),
+                  child: Container(
+                    padding: EdgeInsets.all(6.r),
+                    decoration: BoxDecoration(
+                      color: theme.headerBellBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(
+                          Icons.notifications_none_outlined,
+                          color: theme.dashPrimary,
+                          size: 20.sp,
+                        ),
+                        Positioned(
+                          top: -1,
+                          right: -1,
+                          child: Container(
+                            width: 8.w,
+                            height: 8.w,
+                            decoration: BoxDecoration(
+                              color: AppColors.streakOrange,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: theme.dashCardBg,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                Image.asset(
+                  'assets/images/navigator-mascot.png',
+                  height: 18.h,
+                  width: 18.w,
+                ),
               ],
             ),
-          ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    DashboardTheme theme,
+    DashboardState state,
+  ) {
+    const sections = [
+      PointsCard(),
+      EarningCard(),
+      DashboardCalendar(),
+      KpiOverview(),
+      EarningGraph(),
+    ];
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        child: Column(
+          children: [
+            if (state is DashboardError) ...[
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                decoration: BoxDecoration(
+                  color: AppColors.errorBackground,
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(color: AppColors.errorBorder),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        state.message,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.errorText,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _cubit.refresh,
+                      child: Text(
+                        'Retry',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: theme.dashPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 12.h),
+            ],
+            for (var i = 0; i < sections.length; i++) ...[
+              FadeSlideIn(
+                delay: Duration(milliseconds: 60 * i),
+                offsetY: 10,
+                duration: const Duration(milliseconds: 480),
+                child: sections[i],
+              ),
+              if (i < sections.length - 1) SizedBox(height: _sectionGap.h),
+            ],
+            SizedBox(height: 8.h),
+          ],
         ),
       ),
     );

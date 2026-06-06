@@ -1,4 +1,5 @@
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -14,15 +15,17 @@ class AbsenceWholeDaySwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Whole Day',
+          'Whole day',
           style: TextStyle(
-            fontSize: 16.sp,
+            fontSize: 15.sp,
             fontWeight: FontWeight.w600,
-            color: AppColors.textDarkBlue,
+            color: theme.dashTitle,
           ),
         ),
         GestureDetector(
@@ -30,33 +33,28 @@ class AbsenceWholeDaySwitch extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
-            width: 48.w,
-            height: 28.h,
-            padding: EdgeInsets.all(3.r),
+            width: 38.w,
+            height: 20.h,
             decoration: BoxDecoration(
-              color: value
-                  ? AppColors.primaryBlue
-                  : AppColors.buttonDisabledBackground,
+              color: value ? theme.dashPrimary : theme.dashChipBg,
               borderRadius: BorderRadius.circular(999.r),
-              border: Border.all(
-                color: value
-                    ? AppColors.primaryBlue
-                    : AppColors.textPlaceholder.withValues(alpha: 0.5),
-                width: 0.5,
-              ),
             ),
-            child: Align(
-              alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+            child: AnimatedAlign(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              alignment:
+                  value ? Alignment.centerRight : Alignment.centerLeft,
               child: Container(
-                width: 22.w,
-                height: 22.w,
+                width: 16.w,
+                height: 16.w,
+                margin: EdgeInsets.symmetric(horizontal: 2.w),
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.textShadow.withValues(alpha: 0.12),
-                      blurRadius: 4.r,
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 2.r,
                       offset: Offset(0, 1.h),
                     ),
                   ],

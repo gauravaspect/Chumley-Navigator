@@ -1,5 +1,5 @@
 import 'package:chumley_navigator/utils/colors.dart';
-import 'package:chumley_navigator/widgets/ui/elevated_surface.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -32,42 +32,46 @@ class MilestoneTimelineTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+    final nodeColor =
+        completed ? AppColors.brandRed : theme.surfaceDeep;
+    final lineColor =
+        completed ? AppColors.brandRed : theme.border;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 40.w,
+          width: 36.w,
           child: Column(
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 240),
                 curve: Curves.easeOutCubic,
-                width: 40.w,
-                height: 40.w,
+                width: 32.w,
+                height: 32.w,
                 decoration: BoxDecoration(
-                  color: completed ? AppColors.primaryBlue : ElevatedSurface.tintedFill,
+                  color: nodeColor,
                   border: completed
                       ? null
-                      : Border.all(
-                          color: AppColors.borderLightBlue.withValues(alpha: 0.55),
-                          width: 1.25,
-                        ),
+                      : Border.all(color: theme.border, width: 0.5),
                   shape: BoxShape.circle,
-                  boxShadow: completed
-                      ? ElevatedSurface.softShadows(elevation: 0.5)
-                      : null,
                 ),
                 child: Center(
                   child: completed
-                      ? Icon(Icons.check_rounded, color: AppColors.white, size: 18.sp)
+                      ? Icon(
+                          Icons.check_rounded,
+                          color: AppColors.white,
+                          size: 16.sp,
+                        )
                       : Container(
-                          width: 10.w,
-                          height: 10.w,
+                          width: 8.w,
+                          height: 8.w,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: AppColors.borderLightBlue,
-                              width: 2,
+                              color: theme.textMuted,
+                              width: 1.5,
                             ),
                           ),
                         ),
@@ -76,30 +80,29 @@ class MilestoneTimelineTile extends StatelessWidget {
               if (!isLast)
                 Container(
                   width: 2.w,
-                  height: 44.h,
+                  height: 40.h,
                   margin: EdgeInsets.symmetric(vertical: 4.h),
                   decoration: BoxDecoration(
-                    color: completed
-                        ? AppColors.primaryBlue
-                        : AppColors.borderDefault,
+                    color: lineColor,
                     borderRadius: BorderRadius.circular(100.r),
                   ),
                 ),
             ],
           ),
         ),
-        SizedBox(width: 12.w),
+        SizedBox(width: 10.w),
         Expanded(
           child: PressableScale(
             onTap: () {},
             scale: 0.99,
-            child: ElevatedSurface(
-              margin: EdgeInsets.only(bottom: 14.h),
-              padding: EdgeInsets.all(14.r),
-              borderRadius: 16.r,
-              borderColor: completed
-                  ? AppColors.primaryBlue.withValues(alpha: 0.35)
-                  : AppColors.borderLightBlue.withValues(alpha: 0.4),
+            child: Container(
+              margin: EdgeInsets.only(bottom: 10.h),
+              padding: EdgeInsets.all(12.r),
+              decoration: BoxDecoration(
+                color: theme.surface,
+                border: Border.all(color: theme.border, width: 0.5),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -113,22 +116,22 @@ class MilestoneTimelineTile extends StatelessWidget {
                             Text(
                               title,
                               style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w500,
                                 color: completed
-                                    ? AppColors.textDarkBlue
-                                    : AppColors.textSecondary,
+                                    ? theme.text
+                                    : theme.textMuted,
                               ),
                             ),
                             SizedBox(height: 2.h),
                             Text(
                               subtitle,
                               style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w500,
                                 color: completed
-                                    ? AppColors.primaryBlue
-                                    : AppColors.borderLightBlue,
+                                    ? theme.accent
+                                    : theme.textMuted,
                               ),
                             ),
                           ],
@@ -138,25 +141,23 @@ class MilestoneTimelineTile extends StatelessWidget {
                         trailing,
                         style: TextStyle(
                           fontSize: 10.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                          color: theme.textMuted,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 8.h),
+                  SizedBox(height: 6.h),
                   Text(
                     description,
                     style: TextStyle(
-                      fontSize: 11.sp,
+                      fontSize: 10.sp,
                       fontWeight: FontWeight.w400,
                       height: 1.4,
-                      color: completed
-                          ? AppColors.textBodyMuted
-                          : AppColors.textPlaceholder,
+                      color: theme.textMuted,
                     ),
                   ),
-                  SizedBox(height: 10.h),
+                  SizedBox(height: 8.h),
                   Row(
                     children: [
                       _pill(badgeText, badgeBg, badgeTextColor),
@@ -164,11 +165,15 @@ class MilestoneTimelineTile extends StatelessWidget {
                       _pill(
                         points,
                         completed
-                            ? AppColors.successBackground
-                            : AppColors.dividerLight,
+                            ? (theme.isDark
+                                ? AppColors.trendUpBgDark
+                                : AppColors.trendUpBgLight)
+                            : theme.surfaceDeep,
                         completed
-                            ? AppColors.successText
-                            : AppColors.textInactive,
+                            ? (theme.isDark
+                                ? AppColors.kpiBarHigh
+                                : AppColors.trendUpLight)
+                            : theme.textMuted,
                       ),
                     ],
                   ),
@@ -183,7 +188,7 @@ class MilestoneTimelineTile extends StatelessWidget {
 
   Widget _pill(String text, Color bg, Color fg) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(100.r),
@@ -191,8 +196,8 @@ class MilestoneTimelineTile extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 10.sp,
-          fontWeight: FontWeight.w600,
+          fontSize: 9.sp,
+          fontWeight: FontWeight.w500,
           color: fg,
         ),
       ),

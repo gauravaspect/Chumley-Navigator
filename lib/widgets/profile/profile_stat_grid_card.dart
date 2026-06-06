@@ -1,5 +1,5 @@
 import 'package:chumley_navigator/utils/colors.dart';
-import 'package:chumley_navigator/widgets/ui/elevated_surface.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -20,13 +20,18 @@ class ProfileStatGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return PressableScale(
       onTap: onTap,
-      scale: 0.97,
-      child: ElevatedSurface(
-        padding: EdgeInsets.all(18.r),
-        borderRadius: 18.r,
-        borderColor: AppColors.textDarkBlue.withValues(alpha: 0.1),
+      scale: 0.98,
+      child: Container(
+        padding: EdgeInsets.all(12.r),
+        decoration: BoxDecoration(
+          color: theme.surface,
+          border: Border.all(color: theme.border, width: 0.5),
+          borderRadius: BorderRadius.circular(12.r),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -34,32 +39,34 @@ class ProfileStatGridCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: EdgeInsets.all(8.r),
+                  width: 28.w,
+                  height: 28.w,
                   decoration: BoxDecoration(
-                    color: AppColors.highlightYellow.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(10.r),
-                    border: Border.all(
-                      color: AppColors.textDarkBlue.withValues(alpha: 0.15),
-                      width: 0.75,
-                    ),
+                    color: theme.surfaceDeep,
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(color: theme.border, width: 0.5),
                   ),
+                  alignment: Alignment.center,
                   child: Icon(
                     icon,
-                    color: AppColors.textDarkBlue,
-                    size: 18.sp,
+                    color: theme.isDark
+                        ? AppColors.kpiBarHigh
+                        : AppColors.brandRed,
+                    size: 14.sp,
                   ),
                 ),
-                SizedBox(width: 10.w),
+                SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
                     title,
                     style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w500,
                       height: 1.25,
-                      color: AppColors.textDarkBlue,
+                      color: theme.textMuted,
                     ),
                     maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -68,11 +75,10 @@ class ProfileStatGridCard extends StatelessWidget {
             Text(
               body,
               style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w700,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
                 height: 1.2,
-                letterSpacing: -0.2,
-                color: AppColors.textDarkBlue,
+                color: theme.text,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,

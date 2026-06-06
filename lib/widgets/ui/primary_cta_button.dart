@@ -12,6 +12,7 @@ class PrimaryCtaButton extends StatelessWidget {
     this.icon,
     this.height,
     this.borderRadius,
+    this.backgroundColor,
   });
 
   final String label;
@@ -19,6 +20,7 @@ class PrimaryCtaButton extends StatelessWidget {
   final IconData? icon;
   final double? height;
   final double? borderRadius;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,7 @@ class PrimaryCtaButton extends StatelessWidget {
         height: height ?? 48.h,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: AppColors.primaryBlue,
+          color: backgroundColor ?? AppColors.brandRed,
           borderRadius: BorderRadius.circular(radius),
           boxShadow: ElevatedSurface.softShadows(elevation: 0.85),
         ),
