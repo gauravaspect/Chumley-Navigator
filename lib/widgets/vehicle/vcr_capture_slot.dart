@@ -58,7 +58,7 @@ class VcrCaptureSlot extends StatelessWidget {
                           Icon(
                             Icons.photo_camera_outlined,
                             size: 24.sp,
-                            color: AppColors.brandRed,
+                            color: AppColors.primaryBlue,
                           ),
                           SizedBox(height: 6.h),
                           Text(
@@ -66,7 +66,7 @@ class VcrCaptureSlot extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.brandRed,
+                              color: AppColors.primaryBlue,
                             ),
                           ),
                         ],

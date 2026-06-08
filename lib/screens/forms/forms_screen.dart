@@ -135,7 +135,7 @@ class _FormListTile extends StatelessWidget {
                 icon,
                 color: theme.isDark
                     ? AppColors.kpiBarHigh
-                    : AppColors.brandRed,
+                    : AppColors.primaryBlue,
                 size: 22.sp,
               ),
             ),

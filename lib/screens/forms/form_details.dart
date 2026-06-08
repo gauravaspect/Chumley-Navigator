@@ -243,7 +243,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           style: TextStyle(fontSize: 14.sp),
         ),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.brandRed,
+        backgroundColor: AppColors.primaryBlue,
       ),
     );
   }
@@ -313,7 +313,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
             child: Text(
               _c.badge,
               style: TextStyle(
-                color: AppColors.brandRed,
+                color: AppColors.primaryBlue,
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
               ),
@@ -402,7 +402,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
               children: [
                 Icon(
                   LucideIcons.circleAlert,
-                  color: AppColors.brandRed,
+                  color: AppColors.primaryBlue,
                   size: 20.sp,
                 ),
                 SizedBox(width: 10.w),
@@ -654,7 +654,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
         decoration: BoxDecoration(
           color: confirmed ? _t.surfaceDeep : _t.surface,
           border: Border.all(
-            color: confirmed ? AppColors.brandRed : _t.border,
+            color: confirmed ? AppColors.primaryBlue : _t.border,
             width: 0.5,
           ),
           borderRadius: BorderRadius.circular(12.r),
@@ -677,13 +677,16 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
               duration: const Duration(milliseconds: 140),
               height: 40.h,
               padding: EdgeInsets.symmetric(horizontal: 16.w),
-              decoration: BoxDecoration(
-                color: confirmed ? AppColors.brandRed : _t.surfaceDeep,
-                border: Border.all(
-                  color: confirmed ? AppColors.brandRed : _t.border,
-                ),
-                borderRadius: BorderRadius.circular(999),
-              ),
+              decoration: confirmed
+                  ? BoxDecoration(
+                      color: AppColors.primaryBlue,
+                      borderRadius: BorderRadius.circular(999),
+                    )
+                  : BoxDecoration(
+                      color: _t.surfaceDeep,
+                      border: Border.all(color: _t.border),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -697,7 +700,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                     style: TextStyle(
                       color: confirmed
                           ? AppColors.white
-                          : AppColors.brandRed,
+                          : AppColors.primaryBlue,
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w700,
                     ),
@@ -888,9 +891,9 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
     } else {
       switch (target) {
         case SeqStatus.confirmed:
-          bg = AppColors.brandRed;
+          bg = AppColors.primaryBlue;
           fg = AppColors.white;
-          border = AppColors.brandRed;
+          border = AppColors.primaryBlue;
           break;
         case SeqStatus.rejected:
           bg = AppColors.errorBackground;
@@ -919,11 +922,16 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
         constraints: BoxConstraints(minHeight: 36.h),
         padding:
         EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-        decoration: BoxDecoration(
-          color: bg,
-          border: Border.all(color: border),
-          borderRadius: BorderRadius.circular(999),
-        ),
+        decoration: sel && target == SeqStatus.confirmed
+            ? BoxDecoration(
+                color: AppColors.primaryBlue,
+                borderRadius: BorderRadius.circular(999),
+              )
+            : BoxDecoration(
+                color: bg,
+                border: Border.all(color: border),
+                borderRadius: BorderRadius.circular(999),
+              ),
         child: Text(
           label,
           style: TextStyle(
@@ -967,12 +975,15 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                             right: i < _stepCount - 1 ? 4.w : 0,
                           ),
                           height: 3.h,
-                          decoration: BoxDecoration(
-                            color: active
-                                ? AppColors.brandRed
-                                : _t.progressTrack,
-                            borderRadius: BorderRadius.circular(3.r),
-                          ),
+                          decoration: active
+                              ? BoxDecoration(
+                                  color: AppColors.primaryBlue,
+                                  borderRadius: BorderRadius.circular(3.r),
+                                )
+                              : BoxDecoration(
+                                  color: _t.progressTrack,
+                                  borderRadius: BorderRadius.circular(3.r),
+                                ),
                         ),
                       );
                     }),
@@ -992,7 +1003,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                         TextSpan(
                           text: _stepTitles[_currentStep],
                           style: TextStyle(
-                            color: AppColors.brandRed,
+                            color: AppColors.primaryBlue,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -1011,7 +1022,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                     label: 'Prev',
                     onTap: isFirst ? null : _onPrev,
                     bg: _t.surfaceDeep,
-                    fg: AppColors.brandRed,
+                    fg: AppColors.primaryBlue,
                     border: _t.border,
                     disabled: isFirst,
                   ),
@@ -1021,7 +1032,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                     label: 'Save draft',
                     onTap: _submitForm,
                     bg: _t.surfaceDeep,
-                    fg: AppColors.brandRed,
+                    fg: AppColors.primaryBlue,
                     border: _t.border,
                   ),
                   const Spacer(),
@@ -1030,9 +1041,9 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                     icon: isLast ? LucideIcons.send : LucideIcons.arrowRight,
                     iconTrailing: true,
                     onTap: _onNext,
-                    bg: AppColors.brandRed,
+                    bg: AppColors.primaryBlue,
                     fg: Colors.white,
-                    border: AppColors.brandRed,
+                    border: AppColors.primaryBlue,
                   ),
                 ],
               ),

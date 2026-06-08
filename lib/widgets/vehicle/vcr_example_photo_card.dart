@@ -63,7 +63,7 @@ class VcrExamplePhotoCard extends StatelessWidget {
                         height: 20.r,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.brandRed,
+                          color: AppColors.primaryBlue,
                           value: progress.expectedTotalBytes != null
                               ? progress.cumulativeBytesLoaded /
                                   progress.expectedTotalBytes!

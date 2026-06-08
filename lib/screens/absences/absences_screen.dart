@@ -227,7 +227,6 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                                 icon: LucideIcons.calendar_check,
                                 borderRadius: 8.r,
                                 height: 48.h,
-                                backgroundColor: theme.dashPrimary,
                                 onTap: _canSubmit ? () {} : null,
                               ),
                             ),

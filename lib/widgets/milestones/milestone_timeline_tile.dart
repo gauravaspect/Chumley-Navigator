@@ -33,10 +33,8 @@ class MilestoneTimelineTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
-    final nodeColor =
-        completed ? AppColors.brandRed : theme.surfaceDeep;
     final lineColor =
-        completed ? AppColors.brandRed : theme.border;
+        completed ? AppColors.primaryBlue : theme.border;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,13 +48,16 @@ class MilestoneTimelineTile extends StatelessWidget {
                 curve: Curves.easeOutCubic,
                 width: 32.w,
                 height: 32.w,
-                decoration: BoxDecoration(
-                  color: nodeColor,
-                  border: completed
-                      ? null
-                      : Border.all(color: theme.border, width: 0.5),
-                  shape: BoxShape.circle,
-                ),
+                decoration: completed
+                    ? const BoxDecoration(
+                        color: AppColors.primaryBlue,
+                        shape: BoxShape.circle,
+                      )
+                    : BoxDecoration(
+                        color: theme.surfaceDeep,
+                        border: Border.all(color: theme.border, width: 0.5),
+                        shape: BoxShape.circle,
+                      ),
                 child: Center(
                   child: completed
                       ? Icon(

@@ -14,16 +14,7 @@ class AppColors {
   static const surfaceBlueTint = Color(0xFFEEF4FF);
   static const progressTrackBackground = Color(0xFFEAF1FB);
 
-  // Brand red (dashboard primary accent)
-  static const brandRed = Color(0xFFAC3232);
-  static const brandRedDark = Color(0xFF8D2A2A);
-  static const brandRedDeep = Color(0xFF6A2020);
-  static const brandRedSoft = Color(0xFFC94A4A);
-  static const brandRedFill = Color(0xFFF5DEDE);
-  static const brandRedTrack = Color(0xFFF0E0E0);
-  static const brandRedBorderLight = Color(0xFFE8C4C4);
-
-  // Primary blues (interactive, headings — rest of app)
+  // Primary blues (interactive, headings — dashboard accent)
   static const primaryBlue = Color(0xFF27549D);
   static const primaryBlueDark = Color(0xFF1A4781);
   static const primaryBlueCalendar = Color(0xFF27449D);
@@ -58,10 +49,10 @@ class AppColors {
   static const profileGradientEnd = Color(0xFFFFF5EC);
   static const profileDividerPurple = Color(0xFFF1E2FF);
 
-  // Highlights (points, nav)
+  // Highlights (points, nav, CTA text)
   static const highlightYellow = Color(0xFFF1FF24);
   static const accentLime = Color(0xFFF4FF7F);
-  static const starIconBorder = brandRedDeep;
+  static const starIconBorder = borderAccentBlue;
 
   // Borders & dividers
   static const borderDefault = Color(0xFFE5E5EF);
@@ -83,8 +74,6 @@ class AppColors {
   static const pendingBackground = Color(0xFFFFF5D6);
   static const pendingText = Color(0xFF8A6D00);
   static const streakOrange = Color(0xFFFD541C);
-  static const gradientPromoStart = Color(0xFFE1322F);
-  static const gradientPromoEnd = Color(0xFFF57323);
 
   // Gift card brand colors
   static const giftCardTargetBg = Color(0xFF6E1F2A);
@@ -115,17 +104,15 @@ class AppColors {
   static const darkTextBody = Color(0xFFD1D5DB);
   static const darkProgressTrack = Color(0xFF1E1E2E);
 
-  // Light mode surfaces (dashboard — warm red-forward)
-  static const lightBase = Color(0xFFF7F6F3);
-  static const lightSurface = Color(0xFFFFFFFF);
-  static const lightSurfaceDeep = Color(0xFFFFF4F4);
-  static const lightBorder = Color(0xFFE3D8D8);
-  static const lightText = brandRedDeep;
-  static const lightTextMuted = Color(0xFF9A7A7A);
-  static const lightProgressTrack = brandRedTrack;
-
-  /// Light-mode notification bell background (header).
-  static const lightHeaderBellBg = Color(0xFFFFF4F4);
+  // Light mode surfaces (dashboard — blue-forward)
+  static const lightBase = backgroundGray;
+  static const lightSurface = white;
+  static const lightSurfaceDeep = surfaceLightBlue;
+  static const lightBorder = borderDefault;
+  static const lightText = textDarkBlue;
+  static const lightTextMuted = textSecondary;
+  static const lightProgressTrack = progressTrackBackground;
+  static const lightHeaderBellBg = surfaceBlueTint;
 
   // Dashboard semantic (shared)
   static const kpiBarLow = Color(0xFF378ADD);

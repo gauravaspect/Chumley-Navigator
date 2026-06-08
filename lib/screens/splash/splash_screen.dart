@@ -259,29 +259,10 @@ class _SplashScreenState extends State<SplashScreen>
                 text: 'chumley',
                 style: TextStyle(color: AppColors.primaryTextPurple),
               ),
-              // "navigator" — red → orange gradient
-              WidgetSpan(
-                baseline: TextBaseline.alphabetic,
-                alignment: PlaceholderAlignment.baseline,
-                child: ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [
-                      AppColors.gradientPromoStart,
-                      AppColors.gradientPromoEnd,
-                    ],
-                  ).createShader(bounds),
-                  child: Text(
-                    'navigator',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w700,
-                      fontSize: _kWordmarkFontSize,
-                      letterSpacing: _kWordmarkFontSize * -0.02,
-                      height: 1.0,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+              // "navigator" — brand blue
+              const TextSpan(
+                text: 'navigator',
+                style: TextStyle(color: AppColors.primaryBlue),
               ),
             ],
           ),

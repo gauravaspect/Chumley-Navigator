@@ -165,10 +165,21 @@ class _AbsenceCalendarState extends State<AbsenceCalendar> {
                   : theme.dashCalendarDisabled;
               FontWeight fontWeight = FontWeight.w600;
 
+              late final BoxDecoration decoration;
               if (isSelected && day.isCurrentMonth) {
-                bgColor = theme.dashPrimary;
+                decoration = BoxDecoration(
+                  color: theme.dashPrimary,
+                  shape: BoxShape.circle,
+                );
                 textColor = AppColors.white;
-              } else if (isToday && day.isCurrentMonth && !isSelected) {
+              } else {
+                decoration = BoxDecoration(
+                  color: bgColor,
+                  shape: BoxShape.circle,
+                );
+              }
+
+              if (isToday && day.isCurrentMonth && !isSelected) {
                 textColor = theme.dashPrimary;
                 fontWeight = FontWeight.w700;
               }
@@ -187,10 +198,7 @@ class _AbsenceCalendarState extends State<AbsenceCalendar> {
                     width: 28.w,
                     height: 28.w,
                     alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: bgColor,
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: decoration,
                     child: Text(
                       '${day.date.day}',
                       style: TextStyle(

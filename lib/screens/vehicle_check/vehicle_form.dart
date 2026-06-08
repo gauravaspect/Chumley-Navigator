@@ -393,18 +393,19 @@ class _VehicleFormState extends State<VehicleForm> {
         duration: const Duration(milliseconds: 200),
         height: 40.h,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isPrimary
-              ? AppColors.brandRed
-              : (enabled ? theme.surfaceDeep : theme.progressTrack),
-          borderRadius: BorderRadius.circular(10.r),
-          border: isPrimary
-              ? null
-              : Border.all(
+        decoration: isPrimary
+            ? BoxDecoration(
+                color: AppColors.primaryBlue,
+                borderRadius: BorderRadius.circular(10.r),
+              )
+            : BoxDecoration(
+                color: enabled ? theme.surfaceDeep : theme.progressTrack,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(
                   color: enabled ? theme.border : Colors.transparent,
                   width: 0.5,
                 ),
-        ),
+              ),
         child: Text(
           label,
           style: TextStyle(

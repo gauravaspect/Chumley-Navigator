@@ -213,8 +213,17 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                         ? theme.dashCalendarDay
                         : theme.dashCalendarDisabled;
 
-                    if (isToday) bgColor = theme.dashTodayBg;
-                    if (isSelected) bgColor = theme.dashPrimary;
+                    if (isToday && !isSelected) bgColor = theme.dashTodayBg;
+
+                    final decoration = isSelected
+                        ? BoxDecoration(
+                            color: theme.dashPrimary,
+                            borderRadius: BorderRadius.circular(999.r),
+                          )
+                        : BoxDecoration(
+                            color: bgColor,
+                            borderRadius: BorderRadius.circular(999.r),
+                          );
                     if (isSelected) textColor = AppColors.white;
 
                     return GestureDetector(
@@ -225,10 +234,7 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                           curve: Curves.easeOutCubic,
                           width: 32.w,
                           height: 28.h,
-                          decoration: BoxDecoration(
-                            color: bgColor,
-                            borderRadius: BorderRadius.circular(999.r),
-                          ),
+                          decoration: decoration,
                           alignment: Alignment.center,
                           child: AnimatedDefaultTextStyle(
                             duration: const Duration(milliseconds: 220),

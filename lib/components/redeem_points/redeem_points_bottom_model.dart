@@ -227,14 +227,16 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: emphasized ? AppColors.brandRed : theme.surfaceDeep,
-        border: Border.all(
-          color: emphasized ? AppColors.brandRed : theme.border,
-          width: 0.5,
-        ),
-        borderRadius: BorderRadius.circular(12.r),
-      ),
+      decoration: emphasized
+          ? BoxDecoration(
+              color: AppColors.primaryBlue,
+              borderRadius: BorderRadius.circular(12.r),
+            )
+          : BoxDecoration(
+              color: theme.surfaceDeep,
+              border: Border.all(color: theme.border, width: 0.5),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -348,7 +350,7 @@ class _SectionItem extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.brandRed,
+                    color: AppColors.primaryBlue,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),

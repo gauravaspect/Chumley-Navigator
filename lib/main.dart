@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
                     fontFamily: GoogleFonts.inter().fontFamily,
                     textTheme: GoogleFonts.interTextTheme(),
                     colorScheme: ColorScheme.fromSeed(
-                      seedColor: AppColors.brandRed,
+                      seedColor: AppColors.primaryBlue,
                       brightness: Brightness.light,
                     ),
                   ),
@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
                       ThemeData.dark().textTheme,
                     ),
                     colorScheme: ColorScheme.fromSeed(
-                      seedColor: AppColors.brandRed,
+                      seedColor: AppColors.primaryBlue,
                       brightness: Brightness.dark,
                     ),
                   ),

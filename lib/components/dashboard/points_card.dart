@@ -149,32 +149,32 @@ class PointsCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(8.r),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onTap: () {
-                  Navigator.pushNamed(context, AppRoutes.redeemPoints);
-                },
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 44.h,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Redeem Points',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16.sp,
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.redeemPoints);
+                  },
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 44.h,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Redeem Points',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.sp,
+                            color: AppColors.highlightYellow,
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Icon(
+                          Icons.arrow_forward,
+                          size: 20.sp,
                           color: AppColors.highlightYellow,
                         ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Icon(
-                        Icons.arrow_forward,
-                        size: 20.sp,
-                        color: AppColors.highlightYellow,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
               ),
             ),
           ],

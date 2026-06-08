@@ -64,7 +64,7 @@ class DashboardHeader extends StatelessWidget {
                         width: 34.w,
                         height: 34.w,
                         decoration: const BoxDecoration(
-                          color: AppColors.brandRed,
+                          color: AppColors.primaryBlue,
                           shape: BoxShape.circle,
                         ),
                         alignment: Alignment.center,

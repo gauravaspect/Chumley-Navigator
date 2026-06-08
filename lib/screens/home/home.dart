@@ -21,8 +21,6 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  static const _brandRed = AppColors.brandRed;
-
   int selectedIndex = 0;
   bool _showBottomBar = true;
 
@@ -214,7 +212,7 @@ class _HomeState extends State<Home> {
                                                 : item.icon,
                                             size: 22.sp,
                                             color: isSelected
-                                                ? _brandRed
+                                                ? AppColors.primaryBlue
                                                 : inactiveIcon,
                                           ),
                                         ),

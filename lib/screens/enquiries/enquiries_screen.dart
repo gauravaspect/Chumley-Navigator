@@ -261,7 +261,7 @@ class _SubmitButton extends StatelessWidget {
           height: 40.h,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppColors.brandRed,
+            color: AppColors.primaryBlue,
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Row(

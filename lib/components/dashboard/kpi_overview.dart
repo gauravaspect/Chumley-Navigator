@@ -136,7 +136,11 @@ class _KpiCard extends StatelessWidget {
                     );
                   },
                 ),
-                Image.asset(data.asset,height:24.h,color: AppColors.brandRed,)
+                Image.asset(
+                  data.asset,
+                  height: 24.h,
+                  color: AppColors.primaryBlue,
+                ),
               ],
             ),
           ),

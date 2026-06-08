@@ -347,7 +347,7 @@ class _ProfileHeroCard extends StatelessWidget {
       width: 80.w,
       height: 80.w,
       decoration: const BoxDecoration(
-        color: AppColors.brandRed,
+        color: AppColors.primaryBlue,
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
@@ -446,7 +446,7 @@ class _ProfileHeroCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 10.sp,
               fontWeight: FontWeight.w600,
-              color: theme.isDark ? AppColors.kpiBarHigh : AppColors.brandRed,
+              color: theme.isDark ? AppColors.kpiBarHigh : AppColors.primaryBlue,
             ),
           ),
         ],
@@ -500,7 +500,7 @@ class _AppearanceToggle extends StatelessWidget {
             ),
             value: isDark,
             activeThumbColor: AppColors.white,
-            activeTrackColor: AppColors.brandRed,
+            activeTrackColor: AppColors.primaryBlue,
             inactiveTrackColor: theme.progressTrack,
             onChanged: themeNotifier.setDark,
           ),
@@ -552,7 +552,7 @@ class _AddressTile extends StatelessWidget {
                   Icons.location_on_outlined,
                   color: theme.isDark
                       ? AppColors.kpiBarHigh
-                      : AppColors.brandRed,
+                      : AppColors.primaryBlue,
                   size: 16.sp,
                 ),
               ),

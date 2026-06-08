@@ -96,7 +96,7 @@ class LoginScreen extends StatelessWidget {
                                         height: 1.3,
                                         color: isDark
                                             ? theme.text
-                                            : AppColors.brandRedDeep,
+                                            : AppColors.textDarkBlue,
                                       ),
                                       textAlign: TextAlign.center,
                                     ),
@@ -186,11 +186,11 @@ class _LoginChip extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999.r),
         color: isDark
-            ? AppColors.brandRed.withValues(alpha: 0.15)
+            ? AppColors.primaryBlue.withValues(alpha: 0.15)
             : const Color(0xFFFFF4F4),
         border: Border.all(
           color: isDark
-              ? AppColors.brandRed.withValues(alpha: 0.35)
+              ? AppColors.primaryBlue.withValues(alpha: 0.35)
               : const Color(0xFFEBCFCF),
           width: 0.5,
         ),
@@ -198,14 +198,14 @@ class _LoginChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14.sp, color: AppColors.brandRed),
+          Icon(icon, size: 14.sp, color: AppColors.primaryBlue),
           SizedBox(width: 6.w),
           Text(
             label,
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w500,
-              color: isDark ? AppColors.brandRedSoft : AppColors.brandRedDark,
+              color: isDark ? AppColors.accentBlue : AppColors.primaryBlueDark,
             ),
           ),
         ],
@@ -232,7 +232,7 @@ class _MicrosoftSignInButton extends StatelessWidget {
         height: 48.h,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: AppColors.brandRed,
+          color: AppColors.primaryBlue,
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Row(
@@ -305,11 +305,11 @@ class _ChumleyAspectLockup extends StatelessWidget {
   final bool isDark;
 
   Color get _logoBoxBg => isDark
-      ? AppColors.brandRed.withValues(alpha: 0.12)
+      ? AppColors.primaryBlue.withValues(alpha: 0.12)
       : const Color(0xFFFFF4F4);
 
   Color get _logoBoxBorder => isDark
-      ? AppColors.brandRed.withValues(alpha: 0.3)
+      ? AppColors.primaryBlue.withValues(alpha: 0.3)
       : const Color(0xFFEBCFCF);
 
   Color get _separatorColor =>

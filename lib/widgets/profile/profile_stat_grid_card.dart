@@ -51,7 +51,7 @@ class ProfileStatGridCard extends StatelessWidget {
                     icon,
                     color: theme.isDark
                         ? AppColors.kpiBarHigh
-                        : AppColors.brandRed,
+                        : AppColors.primaryBlue,
                     size: 14.sp,
                   ),
                 ),

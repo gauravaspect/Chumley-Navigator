@@ -73,14 +73,16 @@ class _StepDot extends StatelessWidget {
     return Container(
       width: 28.w,
       height: 28.w,
-      decoration: BoxDecoration(
-        color: isActive ? AppColors.brandRed : theme.surface,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isActive ? AppColors.brandRed : theme.border,
-          width: 0.5,
-        ),
-      ),
+      decoration: isActive
+          ? const BoxDecoration(
+              color: AppColors.primaryBlue,
+              shape: BoxShape.circle,
+            )
+          : BoxDecoration(
+              color: theme.surface,
+              shape: BoxShape.circle,
+              border: Border.all(color: theme.border, width: 0.5),
+            ),
       alignment: Alignment.center,
       child: Text(
         label,

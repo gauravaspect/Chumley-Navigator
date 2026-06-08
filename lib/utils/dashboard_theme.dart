@@ -20,11 +20,11 @@ class DashboardTheme {
       isDark ? AppColors.darkSurfaceDeep : AppColors.lightSurfaceDeep;
   Color get border => isDark ? AppColors.darkBorder : AppColors.lightBorder;
   Color get text =>
-      isDark ? AppColors.darkText : AppColors.brandRedDeep;
+      isDark ? AppColors.darkText : AppColors.lightText;
   Color get textMuted =>
       isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
   Color get textBody =>
-      isDark ? AppColors.darkTextBody : AppColors.brandRedDeep;
+      isDark ? AppColors.darkTextBody : AppColors.textDarkBlue;
   Color get progressTrack =>
       isDark ? AppColors.darkProgressTrack : AppColors.lightProgressTrack;
 
@@ -39,16 +39,16 @@ class DashboardTheme {
   Color get headerBellBg =>
       isDark ? AppColors.darkSurfaceDeep : AppColors.lightHeaderBellBg;
 
-  Color get accent => AppColors.brandRed;
-  Color get accentSoft => AppColors.brandRedFill;
+  Color get accent => AppColors.primaryBlue;
+  Color get accentSoft => AppColors.chartFillBlue;
 
-  // Red-accent dashboard (home UI)
+  // Blue-accent dashboard (home UI)
   Color get dashCardBg => isDark ? AppColors.darkSurface : AppColors.white;
   Color get dashCardBorder =>
       isDark ? AppColors.darkBorder : DashboardPalette.borderLight;
   Color get dashCardBorderSoft => isDark
-      ? AppColors.brandRed.withValues(alpha: 0.35)
-      : AppColors.brandRed.withValues(alpha: 0.45);
+      ? AppColors.primaryBlue.withValues(alpha: 0.35)
+      : AppColors.primaryBlue.withValues(alpha: 0.45);
   Color get dashHeading =>
       isDark ? AppColors.darkText : DashboardPalette.heading;
   Color get dashTitle =>
@@ -58,9 +58,9 @@ class DashboardTheme {
   Color get dashMuted =>
       isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
   Color get dashPrimary =>
-      isDark ? AppColors.brandRedSoft : DashboardPalette.primary;
+      isDark ? AppColors.accentBlue : DashboardPalette.primary;
   Color get dashPrimaryCalendar =>
-      isDark ? AppColors.brandRedSoft : DashboardPalette.primary;
+      isDark ? AppColors.accentBlue : DashboardPalette.primary;
   Color get dashSurfaceTint =>
       isDark ? AppColors.darkSurfaceDeep : DashboardPalette.chartFill;
   Color get dashBorderLight =>
@@ -74,9 +74,9 @@ class DashboardTheme {
   Color get dashStarBg =>
       isDark ? AppColors.darkSurfaceDeep : AppColors.accentLime;
   Color get dashStarBorder =>
-      isDark ? AppColors.brandRedSoft : AppColors.starIconBorder;
+      isDark ? AppColors.accentBlue : AppColors.starIconBorder;
   Color get dashWelcomeHeading =>
-      isDark ? AppColors.brandRedSoft : DashboardPalette.heading;
+      isDark ? AppColors.accentBlue : DashboardPalette.heading;
   Color get dashWelcomeSubtext =>
       isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
   Color get dashHeaderBorder =>
@@ -84,22 +84,24 @@ class DashboardTheme {
   Color get dashShadow =>
       isDark ? Colors.transparent : AppColors.shadowSubtle;
   Color get dashCalendarDay =>
-      isDark ? AppColors.darkTextBody : AppColors.brandRedDeep;
+      isDark ? AppColors.darkTextBody : AppColors.textDarkBlue;
   Color get dashCalendarDisabled =>
       isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
   Color get dashTodayBg =>
-      isDark ? AppColors.brandRed.withValues(alpha: 0.2) : DashboardPalette.borderLight;
+      isDark
+          ? AppColors.primaryBlue.withValues(alpha: 0.2)
+          : DashboardPalette.borderLight;
   Color get dashSuccessBg =>
       isDark ? AppColors.trendUpBgDark : AppColors.successBackground;
   Color get dashSuccessFg =>
       isDark ? AppColors.trendUpDark : AppColors.successText;
   Color get dashCardShadow => isDark
       ? Colors.black.withValues(alpha: 0.25)
-      : AppColors.brandRedDeep.withValues(alpha: 0.06);
+      : AppColors.textDarkBlue.withValues(alpha: 0.06);
 
   Color get chartBarFill =>
-      AppColors.brandRed.withValues(alpha: isDark ? 0.35 : 0.25);
-  Color get chartBarSelected => AppColors.brandRed;
+      AppColors.primaryBlue.withValues(alpha: isDark ? 0.35 : 0.25);
+  Color get chartBarSelected => AppColors.primaryBlue;
   Color get chartGridLine =>
       isDark ? AppColors.darkBorder : AppColors.lightBorder;
 

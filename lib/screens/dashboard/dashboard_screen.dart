@@ -57,8 +57,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return Theme(
             data: Theme.of(context).copyWith(
               colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: AppColors.brandRed,
-                secondary: AppColors.brandRedSoft,
+                primary: AppColors.primaryBlue,
+                secondary: AppColors.accentBlue,
               ),
               iconTheme: IconThemeData(color: theme.dashPrimary),
             ),

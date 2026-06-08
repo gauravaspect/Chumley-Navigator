@@ -147,10 +147,10 @@ class _AvailablePointsCard extends StatelessWidget {
       margin: EdgeInsets.only(top: 12.h, bottom: 10.h),
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       decoration: BoxDecoration(
-        color: AppColors.brandRed,
+        color: AppColors.primaryBlue,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: AppColors.brandRedDark,
+          color: AppColors.primaryBlueDark,
           width: 0.5,
         ),
       ),
@@ -197,9 +197,9 @@ class _AvailablePointsCard extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
             decoration: BoxDecoration(
-              color: AppColors.brandRedDark,
+              color: AppColors.primaryBlueDark,
               borderRadius: BorderRadius.circular(20.r),
-              border: Border.all(color: AppColors.brandRedDeep, width: 0.5),
+              border: Border.all(color: AppColors.textDarkBlue, width: 0.5),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -243,7 +243,7 @@ class _RedeemCta extends StatelessWidget {
         margin: EdgeInsets.only(bottom: 10.h),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: AppColors.brandRed,
+          color: AppColors.primaryBlue,
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Row(

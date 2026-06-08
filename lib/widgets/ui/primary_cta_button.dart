@@ -35,7 +35,7 @@ class PrimaryCtaButton extends StatelessWidget {
         height: height ?? 48.h,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: backgroundColor ?? AppColors.brandRed,
+          color: backgroundColor ?? AppColors.primaryBlue,
           borderRadius: BorderRadius.circular(radius),
           boxShadow: ElevatedSurface.softShadows(elevation: 0.85),
         ),

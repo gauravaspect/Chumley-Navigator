@@ -35,10 +35,15 @@ class AbsenceWholeDaySwitch extends StatelessWidget {
             curve: Curves.easeOutCubic,
             width: 38.w,
             height: 20.h,
-            decoration: BoxDecoration(
-              color: value ? theme.dashPrimary : theme.dashChipBg,
-              borderRadius: BorderRadius.circular(999.r),
-            ),
+            decoration: value
+                ? BoxDecoration(
+                    color: theme.dashPrimary,
+                    borderRadius: BorderRadius.circular(999.r),
+                  )
+                : BoxDecoration(
+                    color: theme.dashChipBg,
+                    borderRadius: BorderRadius.circular(999.r),
+                  ),
             child: AnimatedAlign(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOutCubic,
