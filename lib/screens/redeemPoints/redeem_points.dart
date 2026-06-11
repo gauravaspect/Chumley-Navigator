@@ -12,8 +12,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class RedeemPointsScreen extends StatelessWidget {
+class RedeemPointsScreen extends StatefulWidget {
   const RedeemPointsScreen({super.key});
+
+  @override
+  State<RedeemPointsScreen> createState() => _RedeemPointsScreenState();
+}
+
+class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +101,7 @@ class RedeemPointsScreen extends StatelessWidget {
                 ),
                 Expanded(
                   child: SingleChildScrollView(
+                    controller: _scrollController,
                     physics: const BouncingScrollPhysics(),
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Column(
@@ -100,7 +114,7 @@ class RedeemPointsScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 10.h),
                         _RedeemCta(theme: theme),
-                        const RewardsJourneyList(),
+                        RewardsJourneyList(scrollController: _scrollController),
                         _ClaimedRewards(theme: theme),
                         SizedBox(height: 24.h),
                       ],

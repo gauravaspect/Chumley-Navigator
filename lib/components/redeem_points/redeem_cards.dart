@@ -103,7 +103,9 @@ const _rewards = [
 // ── Main Widget ───────────────────────────────────────────────────────────────
 
 class RewardsJourneyList extends StatefulWidget {
-  const RewardsJourneyList({super.key});
+  const RewardsJourneyList({super.key, this.scrollController});
+
+  final ScrollController? scrollController;
 
   @override
   State<RewardsJourneyList> createState() => _RewardsJourneyListState();
@@ -136,15 +138,57 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
             style: TextStyle(fontSize: 11.sp, color: theme.textMuted),
           ),
           SizedBox(height: 12.h),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _rewards.length,
-            itemBuilder: (_, i) => Padding(
-              padding: EdgeInsets.only(bottom: 12.h),
-              child: _rewardCard(theme: theme, item: _rewards[i]),
+          if (widget.scrollController == null)
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _rewards.length,
+              itemBuilder: (_, i) => Padding(
+                padding: EdgeInsets.only(bottom: 12.h),
+                child: _rewardCard(theme: theme, item: _rewards[i]),
+              ),
+            )
+          else
+            AnimatedBuilder(
+              animation: widget.scrollController!,
+              builder: (context, _) {
+                final double scrollOffset = widget.scrollController!.hasClients
+                    ? widget.scrollController!.offset
+                    : 0.0;
+
+                final double cardHeight = 246.h;
+                final double spacing = 12.h;
+                final double pinSpacing = 36.h;
+                final double listTopOffset = 269.h;
+                final double totalHeight = _rewards.length * cardHeight + (_rewards.length - 1) * spacing;
+
+                return SizedBox(
+                  height: totalHeight,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: List.generate(_rewards.length, (i) {
+                      final double normalTop = i * (cardHeight + spacing);
+                      final double viewportTopNormal = listTopOffset + normalTop - scrollOffset;
+
+                      final double pinnedViewportTop = i * pinSpacing;
+                      final double limitViewportTop = listTopOffset + totalHeight - cardHeight - scrollOffset;
+                      final double clampedViewportTop = pinnedViewportTop < limitViewportTop ? pinnedViewportTop : limitViewportTop;
+
+                      final double finalViewportTop = viewportTopNormal > clampedViewportTop ? viewportTopNormal : clampedViewportTop;
+                      final double finalLocalTop = finalViewportTop - listTopOffset + scrollOffset;
+
+                      return Positioned(
+                        top: finalLocalTop,
+                        left: 0,
+                        right: 0,
+                        height: cardHeight,
+                        child: _rewardCard(theme: theme, item: _rewards[i]),
+                      );
+                    }),
+                  ),
+                );
+              },
             ),
-          ),
         ],
       ),
     );
@@ -166,6 +210,13 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
           width: 0.5,
         ),
         borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: theme.isDark ? Colors.black.withOpacity(0.25) : Colors.black.withOpacity(0.06),
+            blurRadius: 12.r,
+            offset: Offset(0, 4.h),
+          ),
+        ],
       ),
       padding: EdgeInsets.all(12.r),
       child: Column(

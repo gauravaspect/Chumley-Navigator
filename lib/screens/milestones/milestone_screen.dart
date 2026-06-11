@@ -151,6 +151,12 @@ class _MilestoneScreenState extends State<MilestoneScreen> {
                         expandedHeight: _brandingExpandedHeight,
                         collapsedHeight: _brandingCollapsedHeight,
                         theme: theme,
+                        title: Text('Milestones' ,style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.6,
+                          color: theme.textBody,
+                        ),),
                       ),
                     );
                   },

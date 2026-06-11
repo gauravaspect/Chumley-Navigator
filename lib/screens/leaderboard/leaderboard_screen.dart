@@ -160,7 +160,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 final users = leaderboard?.users ?? const <LeaderboardUser>[];
                 final showShimmer = state is LeaderboardInitial ||
                     (state is LeaderboardLoading && users.isEmpty);
-                final isStale = leaderboard?.stale ?? false;
+                // final isStale = leaderboard?.stale ?? false;
                 final tableRows = _tableRows(users);
 
                 return Scaffold(
@@ -204,18 +204,18 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                     );
                                   },
                                 ),
-                                if (isStale) ...[
-                                  SizedBox(height: 6.h),
-                                  Text(
-                                    'Showing cached data',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 9.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: theme.textMuted,
-                                    ),
-                                  ),
-                                ],
+                                // if (isStale) ...[
+                                //   SizedBox(height: 6.h),
+                                //   Text(
+                                //     'Showing cached data',
+                                //     textAlign: TextAlign.center,
+                                //     style: TextStyle(
+                                //       fontSize: 9.sp,
+                                //       fontWeight: FontWeight.w500,
+                                //       color: theme.textMuted,
+                                //     ),
+                                //   ),
+                                // ],
                                 SizedBox(height: 14.h),
                                   if (showShimmer)
                                     LeaderboardShimmer(theme: theme)
@@ -286,6 +286,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                 expandedHeight: _brandingExpandedHeight,
                                 collapsedHeight: _brandingCollapsedHeight,
                                 theme: theme,
+                                title: Text(
+                                  'Engineer leaderboard',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.6,
+                                    color: theme.textBody,
+                                  ),
+                                ),
                               ),
                             );
                           },

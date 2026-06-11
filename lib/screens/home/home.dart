@@ -90,14 +90,34 @@ class _HomeState extends State<Home> {
           body: Stack(
             fit: StackFit.expand,
             children: [
-              NotificationListener<UserScrollNotification>(
+              NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
-                  final direction = notification.direction;
-                  if (direction == ScrollDirection.reverse && _showBottomBar) {
-                    setState(() => _showBottomBar = false);
-                  } else if (direction == ScrollDirection.forward &&
-                      !_showBottomBar) {
-                    setState(() => _showBottomBar = true);
+                  final metrics = notification.metrics;
+
+                  // If there is not much data (scrollable range fits or is very short),
+                  // keep the bottom navigation bar visible.
+                  if (metrics.maxScrollExtent <= 100.h) {
+                    if (!_showBottomBar) {
+                      setState(() => _showBottomBar = true);
+                    }
+                    return false;
+                  }
+
+                  if (notification is UserScrollNotification) {
+                    final direction = notification.direction;
+                    if (direction == ScrollDirection.reverse && _showBottomBar) {
+                      setState(() => _showBottomBar = false);
+                    } else if (direction == ScrollDirection.forward &&
+                        !_showBottomBar) {
+                      setState(() => _showBottomBar = true);
+                    }
+                  } else if (notification is ScrollEndNotification) {
+                    // Automatically show the bottom navigation bar when scrolling ends and we are at/near the top boundary.
+                    if (metrics.pixels <= 0) {
+                      if (!_showBottomBar) {
+                        setState(() => _showBottomBar = true);
+                      }
+                    }
                   }
                   return false;
                 },

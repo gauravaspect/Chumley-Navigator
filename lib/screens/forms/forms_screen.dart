@@ -157,6 +157,15 @@ class _FormsScreenState extends State<FormsScreen> {
                         expandedHeight: _brandingExpandedHeight,
                         collapsedHeight: _brandingCollapsedHeight,
                         theme: theme,
+                        title: Text(
+                          'Forms',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.6,
+                            color: theme.textBody,
+                          ),
+                        ),
                       ),
                     );
                   },

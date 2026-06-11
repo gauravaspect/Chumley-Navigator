@@ -15,10 +15,9 @@ class VcrPageHeader extends StatelessWidget {
         Text(
           'Vehicle Condition Report (VCR)',
           style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w500,
-            height: 1.3,
-            color: theme.text,
+            fontSize: 20.sp,
+            fontWeight: FontWeight.bold,
+            color: theme.dashHeading,
           ),
         ),
         SizedBox(height: 6.h),

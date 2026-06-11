@@ -409,6 +409,15 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
                               expandedHeight: _brandingExpandedHeight,
                               collapsedHeight: _brandingCollapsedHeight,
                               theme: theme,
+                              title: Text(
+                                'Vehicle check Report',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.6,
+                                  color: theme.textBody,
+                                ),
+                              ),
                             ),
                           );
                         },

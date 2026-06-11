@@ -185,6 +185,15 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
                         expandedHeight: _brandingExpandedHeight,
                         collapsedHeight: _brandingCollapsedHeight,
                         theme: theme,
+                        title: Text(
+                          'Enquiries',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.6,
+                            color: theme.textBody,
+                          ),
+                        ),
                       ),
                     );
                   },

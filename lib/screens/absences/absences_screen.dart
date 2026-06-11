@@ -143,8 +143,26 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // const AspectBranding(),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 14.h),
+                        ValueListenableBuilder<double>(
+                          valueListenable: _collapseProgress,
+                          builder: (context, progress, _) {
+                            return Opacity(
+                              opacity: (1.0 - progress).clamp(0.0, 1.0),
+                              child: Text(
+                                'Absences',
+                                textAlign: TextAlign.left,
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.6,
+                                  color: theme.dashTitle,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        SizedBox(height: 14.h),
                         FadeSlideIn(
                           child: AbsenceCalendar(
                             markedDays: _calendarMarks,
@@ -300,6 +318,15 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                           expandedHeight: _brandingExpandedHeight,
                           collapsedHeight: _brandingCollapsedHeight,
                           theme: theme,
+                          title: Text(
+                            'Absences',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.6,
+                              color: theme.dashTitle,
+                            ),
+                          ),
                         ),
                       );
                     },
