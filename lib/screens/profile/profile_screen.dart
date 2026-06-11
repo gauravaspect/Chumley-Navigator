@@ -11,6 +11,7 @@ import 'package:chumley_navigator/utils/user_display.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/profile/profile_info_row.dart';
 import 'package:chumley_navigator/widgets/profile/profile_stat_grid_card.dart';
+import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
 import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:flutter/material.dart';
@@ -50,9 +51,33 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   UserModel? _fallbackUser;
 
+  final _scrollController = ScrollController();
+
+  /// 0.0 = expanded, 1.0 = collapsed — updated every scroll frame.
+  final ValueNotifier<double> _collapseProgress = ValueNotifier(0);
+
+  static const double _brandingExpandedHeight = 56;
+  static const double _brandingCollapsedHeight = 44;
+  static const double _scrollThreshold = 100;
+
+  static double _easedCollapseProgress(double offset) {
+    final raw = (offset / _scrollThreshold).clamp(0.0, 1.0);
+    return Curves.easeOutCubic.transform(raw);
+  }
+
+  void _onScroll() {
+    final progress = _easedCollapseProgress(_scrollController.offset);
+    if (_collapseProgress.value != progress) {
+      _collapseProgress.value = progress;
+    }
+  }
+
+
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     Prefs.getUser().then((user) {
       if (mounted && user != null) {
         setState(() => _fallbackUser = user);
@@ -61,11 +86,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _collapseProgress.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocBuilder<DashboardCubit, DashboardState>(
       builder: (context, state) {
         final user = _resolveUser(state);
-        return _ProfileContent(user: user, gridItems: _gridItems(user));
+        return _ProfileContent(
+          user: user,
+          gridItems: _gridItems(user),
+          scrollController: _scrollController,
+          brandingCollapsedHeight: _brandingCollapsedHeight,
+          brandingExpandedHeight: _brandingExpandedHeight,
+          collapseProgress: _collapseProgress,
+        );
       },
     );
   }
@@ -138,10 +178,18 @@ class _ProfileContent extends StatelessWidget {
   const _ProfileContent({
     required this.user,
     required this.gridItems,
+    required this.scrollController,
+    required this.brandingCollapsedHeight,
+    required this.brandingExpandedHeight,
+    required this.collapseProgress
   });
 
   final UserModel user;
   final List<_GridItem> gridItems;
+  final ScrollController scrollController;
+  final ValueNotifier<double> collapseProgress;
+  final double brandingExpandedHeight;
+  final double brandingCollapsedHeight;
 
   String _display(String value, [String fallback = '—']) {
     final trimmed = value.trim();
@@ -158,146 +206,146 @@ class _ProfileContent extends StatelessWidget {
         return Scaffold(
           backgroundColor: theme.base,
           body: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 16.h),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _ProfileBackButton(theme: theme),
-                    SizedBox(height: 8.h),
-                    const AspectBranding(),
-                    SizedBox(height: 14.h),
-                    Text(
-                      'User profile',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.6,
-                        color: theme.textMuted,
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  controller: scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.only(
+                    left: 16.w,
+                    right: 16.w,
+                    top: brandingExpandedHeight,
+                    bottom: 24.h,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ValueListenableBuilder<double>(
+                        valueListenable: collapseProgress,
+                        builder: (context, progress, _) {
+                          return Opacity(
+                            opacity: (1.0 - progress).clamp(0.0, 1.0),
+                            child: Text(
+                              'User profile',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.6,
+                                color: theme.textMuted,
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                    SizedBox(height: 14.h),
-                    FadeSlideIn(
-                      child: _ProfileHeroCard(theme: theme, user: user),
-                    ),
-                    SizedBox(height: 10.h),
-                    FadeSlideIn(
-                      delay: const Duration(milliseconds: 50),
-                      child: _SectionLabel(theme: theme, label: 'DETAILS'),
-                    ),
-                    SizedBox(height: 8.h),
-                    ProfileInfoRow(
-                      label: 'Trade',
-                      value: _display(user.bio.trade),
-                    ),
-                    ProfileInfoRow(
-                      label: 'Position',
-                      value: _display(user.position),
-                    ),
-                    if (user.bio.rateTier.trim().isNotEmpty)
-                      ProfileInfoRow(
-                        label: 'Rate tier',
-                        value: user.bio.rateTier.trim(),
-                      ),
-                    if (user.bio.description.trim().isNotEmpty) ...[
-                      SizedBox(height: 6.h),
-                      ProfileInfoRow(
-                        label: 'About',
-                        value: user.bio.description.trim(),
-                      ),
-                    ],
-                    SizedBox(height: 6.h),
-                    FadeSlideIn(
-                      delay: const Duration(milliseconds: 80),
-                      child: _SectionLabel(theme: theme, label: 'STATS'),
-                    ),
-                    SizedBox(height: 8.h),
-                    GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 8.h,
-                        crossAxisSpacing: 8.w,
-                        childAspectRatio: 1.12,
-                      ),
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: gridItems.length,
-                      itemBuilder: (context, index) {
-                        final data = gridItems[index];
-                        return FadeSlideIn(
-                          delay: Duration(milliseconds: 35 * index),
-                          offsetY: 8,
-                          child: ProfileStatGridCard(
-                            icon: data.icon,
-                            title: data.title,
-                            body: data.body,
+                      SizedBox(height: 14.h),
+                        FadeSlideIn(
+                          child: _ProfileHeroCard(theme: theme, user: user),
+                        ),
+                        SizedBox(height: 10.h),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 50),
+                          child: _SectionLabel(theme: theme, label: 'DETAILS'),
+                        ),
+                        SizedBox(height: 8.h),
+                        ProfileInfoRow(
+                          label: 'Trade',
+                          value: _display(user.bio.trade),
+                        ),
+                        ProfileInfoRow(
+                          label: 'Position',
+                          value: _display(user.position),
+                        ),
+                        if (user.bio.rateTier.trim().isNotEmpty)
+                          ProfileInfoRow(
+                            label: 'Rate tier',
+                            value: user.bio.rateTier.trim(),
                           ),
-                        );
-                      },
+                        if (user.bio.description.trim().isNotEmpty) ...[
+                          SizedBox(height: 6.h),
+                          ProfileInfoRow(
+                            label: 'About',
+                            value: user.bio.description.trim(),
+                          ),
+                        ],
+                        SizedBox(height: 6.h),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 80),
+                          child: _SectionLabel(theme: theme, label: 'STATS'),
+                        ),
+                        SizedBox(height: 8.h),
+                        GridView.builder(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 8.h,
+                            crossAxisSpacing: 8.w,
+                            childAspectRatio: 1.12,
+                          ),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: gridItems.length,
+                          itemBuilder: (context, index) {
+                            final data = gridItems[index];
+                            return FadeSlideIn(
+                              delay: Duration(milliseconds: 35 * index),
+                              offsetY: 8,
+                              child: ProfileStatGridCard(
+                                icon: data.icon,
+                                title: data.title,
+                                body: data.body,
+                              ),
+                            );
+                          },
+                        ),
+                        SizedBox(height: 6.h),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 120),
+                          child: _AddressTile(
+                            theme: theme,
+                            address: user.bio.address,
+                          ),
+                        ),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 150),
+                          child: _AppearanceToggle(theme: theme),
+                        ),
+                        SizedBox(height: 10.h),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 180),
+                          child: _LogoutButton(theme: theme),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 6.h),
-                    FadeSlideIn(
-                      delay: const Duration(milliseconds: 120),
-                      child: _AddressTile(
+                  ),
+                ValueListenableBuilder<double>(
+                  valueListenable: collapseProgress,
+                  builder: (context, progress, _) {
+                    return Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: AspectBranding(
+                        progress: progress,
+                        expandedHeight: brandingExpandedHeight,
+                        collapsedHeight: brandingCollapsedHeight,
                         theme: theme,
-                        address: user.bio.address,
                       ),
-                    ),
-                    FadeSlideIn(
-                      delay: const Duration(milliseconds: 150),
-                      child: _AppearanceToggle(theme: theme),
-                    ),
-                    SizedBox(height: 10.h),
-                    FadeSlideIn(
-                      delay: const Duration(milliseconds: 180),
-                      child: _LogoutButton(theme: theme),
-                    ),
-                    SizedBox(height: 24.h),
-                  ],
+                    );
+                  },
                 ),
-              ),
+                Positioned(
+                  top: 8.h,
+                  left: 16.w,
+                  child: CommandCentreBackButton(
+                    onTap: () => Navigator.of(context).pop(),
+                    semanticsLabel: 'Back to home',
+                  ),
+                ),
+              ],
             ),
           ),
         );
       },
-    );
-  }
-}
-
-class _ProfileBackButton extends StatelessWidget {
-  const _ProfileBackButton({required this.theme});
-
-  final DashboardTheme theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Semantics(
-        label: 'Back to home',
-        button: true,
-        child: PressableScale(
-          onTap: () => Navigator.of(context).pop(),
-          scale: 0.92,
-          child: Container(
-            width: 30.w,
-            height: 30.w,
-            decoration: BoxDecoration(
-              color: theme.headerBellBg,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 14.sp,
-              color: theme.textMuted,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

@@ -6,6 +6,8 @@ import 'package:chumley_navigator/core/storage/prefs.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:dio/dio.dart';
 
+import '../../../models/points_model.dart';
+
 class DashboardApiService {
   DashboardApiService(this._apiClient);
 
@@ -48,6 +50,45 @@ class DashboardApiService {
       throw DashboardApiException(NetworkExceptions.getError(e));
     }
   }
+
+  Future<EngineerPerformanceHistory> fetchPoints({int months = 12})async{
+    if (!ApiEndpoints.isConfigured) {
+      throw const DashboardApiException(
+        'API server URL is not configured. Set API_BASE_URL when running the app.',
+      );
+    }
+
+    final authUser = await Prefs.getAuthUser();
+    final engineerId = authUser?.engineerId.trim().isNotEmpty == true
+        ? authUser!.engineerId
+        : authUser?.id ?? '';
+
+    if (engineerId.isEmpty) {
+      throw const DashboardApiException(
+        'Engineer profile is unavailable. Please sign in again.',
+      );
+    }
+
+    try{
+      final response = await _apiClient.get(
+        ApiEndpoints.getPointsData(engineerId,month: months),
+      );
+      final body = ApiResponseHelper.toMap(response.data);
+
+      if (body['success'] == false) {
+        throw DashboardApiException(
+          ApiResponseHelper.extractMessage(body, fallback: 'Unable to load dashboard.'),
+        );
+      }
+      return EngineerPerformanceHistory.fromJson(body);
+    }on DashboardApiException {
+      rethrow;
+    } on DioException catch (e) {
+      throw DashboardApiException(NetworkExceptions.getError(e));
+    }
+
+  }
+
 }
 
 class DashboardApiException implements Exception {

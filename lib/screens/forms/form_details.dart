@@ -182,6 +182,11 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
 
   late final _FormContent _c;
   final ScrollController _scrollController = ScrollController();
+  final ValueNotifier<double> _collapseProgress = ValueNotifier(0);
+
+  static const double _brandingExpandedHeight = 72;
+  static const double _brandingCollapsedHeight = 54;
+  static const double _scrollThreshold = 100;
 
   int _currentStep = 0;
 
@@ -192,15 +197,30 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
 
   DashboardTheme get _t => DashboardTheme.of(context);
 
+  static double _easedCollapseProgress(double offset) {
+    final raw = (offset / _scrollThreshold).clamp(0.0, 1.0);
+    return Curves.easeOutCubic.transform(raw);
+  }
+
+  void _onScroll() {
+    final progress = _easedCollapseProgress(_scrollController.offset);
+    if (_collapseProgress.value != progress) {
+      _collapseProgress.value = progress;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _c = widget.formType == FormType.eicr ? _eicrContent : _dampContent;
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _collapseProgress.dispose();
     super.dispose();
   }
 
@@ -458,31 +478,6 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
   // ═══════════════════════════════════════════════════════════
   // TOP BAR
   // ═══════════════════════════════════════════════════════════
-
-  PreferredSizeWidget _buildAppBar() {
-    return PreferredSize(
-      preferredSize: Size.fromHeight(88.h),
-      child: AppBar(
-        backgroundColor: _t.base,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        leadingWidth: 60.w,
-        titleSpacing: 0,
-        leading: Padding(
-          padding: EdgeInsets.only(left: 16.w),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: CommandCentreBackButton(
-              onTap: () => Navigator.maybePop(context),
-            ),
-          ),
-        ),
-        title: const AspectBranding(),
-      ),
-    );
-  }
 
   // ═══════════════════════════════════════════════════════════
   // INFO CARD  (Customer / Appointment / Ref)
@@ -1119,45 +1114,87 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
       builder: (context, _) {
         return Scaffold(
           backgroundColor: _t.base,
-          appBar: _buildAppBar(),
-          body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              padding: EdgeInsets.fromLTRB(14.w, 16.h, 14.w, 24.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildPageHeader(),
-                  SizedBox(height: 16.h),
-                  _buildInfoCard(),
-                  SizedBox(height: 8.h),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 280),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, 0.03),
-                            end: Offset.zero,
-                          ).animate(animation),
-                          child: child,
+          body: SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: Stack(
+                    children: [
+                      SingleChildScrollView(
+                        controller: _scrollController,
+                        physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(
+                          14.w,
+                          _brandingExpandedHeight + 28,
+                          14.w,
+                          24.h,
                         ),
-                      );
-                    },
-                    child: _buildStepContent(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ValueListenableBuilder<double>(
+                              valueListenable: _collapseProgress,
+                              builder: (context, progress, _) {
+                                return Opacity(
+                                  opacity: (1.0 - progress).clamp(0.0, 1.0),
+                                  child: _buildPageHeader(),
+                                );
+                              },
+                            ),
+                            SizedBox(height: 16.h),
+                            _buildInfoCard(),
+                            SizedBox(height: 8.h),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 280),
+                              switchInCurve: Curves.easeOutCubic,
+                              switchOutCurve: Curves.easeInCubic,
+                              transitionBuilder: (child, animation) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0, 0.03),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: _buildStepContent(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ValueListenableBuilder<double>(
+                        valueListenable: _collapseProgress,
+                        builder: (context, progress, _) {
+                          return Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: AspectBranding(
+                              progress: progress,
+                              expandedHeight: _brandingExpandedHeight,
+                              collapsedHeight: _brandingCollapsedHeight,
+                              theme: _t,
+                            ),
+                          );
+                        },
+                      ),
+                      Positioned(
+                        top: 8.h,
+                        left: 16.w,
+                        child: CommandCentreBackButton(
+                          onTap: () => Navigator.maybePop(context),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                _buildStickyFooter(),
+              ],
             ),
           ),
-          _buildStickyFooter(),
-        ],
-      ),
         );
       },
     );

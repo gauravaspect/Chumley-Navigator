@@ -9,18 +9,27 @@ class DashboardCubit extends Cubit<DashboardState> {
   final DashboardRepository _repository;
 
   Future<void> load() async {
-    final cached = await _repository.readCachedProfile();
-    emit(DashboardLoading(cachedUser: cached));
+    final staleUser =
+        state.userOrNull ?? await _repository.readCachedProfile();
+    final stalePoints =
+        state.performanceHistoryOrNull ?? await _repository.readCachedPoints();
+    emit(DashboardLoading(cachedUser: staleUser, cachedPoints: stalePoints));
 
     try {
       final user = await _repository.fetchDashboardData();
-      emit(DashboardLoaded(user));
+      final points = await _repository.fetchPoints();
+      emit(DashboardLoaded(user: user, performanceHistory: points));
     } on DashboardApiException catch (e) {
-      emit(DashboardError(message: e.message, cachedUser: cached));
+      emit(DashboardError(
+        message: e.message,
+        cachedUser: staleUser,
+        cachedPoints: stalePoints,
+      ));
     } catch (_) {
       emit(DashboardError(
         message: 'Unable to load dashboard. Please try again.',
-        cachedUser: cached,
+        cachedUser: staleUser,
+        cachedPoints: stalePoints,
       ));
     }
   }

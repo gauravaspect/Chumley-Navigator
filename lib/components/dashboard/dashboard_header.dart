@@ -46,10 +46,14 @@ class DashboardHeader extends StatelessWidget {
 
     return SkeletonShimmer(
       isLoading: isLoading,
+      baseColor: theme.shimmerBase,
+      highlightColor: theme.shimmerHighlight,
       child: isLoading
           ? SkeletonBox(
               height: 40.h,
               borderRadius: BorderRadius.circular(8.r),
+              baseColor: theme.shimmerBase,
+              highlightColor: theme.shimmerHighlight,
             )
           : Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -1,19 +1,74 @@
+import 'package:chumley_navigator/models/points_model.dart';
+import 'package:chumley_navigator/models/user_model.dart';
+import 'package:chumley_navigator/screens/dashboard/cubit/dashboard_cubit.dart';
+import 'package:chumley_navigator/screens/dashboard/cubit/dashboard_state.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/utils/number_display.dart';
 import 'package:chumley_navigator/utils/routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../redeem_points/redeem_points_bottom_model.dart';
 
 class PointsCard extends StatelessWidget {
-  const PointsCard({super.key});
+  const PointsCard({
+    super.key,
+    required this.user,
+  });
+
+  final UserModel user;
+
+  int get _points => user.performanceScore.round();
 
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
     final iconColor = theme.dashPrimary;
 
+    return BlocBuilder<DashboardCubit, DashboardState>(
+      builder: (context, state) {
+        final history = state.performanceHistoryOrNull;
+        final cumulativePoints = history?.cumulativeTotal ?? _points;
+        final thisMonthPoints = history?.thisMonthTotal ?? 0;
+        final cumulativeLabel = formatIntegerWithCommas(cumulativePoints);
+        final thisMonthLabel =
+            '${formatSignedIntegerWithCommas(thisMonthPoints)} this month';
+
+        return _PointsCardBody(
+          theme: theme,
+          iconColor: iconColor,
+          user: user,
+          performanceHistory:
+              history ?? const EngineerPerformanceHistory(),
+          cumulativeLabel: cumulativeLabel,
+          thisMonthLabel: thisMonthLabel,
+        );
+      },
+    );
+  }
+}
+
+class _PointsCardBody extends StatelessWidget {
+  const _PointsCardBody({
+    required this.theme,
+    required this.iconColor,
+    required this.user,
+    required this.performanceHistory,
+    required this.cumulativeLabel,
+    required this.thisMonthLabel,
+  });
+
+  final DashboardTheme theme;
+  final Color iconColor;
+  final UserModel user;
+  final EngineerPerformanceHistory performanceHistory;
+  final String cumulativeLabel;
+  final String thisMonthLabel;
+
+  @override
+  Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
@@ -72,7 +127,9 @@ class PointsCard extends StatelessWidget {
                           backgroundColor: Colors.transparent,
                           builder: (context) => SizedBox(
                             height: MediaQuery.of(context).size.height * 0.90,
-                            child: const RedeemPointsBottomModal(),
+                            child: RedeemPointsBottomModal(
+                              performanceHistory: performanceHistory,
+                            ),
                           ),
                         );
                       },
@@ -85,7 +142,14 @@ class PointsCard extends StatelessWidget {
                     _IconButton(
                       backgroundColor: theme.dashIconButtonBg,
                       onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.redeemPoints);
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.redeemPoints,
+                          arguments: {
+                            'user': user,
+                            'performanceHistory': performanceHistory,
+                          },
+                        );
                       },
                       child: CustomPaint(
                         size: Size(14.w, 14.w),
@@ -104,7 +168,7 @@ class PointsCard extends StatelessWidget {
                   text: TextSpan(
                     children: [
                       TextSpan(
-                        text: '0 ',
+                        text: '$cumulativeLabel ',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 28.sp,
@@ -132,11 +196,11 @@ class PointsCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999.r),
                   ),
                   child: Text(
-                    '0 this month',
+                    thisMonthLabel,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 11.5.sp,
-                      color: theme.dashMuted,
+                      color: theme.dashPrimaryCalendar,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
@@ -150,7 +214,14 @@ class PointsCard extends StatelessWidget {
               clipBehavior: Clip.antiAlias,
               child: InkWell(
                   onTap: () {
-                    Navigator.pushNamed(context, AppRoutes.redeemPoints);
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.redeemPoints,
+                      arguments: {
+                        'user': user,
+                        'performanceHistory': performanceHistory,
+                      },
+                    );
                   },
                   child: SizedBox(
                     width: double.infinity,

@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/utils/routes.dart';
@@ -20,20 +21,55 @@ class _CardData {
   final String asset;
 }
 
-const List<_CardData> _cards = [
-  _CardData(label: 'Conversion Pool', value: 8.1, max: 20, asset: 'assets/icons/conversion_pool.png'),
-  _CardData(label: 'Productivity Pool', value: 12.1, max: 20,asset: 'assets/icons/productivity_pool.png'),
-  _CardData(label: 'Procedural Pool', value: 14.2, max: 20,asset: 'assets/icons/procedural_pool.png'),
-  _CardData(label: 'Vehicular Pool', value: 18.1, max: 20,asset: 'assets/icons/vehicular_pool.png'),
-  _CardData(label: 'Satisfaction Pool', value: 16.7, max: 20,asset: 'assets/icons/star.png'),
-];
+const _kpiMax = 20.0;
+
+List<_CardData> _cardsFromUser(UserModel user) {
+  return [
+    _CardData(
+      label: 'Conversion Pool',
+      value: user.conversion.score,
+      max: _kpiMax,
+      asset: 'assets/icons/conversion_pool.png',
+    ),
+    _CardData(
+      label: 'Productivity Pool',
+      value: user.productivity.score,
+      max: _kpiMax,
+      asset: 'assets/icons/productivity_pool.png',
+    ),
+    _CardData(
+      label: 'Procedural Pool',
+      value: user.procedural.score,
+      max: _kpiMax,
+      asset: 'assets/icons/procedural_pool.png',
+    ),
+    _CardData(
+      label: 'Vehicular Pool',
+      value: user.vehicular.score,
+      max: _kpiMax,
+      asset: 'assets/icons/vehicular_pool.png',
+    ),
+    _CardData(
+      label: 'Satisfaction Pool',
+      value: user.cSat.score,
+      max: _kpiMax,
+      asset: 'assets/icons/star.png',
+    ),
+  ];
+}
 
 class KpiOverview extends StatelessWidget {
-  const KpiOverview({super.key});
+  const KpiOverview({
+    super.key,
+    required this.user,
+  });
+
+  final UserModel user;
 
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
+    final cards = _cardsFromUser(user);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +95,7 @@ class KpiOverview extends StatelessWidget {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: _cards.length,
+            itemCount: cards.length,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 12.w,
@@ -75,7 +111,7 @@ class KpiOverview extends StatelessWidget {
                   },
                   borderRadius: BorderRadius.circular(18.r),
                   child: _KpiCard(
-                    data: _cards[index],
+                    data: cards[index],
                     theme: theme,
                   ),
                 ),

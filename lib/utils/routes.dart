@@ -36,7 +36,10 @@ class AppRoutes {
       create: (_) => AppDependencies.createDashboardCubit()..load(),
       child: const ProfileScreen(),
     ),
-    AppRoutes.vehicleForm: (context) => const VehicleForm(),
+    AppRoutes.vehicleForm: (context) => BlocProvider(
+      create: (_) => AppDependencies.createVcrExamplesCubit(),
+      child: const VehicleForm(),
+    ),
     AppRoutes.earningsDetail: (context) => const EarningsDetailScreen(),
   };
 }

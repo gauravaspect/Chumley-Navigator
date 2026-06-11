@@ -2,15 +2,21 @@ import 'dart:convert';
 
 import 'package:chumley_navigator/core/storage/session_storage.dart';
 import 'package:chumley_navigator/models/auth_user.dart';
+import 'package:chumley_navigator/models/leaderboard_model.dart';
+import 'package:chumley_navigator/models/points_model.dart';
 import 'package:chumley_navigator/models/user_model.dart';
+import 'package:chumley_navigator/models/vehicle_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Prefs {
   static const _sessionTokenKey = 'sessionToken';
   static const _userKey = 'user';
+  static const _leaderboardKey = 'leaderboard';
   static const _authUserKey = 'authUser';
   static const _bearerKey = 'bearer';
   static const _refreshTokenKey = 'refreshToken';
+  static const _pointsKey = 'performanceHistory';
+  static const _vehicleAllocationsKey = 'vehicleAllocations';
 
   static Future<SharedPreferences> getPrefs() async {
     return await SharedPreferences.getInstance();
@@ -91,7 +97,7 @@ class Prefs {
 
   static Future<void> saveUser(UserModel user) async {
     final prefs = await getPrefs();
-    await prefs.setString(_userKey, jsonEncode(user.toJson()));
+    await prefs.setString(_userKey, jsonEncode(user.toCacheJson()));
   }
 
   static Future<UserModel?> getUser() async {
@@ -101,13 +107,85 @@ class Prefs {
     try {
       final decoded = jsonDecode(userJson);
       if (decoded is Map<String, dynamic>) {
-        return UserModel.fromJson(decoded);
+        return UserModel.fromCacheJson(decoded);
       }
       if (decoded is Map) {
-        return UserModel.fromJson(Map<String, dynamic>.from(decoded));
+        return UserModel.fromCacheJson(Map<String, dynamic>.from(decoded));
       }
     } catch (_) {
       await prefs.remove(_userKey);
+    }
+    return null;
+  }
+
+  static Future<void> saveLeaderboardCache(LeaderboardCache cache) async {
+    final prefs = await getPrefs();
+    await prefs.setString(_leaderboardKey, jsonEncode(cache.toJson()));
+  }
+
+  static Future<LeaderboardCache?> getLeaderboardCache() async {
+    final prefs = await getPrefs();
+    final json = prefs.getString(_leaderboardKey);
+    if (json == null || json.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(json);
+      if (decoded is Map<String, dynamic>) {
+        return LeaderboardCache.fromJson(decoded);
+      }
+      if (decoded is Map) {
+        return LeaderboardCache.fromJson(Map<String, dynamic>.from(decoded));
+      }
+    } catch (_) {
+      await prefs.remove(_leaderboardKey);
+    }
+    return null;
+  }
+
+  static Future<void> savePoints(EngineerPerformanceHistory points) async {
+    final prefs = await getPrefs();
+    await prefs.setString(_pointsKey, jsonEncode(points.toJson()));
+  }
+
+  static Future<void> saveVehicleAllocations(VehicleResponse response) async {
+    final prefs = await getPrefs();
+    await prefs.setString(
+      _vehicleAllocationsKey,
+      jsonEncode(response.toJson()),
+    );
+  }
+
+  static Future<VehicleResponse?> getVehicleAllocations() async {
+    final prefs = await getPrefs();
+    final json = prefs.getString(_vehicleAllocationsKey);
+    if (json == null || json.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(json);
+      if (decoded is Map<String, dynamic>) {
+        return VehicleResponse.fromJson(decoded);
+      }
+      if (decoded is Map) {
+        return VehicleResponse.fromJson(Map<String, dynamic>.from(decoded));
+      }
+    } catch (_) {
+      await prefs.remove(_vehicleAllocationsKey);
+    }
+    return null;
+  }
+
+  static Future<EngineerPerformanceHistory?> getPoints() async {
+    final prefs = await getPrefs();
+    final json = prefs.getString(_pointsKey);
+    if (json == null || json.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(json);
+      if (decoded is Map<String, dynamic>) {
+        return EngineerPerformanceHistory.fromJson(decoded);
+      }
+      if (decoded is Map) {
+        return EngineerPerformanceHistory.fromJson(Map<String, dynamic>.from(decoded));
+      }
+    } catch (_) {
+      await prefs.remove(_pointsKey);
     }
     return null;
   }
@@ -117,9 +195,12 @@ class Prefs {
     final prefs = await getPrefs();
     await prefs.remove(_sessionTokenKey);
     await prefs.remove(_userKey);
+    await prefs.remove(_leaderboardKey);
     await prefs.remove(_authUserKey);
     await prefs.remove(_bearerKey);
     await prefs.remove(_refreshTokenKey);
+    await prefs.remove(_pointsKey);
+    await prefs.remove(_vehicleAllocationsKey);
   }
 
   static Future<void> clearAll() async {

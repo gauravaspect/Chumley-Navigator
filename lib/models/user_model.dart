@@ -170,6 +170,7 @@ class PerformanceBreakdown extends Equatable {
     this.avgReviewRating = 0,
     this.drivingScore = 0,
     this.unclosedJobs = 0,
+    this.paymentCollectionPercentage = 0,
   });
 
   final double avgJobValue;
@@ -179,6 +180,7 @@ class PerformanceBreakdown extends Equatable {
   final double avgReviewRating;
   final double drivingScore;
   final double unclosedJobs;
+  final double paymentCollectionPercentage;
 
   factory PerformanceBreakdown.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const PerformanceBreakdown();
@@ -191,6 +193,8 @@ class PerformanceBreakdown extends Equatable {
       avgReviewRating: _readDouble(json['avg_review_rating']),
       drivingScore: _readDouble(json['driving_score']),
       unclosedJobs: _readDouble(json['unclosed_jobs']),
+      paymentCollectionPercentage:
+          _readDouble(json['payment_collection_percentage']),
     );
   }
 
@@ -202,6 +206,7 @@ class PerformanceBreakdown extends Equatable {
     'avg_review_rating': avgReviewRating,
     'driving_score': drivingScore,
     'unclosed_jobs': unclosedJobs,
+    'payment_collection_percentage': paymentCollectionPercentage,
   };
 
   @override
@@ -213,6 +218,7 @@ class PerformanceBreakdown extends Equatable {
     avgReviewRating,
     drivingScore,
     unclosedJobs,
+    paymentCollectionPercentage,
   ];
 }
 
@@ -303,6 +309,29 @@ class UserModel extends Equatable {
     'performance_breakdown': performanceBreakdown.toJson(),
   };
 
+  /// Minimal fields for offline profile/header — no KPI pools or appointments.
+  Map<String, dynamic> toCacheJson() => {
+    'id': id,
+    'name': name,
+    'position': position,
+    'photo_url': photoUrl,
+    'overall_rating': overallRating,
+    'performance_score': performanceScore,
+    'bio': bio.toJson(),
+  };
+
+  factory UserModel.fromCacheJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      position: (json['position'] ?? '').toString(),
+      photoUrl: (json['photo_url'] ?? '').toString(),
+      overallRating: _readDouble(json['overall_rating']),
+      performanceScore: _readDouble(json['performance_score']),
+      bio: UserBio.fromJson(_readMap(json['bio'])),
+    );
+  }
+
   @override
   List<Object?> get props => [
     id,
@@ -323,6 +352,25 @@ class UserModel extends Equatable {
     performanceScore,
     performanceBreakdown,
   ];
+
+  /// True when the full profile API payload is available (not slim prefs cache).
+  bool get hasFullDashboardProfile {
+    if (id.isEmpty) return false;
+    if (dateRange.isNotEmpty || dateDescription.isNotEmpty) return true;
+    if (conversion.score != 0 ||
+        productivity.score != 0 ||
+        procedural.score != 0 ||
+        vehicular.score != 0 ||
+        cSat.score != 0) {
+      return true;
+    }
+    if (dashboard.appointmentsThisMonth.isNotEmpty) return true;
+    if (performanceBreakdown.cases != 0 ||
+        performanceBreakdown.avgJobValue != 0) {
+      return true;
+    }
+    return false;
+  }
 }
 
 Map<String, dynamic> _readMap(dynamic value) {

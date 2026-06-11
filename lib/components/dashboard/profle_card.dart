@@ -18,6 +18,8 @@ class ProfileCard extends StatelessWidget {
 
     return SkeletonShimmer(
       isLoading: isLoading,
+      baseColor: theme.shimmerBase,
+      highlightColor: theme.shimmerHighlight,
       child: Container(
         decoration: BoxDecoration(
           color: theme.dashCardBg,
@@ -36,7 +38,11 @@ class ProfileCard extends StatelessWidget {
         child: isLoading
             ? Padding(
                 padding: EdgeInsets.all(16.w),
-                child: SkeletonBox(height: 88.h),
+                child: SkeletonBox(
+                  height: 88.h,
+                  baseColor: theme.shimmerBase,
+                  highlightColor: theme.shimmerHighlight,
+                ),
               )
             : Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),

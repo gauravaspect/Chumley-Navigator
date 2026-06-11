@@ -154,13 +154,6 @@ class _HomeState extends State<Home> {
                                   width: 0.5,
                                 ),
                               ),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: AppColors.shadowSoft,
-                                  blurRadius: 16,
-                                  offset: Offset(0, -2),
-                                ),
-                              ],
                             ),
                             child: Row(
                               children:

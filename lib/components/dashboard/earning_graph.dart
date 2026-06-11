@@ -15,18 +15,20 @@ class _EarningGraphState extends State<EarningGraph> {
 
   final List<int> months = [3, 6, 8, 12];
 
-  final Map<int, List<String>> labels = {
-    3: ['112 EPR', '124 EPR', '131 EPR'],
-    6: ['103 EPR', '112 EPR', '119 EPR', '124 EPR', '128 EPR', '131 EPR'],
-    8: [
-      '98 EPR', '107 EPR', '115 EPR', '103 EPR',
-      '112 EPR', '119 EPR', '124 EPR', '131 EPR',
-    ],
-    12: [
-      '84 EPR', '90 EPR', '96 EPR', '101 EPR', '107 EPR', '110 EPR',
-      '115 EPR', '118 EPR', '122 EPR', '126 EPR', '128 EPR', '131 EPR',
-    ],
-  };
+  static const _monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  /// Oldest → newest month abbreviations for the last [count] months.
+  List<String> _monthLabels(int count) {
+    final now = DateTime.now();
+    return List.generate(count, (index) {
+      final monthsBack = count - 1 - index;
+      final date = DateTime(now.year, now.month - monthsBack, 1);
+      return _monthNames[date.month - 1];
+    });
+  }
 
   final Map<int, List<double>> barHeights = {
     3: [22, 45, 72],
@@ -35,10 +37,22 @@ class _EarningGraphState extends State<EarningGraph> {
     12: [6, 8, 10, 14, 18, 24, 30, 38, 46, 58, 64, 72],
   };
 
+  static double _barGap(int count) {
+    if (count <= 6) return 6;
+    if (count <= 8) return 3;
+    return 2;
+  }
+
+  static double _labelFontSize(int count) {
+    if (count <= 6) return 9;
+    if (count <= 8) return 8;
+    return 7;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
-    final currentLabels = labels[selectedMonth]!;
+    final currentLabels = _monthLabels(selectedMonth);
     final currentBars = barHeights[selectedMonth]!;
 
     return ClipRRect(
@@ -50,57 +64,85 @@ class _EarningGraphState extends State<EarningGraph> {
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Earnings in the last $selectedMonth Months',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w700,
-                        color: theme.dashTitle,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Earnings in the last $selectedMonth Months',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                          color: theme.dashTitle,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 3.h),
-                    Text(
-                      'Monthly earning performance revenue',
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w400,
-                        color: theme.dashSubtitle,
+                      SizedBox(height: 3.h),
+                      Text(
+                        'Monthly earning performance revenue',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w400,
+                          color: theme.dashSubtitle,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                SizedBox(width: 8.w),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  constraints: BoxConstraints(maxWidth: 96.w),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 0),
                   decoration: BoxDecoration(
                     color: theme.dashSurfaceTint,
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<int>(
                       value: selectedMonth,
+                      isDense: true,
+                      isExpanded: true,
                       icon: Icon(
                         Icons.keyboard_arrow_down_rounded,
-                        size: 16.sp,
+                        size: 14.sp,
                         color: theme.dashPrimary,
                       ),
                       dropdownColor: theme.dashCardBg,
                       borderRadius: BorderRadius.circular(12.r),
                       style: TextStyle(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w400,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w500,
                         color: theme.dashPrimary,
                       ),
                       items: months.map((month) {
                         return DropdownMenuItem<int>(
                           value: month,
-                          child: Text('$month Months'),
+                          child: Text('$month mo'),
                         );
                       }).toList(),
+                      selectedItemBuilder: (context) {
+                        return months
+                            .map(
+                              (month) => Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  '$month mo',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: theme.dashPrimary,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList();
+                      },
                       onChanged: (value) {
                         if (value == null) return;
                         setState(() => selectedMonth = value);
@@ -122,6 +164,9 @@ class _EarningGraphState extends State<EarningGraph> {
               child: _ChartBody(
                 key: ValueKey(selectedMonth),
                 theme: theme,
+                monthCount: selectedMonth,
+                barGap: _barGap(selectedMonth).w,
+                labelFontSize: _labelFontSize(selectedMonth).sp,
                 currentLabels: currentLabels,
                 currentBars: currentBars,
               ),
@@ -137,13 +182,21 @@ class _ChartBody extends StatelessWidget {
   const _ChartBody({
     super.key,
     required this.theme,
+    required this.monthCount,
+    required this.barGap,
+    required this.labelFontSize,
     required this.currentLabels,
     required this.currentBars,
   });
 
   final DashboardTheme theme;
+  final int monthCount;
+  final double barGap;
+  final double labelFontSize;
   final List<String> currentLabels;
   final List<double> currentBars;
+
+  bool get _compactChart => monthCount >= 8;
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +218,7 @@ class _ChartBody extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: 8.w),
+        SizedBox(width: 4.w),
         Expanded(
           child: Column(
             children: [
@@ -197,33 +250,27 @@ class _ChartBody extends StatelessWidget {
                                 padding: EdgeInsets.only(
                                   right: index == currentLabels.length - 1
                                       ? 0
-                                      : 6.w,
+                                      : barGap,
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
-                                    if (isActive)
+                                    if (isActive && !_compactChart)
                                       Container(
-                                        margin: EdgeInsets.only(bottom: 6.h),
+                                        margin: EdgeInsets.only(bottom: 4.h),
                                         padding: EdgeInsets.symmetric(
-                                          horizontal: 6.w,
-                                          vertical: 3.h,
+                                          horizontal: 4.w,
+                                          vertical: 2.h,
                                         ),
                                         decoration: BoxDecoration(
                                           color: theme.chartBarSelected,
                                           borderRadius:
-                                              BorderRadius.circular(6.r),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: theme.dashCardShadow,
-                                              blurRadius: 8.r,
-                                            ),
-                                          ],
+                                              BorderRadius.circular(4.r),
                                         ),
                                         child: Text(
                                           '£131',
                                           style: TextStyle(
-                                            fontSize: 10.sp,
+                                            fontSize: 8.sp,
                                             fontWeight: FontWeight.bold,
                                             color: AppColors.white,
                                           ),
@@ -240,14 +287,19 @@ class _ChartBody extends StatelessWidget {
                                       curve: Curves.easeOutCubic,
                                       builder: (context, height, _) {
                                         return Container(
+                                          width: double.infinity,
                                           height: height.h,
                                           decoration: BoxDecoration(
                                             color: isActive
                                                 ? theme.chartBarSelected
                                                 : theme.chartBarFill,
                                             borderRadius: BorderRadius.only(
-                                              topLeft: Radius.circular(4.r),
-                                              topRight: Radius.circular(4.r),
+                                              topLeft: Radius.circular(
+                                                _compactChart ? 2.r : 4.r,
+                                              ),
+                                              topRight: Radius.circular(
+                                                _compactChart ? 2.r : 4.r,
+                                              ),
                                             ),
                                           ),
                                         );
@@ -281,13 +333,15 @@ class _ChartBody extends StatelessWidget {
                   return Expanded(
                     child: Padding(
                       padding: EdgeInsets.only(
-                        right: index == currentLabels.length - 1 ? 0 : 6.w,
+                        right: index == currentLabels.length - 1 ? 0 : barGap,
                       ),
                       child: Text(
                         currentLabels[index],
                         textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 9.sp,
+                          fontSize: labelFontSize,
                           fontWeight: FontWeight.w600,
                           color: isActive
                               ? theme.dashPrimary
@@ -307,7 +361,7 @@ class _ChartBody extends StatelessWidget {
 
   Widget _yAxisText(DashboardTheme theme, String text) {
     return SizedBox(
-      width: 28.w,
+      width: 24.w,
       child: Text(
         text,
         textAlign: TextAlign.right,

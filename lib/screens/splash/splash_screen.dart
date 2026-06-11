@@ -262,7 +262,7 @@ class _SplashScreenState extends State<SplashScreen>
               // "navigator" — brand blue
               const TextSpan(
                 text: 'navigator',
-                style: TextStyle(color: AppColors.primaryBlue),
+                style: TextStyle(color: AppColors.streakOrange),
               ),
             ],
           ),

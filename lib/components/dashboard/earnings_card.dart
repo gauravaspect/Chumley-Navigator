@@ -1,9 +1,27 @@
+import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class EarningCard extends StatelessWidget {
-  const EarningCard({super.key});
+  const EarningCard({
+    super.key,
+    required this.user,
+  });
+
+  final UserModel user;
+
+  double get _totalEarnings {
+    final breakdown = user.performanceBreakdown;
+    return breakdown.avgJobValue * breakdown.cases;
+  }
+
+  String get _earningsLabel {
+    final amount = _totalEarnings;
+    return '£${amount.toStringAsFixed(2)}';
+  }
+
+  bool get _hasRatingTrend => user.overallRating > 0;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +63,7 @@ class EarningCard extends StatelessWidget {
                     );
                   },
                   child: Text(
-                    '£1,312.00',
+                    _earningsLabel,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 28.sp,
@@ -56,41 +74,41 @@ class EarningCard extends StatelessWidget {
                 ),
               ],
             ),
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.easeOutBack,
-              builder: (context, value, child) {
-                return Transform.scale(scale: value, child: child);
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: theme.dashSuccessBg,
-                  borderRadius: BorderRadius.circular(999.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.arrow_upward,
-                      color: theme.dashSuccessFg,
-                      fontWeight: FontWeight.w900,
-                      size: 14.sp,
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      '+6%',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11.sp,
+            if (_hasRatingTrend)
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeOutBack,
+                builder: (context, value, child) {
+                  return Transform.scale(scale: value, child: child);
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: theme.dashSuccessBg,
+                    borderRadius: BorderRadius.circular(999.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.star_rounded,
                         color: theme.dashSuccessFg,
+                        size: 14.sp,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 4.w),
+                      Text(
+                        user.overallRating.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11.sp,
+                          color: theme.dashSuccessFg,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

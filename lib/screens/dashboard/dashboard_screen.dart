@@ -10,6 +10,7 @@ import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/screens/profile/profile_screen.dart';
 import 'package:chumley_navigator/utils/routes.dart';
 import 'package:chumley_navigator/utils/user_display.dart';
+import 'package:chumley_navigator/shimmers/dashboard_shimmer.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
 import 'package:flutter/material.dart';
@@ -45,6 +46,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   UserModel? _userFromState(DashboardState state) => state.userOrNull;
 
+  /// Shimmer only when there is no cached profile to show yet.
+  bool _shouldShowShimmer(DashboardState state, UserModel? user) {
+    if (state is DashboardInitial) return true;
+    if (state is DashboardLoading) return user == null;
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
@@ -72,7 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               },
               builder: (context, state) {
                 final user = _userFromState(state);
-                final isLoading = state is DashboardLoading && user == null;
+                final showShimmer = _shouldShowShimmer(state, user);
 
                 return Scaffold(
                   backgroundColor: theme.base,
@@ -81,16 +89,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: RefreshIndicator(
                       color: theme.dashPrimary,
                       onRefresh: _cubit.refresh,
-                      child: isLoading
+                      child: showShimmer
                           ? ListView(
                               physics: const AlwaysScrollableScrollPhysics(),
                               children: [
-                                SizedBox(height: 120.h),
-                                Center(
-                                  child: CircularProgressIndicator(
-                                    color: theme.dashPrimary,
-                                  ),
-                                ),
+                                DashboardShimmer(theme: theme),
                               ],
                             )
                           : _buildBody(context, theme, state),
@@ -224,12 +227,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     DashboardTheme theme,
     DashboardState state,
   ) {
-    const sections = [
-      PointsCard(),
-      EarningCard(),
-      DashboardCalendar(),
-      KpiOverview(),
-      EarningGraph(),
+    final resolvedUser = _userFromState(state);
+    final user = resolvedUser ?? const UserModel();
+
+    final sections = [
+      PointsCard(user: user),
+      EarningCard(user: user),
+      DashboardCalendar(appointments: user.dashboard.appointmentsThisMonth),
+      KpiOverview(user: user),
+      const EarningGraph(),
     ];
 
     return Padding(

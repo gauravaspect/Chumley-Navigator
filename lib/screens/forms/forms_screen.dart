@@ -9,8 +9,50 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-class FormsScreen extends StatelessWidget {
+class FormsScreen extends StatefulWidget {
   const FormsScreen({super.key});
+
+  @override
+  State<FormsScreen> createState() => _FormsScreenState();
+}
+
+class _FormsScreenState extends State<FormsScreen> {
+
+  final _scrollController = ScrollController();
+
+  /// 0.0 = expanded, 1.0 = collapsed — updated every scroll frame.
+  final ValueNotifier<double> _collapseProgress = ValueNotifier(0);
+
+  static const double _brandingExpandedHeight = 72;
+  static const double _brandingCollapsedHeight = 54;
+  static const double _scrollThreshold = 100;
+
+  static double _easedCollapseProgress(double offset) {
+    final raw = (offset / _scrollThreshold).clamp(0.0, 1.0);
+    return Curves.easeOutCubic.transform(raw);
+  }
+
+  void _onScroll() {
+    final progress = _easedCollapseProgress(_scrollController.offset);
+    if (_collapseProgress.value != progress) {
+      _collapseProgress.value = progress;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _collapseProgress.dispose();
+    super.dispose();
+  }
+
 
   void _openForm(BuildContext context, FormType type) {
     Navigator.push(
@@ -31,61 +73,95 @@ class FormsScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: theme.base,
           body: SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.only(
-                left: 16.w,
-                right: 16.w,
-                top: 16.h,
-                bottom: 24.h,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const AspectBranding(),
-                  SizedBox(height: 14.h),
-                  Text(
-                    'Forms',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.6,
-                      color: theme.textMuted,
-                    ),
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
                   ),
-                  SizedBox(height: 6.h),
-                  Text(
-                    'Select a work type to start a new form',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w500,
-                      color: theme.textMuted,
-                    ),
+                  padding: EdgeInsets.only(
+                    left: 16.w,
+                    right: 16.w,
+                    top: _brandingExpandedHeight + 28,
+                    bottom: 180.h,
                   ),
-                  SizedBox(height: 14.h),
-                  FadeSlideIn(
-                    child: _FormListTile(
-                      icon: LucideIcons.zap,
-                      title: 'EICR',
-                      subtitle:
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(height: 14.h),
+                      ValueListenableBuilder<double>(
+                        valueListenable: _collapseProgress,
+                        builder: (context, progress, _) {
+                          return Opacity(
+                            opacity: (1.0 - progress).clamp(0.0, 1.0),
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Forms',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0.6,
+                                    color: theme.textMuted,
+                                  ),
+                                ),
+                                SizedBox(height: 6.h),
+                                Text(
+                                  'Select a work type to start a new form',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: theme.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 14.h),
+                      FadeSlideIn(
+                        child: _FormListTile(
+                          icon: LucideIcons.zap,
+                          title: 'EICR',
+                          subtitle:
                           'Electrical Installation Condition Report · BS 7671:2018+A2:2022',
-                      onTap: () => _openForm(context, FormType.eicr),
-                    ),
+                          onTap: () => _openForm(context, FormType.eicr),
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 50),
+                        child: _FormListTile(
+                          icon: LucideIcons.droplets,
+                          title: 'Damp & Moisture Survey',
+                          subtitle: 'Surface / depth readings · BS 5250:2021',
+                          onTap: () => _openForm(context, FormType.dampSurvey),
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 8.h),
-                  FadeSlideIn(
-                    delay: const Duration(milliseconds: 50),
-                    child: _FormListTile(
-                      icon: LucideIcons.droplets,
-                      title: 'Damp & Moisture Survey',
-                      subtitle: 'Surface / depth readings · BS 5250:2021',
-                      onTap: () => _openForm(context, FormType.dampSurvey),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                ValueListenableBuilder<double>(
+                  valueListenable: _collapseProgress,
+                  builder: (context, progress, _) {
+                    return Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: AspectBranding(
+                        progress: progress,
+                        expandedHeight: _brandingExpandedHeight,
+                        collapsedHeight: _brandingCollapsedHeight,
+                        theme: theme,
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         );

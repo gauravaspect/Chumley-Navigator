@@ -29,8 +29,46 @@ const List<_CardData> _cards = [
   _CardData(label: 'Satisfaction Pool', value: 16.7, max: 20),
 ];
 
-class GoalsTargetsScreen extends StatelessWidget {
+class GoalsTargetsScreen extends StatefulWidget {
   const GoalsTargetsScreen({super.key});
+
+  @override
+  State<GoalsTargetsScreen> createState() => _GoalsTargetsScreenState();
+}
+
+class _GoalsTargetsScreenState extends State<GoalsTargetsScreen> {
+  final _scrollController = ScrollController();
+  final ValueNotifier<double> _collapseProgress = ValueNotifier(0);
+
+  static const double _brandingExpandedHeight = 72;
+  static const double _brandingCollapsedHeight = 54;
+  static const double _scrollThreshold = 100;
+
+  static double _easedCollapseProgress(double offset) {
+    final raw = (offset / _scrollThreshold).clamp(0.0, 1.0);
+    return Curves.easeOutCubic.transform(raw);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _collapseProgress.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final progress = _easedCollapseProgress(_scrollController.offset);
+    if (_collapseProgress.value != progress) {
+      _collapseProgress.value = progress;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,67 +80,109 @@ class GoalsTargetsScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: theme.base,
           body: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: _CloseButton(theme: theme),
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.only(
+                    left: 16.w,
+                    right: 16.w,
+                    top: _brandingExpandedHeight + 28,
+                    bottom: 24.h,
                   ),
-                  const AspectBranding(),
-                  SizedBox(height: 14.h),
-                  Text(
-                    'Goals & targets',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.6,
-                      color: theme.textMuted,
-                    ),
-                  ),
-                  SizedBox(height: 14.h),
-                  FadeSlideIn(
-                    child: Text(
-                      'KPI pools',
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w500,
-                        height: 1.2,
-                        color: theme.text,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(height: 14.h),
+                      ValueListenableBuilder<double>(
+                        valueListenable: _collapseProgress,
+                        builder: (context, progress, _) {
+                          return Opacity(
+                            opacity: (1.0 - progress).clamp(0.0, 1.0),
+                            child: Text(
+                              'Goals & targets',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.6,
+                                color: theme.textMuted,
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  FadeSlideIn(
-                    delay: const Duration(milliseconds: 40),
-                    child: Text(
-                      'Tap a pool to see your KPI background',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        height: 1.35,
-                        color: theme.textMuted,
+                      SizedBox(height: 14.h),
+                      ValueListenableBuilder<double>(
+                        valueListenable: _collapseProgress,
+                        builder: (context, progress, _) {
+                          return Opacity(
+                            opacity: (1.0 - progress).clamp(0.0, 1.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                FadeSlideIn(
+                                  child: Text(
+                                    'KPI pools',
+                                    style: TextStyle(
+                                      fontSize: 18.sp,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.2,
+                                      color: theme.text,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 4.h),
+                                FadeSlideIn(
+                                  delay: const Duration(milliseconds: 40),
+                                  child: Text(
+                                    'Tap a pool to see your KPI background',
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      height: 1.35,
+                                      color: theme.textMuted,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                    ),
+                      SizedBox(height: 14.h),
+                      for (var i = 0; i < _cards.length; i++) ...[
+                        if (i > 0) SizedBox(height: 8.h),
+                        FadeSlideIn(
+                          delay: Duration(milliseconds: 50 * i),
+                          child: _KpiCard(theme: theme, data: _cards[i]),
+                        ),
+                      ],
+                    ],
                   ),
-                  SizedBox(height: 14.h),
-                  Expanded(
-                    child: ListView.separated(
-                      physics: const BouncingScrollPhysics(),
-                      padding: EdgeInsets.only(bottom: 16.h),
-                      itemCount: _cards.length,
-                      separatorBuilder: (context, _) =>
-                          SizedBox(height: 8.h),
-                      itemBuilder: (_, index) => FadeSlideIn(
-                        delay: Duration(milliseconds: 50 * index),
-                        child: _KpiCard(theme: theme, data: _cards[index]),
+                ),
+                ValueListenableBuilder<double>(
+                  valueListenable: _collapseProgress,
+                  builder: (context, progress, _) {
+                    return Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: AspectBranding(
+                        progress: progress,
+                        expandedHeight: _brandingExpandedHeight,
+                        collapsedHeight: _brandingCollapsedHeight,
+                        theme: theme,
                       ),
-                    ),
-                  ),
-                ],
-              ),
+                    );
+                  },
+                ),
+                Positioned(
+                  top: 8.h,
+                  left: 16.w,
+                  child: _CloseButton(theme: theme),
+                ),
+              ],
             ),
           ),
         );

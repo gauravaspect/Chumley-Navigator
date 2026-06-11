@@ -1,5 +1,7 @@
+import 'package:chumley_navigator/models/points_model.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/utils/number_display.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,54 +13,93 @@ class _Section {
     required this.title,
     required this.subtitle,
     this.points = 0,
+    this.events = const [],
   });
   final String title;
   final String subtitle;
   final int points;
+  final List<PerformanceEvent> events;
 }
-
-const _sections = [
-  _Section(
-    title: 'Every job',
-    subtitle: 'AJV & converted estimate vs trade-group average',
-  ),
-  _Section(
-    title: 'Customer reviews',
-    subtitle: '5-star and 4-star earnings',
-  ),
-  _Section(
-    title: 'Lead conversion',
-    subtitle: 'Conversion rate band for the month',
-  ),
-  _Section(
-    title: 'Estimates produced',
-    subtitle: '+5 per reactive lead → estimate',
-  ),
-  _Section(
-    title: 'Referrals',
-    subtitle: 'New jobs raised from your jobs (1 pt per £1)',
-  ),
-  _Section(
-    title: 'Consistency',
-    subtitle: 'Full week / month attendance',
-  ),
-  _Section(
-    title: 'Driving score',
-    subtitle: 'Weekly band',
-  ),
-  _Section(
-    title: 'Milestones',
-    subtitle: 'Top of trade group, streak bonuses',
-  ),
-];
 
 // ── Bottom sheet ──────────────────────────────────────────────────────────────
 
-class RedeemPointsBottomModal extends StatelessWidget {
-  const RedeemPointsBottomModal({super.key});
+class RedeemPointsBottomModal extends StatefulWidget {
+  const RedeemPointsBottomModal({
+    super.key,
+    required this.performanceHistory,
+  });
+
+  final EngineerPerformanceHistory performanceHistory;
+
+  @override
+  State<RedeemPointsBottomModal> createState() => _RedeemPointsBottomModalState();
+}
+
+class _RedeemPointsBottomModalState extends State<RedeemPointsBottomModal> {
+  PerformanceMonth? _selectedMonth;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.performanceHistory.months.isNotEmpty) {
+      _selectedMonth = widget.performanceHistory.months.first;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final categories = _selectedMonth?.categories;
+    final sections = [
+      _Section(
+        title: 'Every job',
+        subtitle: 'AJV & converted estimate vs trade-group average',
+        points: categories?.perJob.total ?? 0,
+        events: categories?.perJob.events ?? const [],
+      ),
+      _Section(
+        title: 'Customer reviews',
+        subtitle: '5-star and 4-star earnings',
+        points: categories?.reviews.total ?? 0,
+        events: categories?.reviews.events ?? const [],
+      ),
+      _Section(
+        title: 'Lead conversion',
+        subtitle: 'Conversion rate band for the month',
+        points: categories?.leadConversion.total ?? 0,
+        events: categories?.leadConversion.events ?? const [],
+      ),
+      _Section(
+        title: 'Estimates produced',
+        subtitle: '+5 per reactive lead → estimate',
+        points: categories?.reactiveEstimates.total ?? 0,
+        events: categories?.reactiveEstimates.events ?? const [],
+      ),
+      _Section(
+        title: 'Referrals',
+        subtitle: 'New jobs raised from your jobs (1 pt per £1)',
+        points: categories?.referrals.total ?? 0,
+        events: categories?.referrals.events ?? const [],
+      ),
+      _Section(
+        title: 'Consistency',
+        subtitle: 'Full week / month attendance',
+        points: categories?.consistency.total ?? 0,
+        events: categories?.consistency.events ?? const [],
+      ),
+      _Section(
+        title: 'Driving score',
+        subtitle: 'Weekly band',
+        points: categories?.driving.total ?? 0,
+        events: categories?.driving.events ?? const [],
+      ),
+      _Section(
+        title: 'Milestones',
+        subtitle: 'Top of trade group, streak bonuses',
+        points: categories?.milestones.total ?? 0,
+        events: categories?.milestones.events ?? const [],
+      ),
+    ];
+
     return ListenableBuilder(
       listenable: ThemeScope.of(context),
       builder: (context, _) {
@@ -152,8 +193,8 @@ class RedeemPointsBottomModal extends StatelessWidget {
                             child: _SummaryCard(
                               theme: theme,
                               title: 'All points',
-                              points: 0,
-                              body: 'last 0 months',
+                              points: widget.performanceHistory.cumulativeTotal,
+                              body: 'last ${widget.performanceHistory.monthsRequested} months',
                               emphasized: true,
                             ),
                           ),
@@ -162,7 +203,7 @@ class RedeemPointsBottomModal extends StatelessWidget {
                             child: _SummaryCard(
                               theme: theme,
                               title: 'This month',
-                              points: 0,
+                              points: widget.performanceHistory.thisMonthTotal,
                               body: 'live, updates daily',
                               emphasized: false,
                             ),
@@ -170,28 +211,66 @@ class RedeemPointsBottomModal extends StatelessWidget {
                         ],
                       ),
                       SizedBox(height: 10.h),
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 8.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.surfaceDeep,
-                          border: Border.all(color: theme.border, width: 0.5),
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        child: Text(
-                          'Loading months…',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: theme.textMuted,
+                      if (widget.performanceHistory.months.isNotEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.surfaceDeep,
+                            border: Border.all(color: theme.border, width: 0.5),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<PerformanceMonth>(
+                              value: _selectedMonth,
+                              dropdownColor: theme.surfaceDeep,
+                              icon: Icon(Icons.arrow_drop_down, color: theme.textMuted),
+                              isExpanded: true,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                                color: theme.text,
+                              ),
+                              items: widget.performanceHistory.months
+                                  .map((m) => DropdownMenuItem<PerformanceMonth>(
+                                        value: m,
+                                        child: Text(m.monthLabel),
+                                      ))
+                                  .toList(),
+                              onChanged: (val) {
+                                setState(() {
+                                  _selectedMonth = val;
+                                });
+                              },
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 8.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.surfaceDeep,
+                            border: Border.all(color: theme.border, width: 0.5),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Text(
+                            'No months data available',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: theme.textMuted,
+                            ),
                           ),
                         ),
-                      ),
                       SizedBox(height: 12.h),
-                      ..._sections.map(
+                      ...sections.map(
                         (s) => _SectionItem(theme: theme, section: s),
                       ),
                     ],
@@ -247,7 +326,7 @@ class _SummaryCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
               color: emphasized
-                  ? Colors.white.withValues(alpha: 0.7)
+                  ? Colors.white.withOpacity(0.7)
                   : theme.textMuted,
             ),
           ),
@@ -256,7 +335,7 @@ class _SummaryCard extends StatelessWidget {
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: '$points',
+                  text: formatIntegerWithCommas(points),
                   style: TextStyle(
                     fontSize: 24.sp,
                     fontWeight: FontWeight.w700,
@@ -272,7 +351,7 @@ class _SummaryCard extends StatelessWidget {
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
                     color: emphasized
-                        ? Colors.white.withValues(alpha: 0.85)
+                        ? Colors.white.withOpacity(0.85)
                         : theme.textMuted,
                   ),
                 ),
@@ -285,7 +364,7 @@ class _SummaryCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 10.sp,
               color: emphasized
-                  ? Colors.white.withValues(alpha: 0.55)
+                  ? Colors.white.withOpacity(0.55)
                   : theme.textMuted,
             ),
           ),
@@ -366,13 +445,58 @@ class _SectionItem extends StatelessWidget {
               border: Border.all(color: theme.border, width: 0.5),
               borderRadius: BorderRadius.circular(12.r),
             ),
-            child: Text(
-              '—',
-              style: TextStyle(
-                fontSize: 11.5.sp,
-                color: theme.textMuted,
-              ),
-            ),
+            child: section.events.isEmpty
+                ? Text(
+                    '—',
+                    style: TextStyle(
+                      fontSize: 11.5.sp,
+                      color: theme.textMuted,
+                    ),
+                  )
+                : Column(
+                    children: section.events.map((e) {
+                      return Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4.h),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    e.label,
+                                    style: TextStyle(
+                                      fontSize: 11.5.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: theme.text,
+                                    ),
+                                  ),
+                                  if (e.detail.isNotEmpty)
+                                    Text(
+                                      e.detail,
+                                      style: TextStyle(
+                                        fontSize: 10.sp,
+                                        color: theme.textMuted,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              '${e.points >= 0 ? '+' : ''}${e.points} pts',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.bold,
+                                color: theme.text,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
           ),
         ],
       ),

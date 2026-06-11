@@ -14,92 +14,86 @@ class NotificationScreen extends StatelessWidget {
       listenable: ThemeScope.of(context),
       builder: (context, _) {
         final theme = DashboardTheme.of(context);
-
         return DefaultTabController(
           length: 3,
           child: Scaffold(
             backgroundColor: theme.base,
-            body: SafeArea(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 16.w,
-                  right: 16.w,
-                  top: 16.h,
+            appBar: AppBar(
+              backgroundColor: theme.base,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              centerTitle: true,
+              automaticallyImplyLeading: false,
+              leadingWidth: 56.w,
+              leading: Padding(
+                padding: EdgeInsets.only(left: 16.w),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: CommandCentreBackButton(
+                    semanticsLabel: 'Back to home',
+                    onTap: () => Navigator.pushReplacementNamed(
+                      context,
+                      AppRoutes.home,
+                    ),
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    CommandCentreBackButton(
-                      semanticsLabel: 'Back to home',
-                      onTap: () => Navigator.pushReplacementNamed(
-                        context,
-                        AppRoutes.home,
-                      ),
-                    ),
-                    SizedBox(height: 14.h),
-                    Text(
-                      'Notifications',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.6,
-                        color: theme.textMuted,
-                      ),
-                    ),
-                    SizedBox(height: 14.h),
-                    TabBar(
-                      isScrollable: true,
-                      labelPadding: EdgeInsets.only(right: 24.w),
-                      indicatorColor: theme.accent,
-                      indicatorWeight: 2,
-                      dividerColor: Colors.transparent,
-                      splashFactory: NoSplash.splashFactory,
-                      overlayColor:
-                          WidgetStateProperty.all(Colors.transparent),
-                      labelColor: theme.text,
-                      unselectedLabelColor: theme.textMuted,
-                      labelStyle: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      unselectedLabelStyle: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      tabs: const [
-                        Tab(text: 'All'),
-                        Tab(text: 'Unread'),
-                        Tab(text: 'Read'),
-                      ],
-                    ),
-                    SizedBox(height: 16.h),
-                    Expanded(
-                      child: TabBarView(
-                        children: [
-                          _EmptyTab(
-                            theme: theme,
-                            title: "You're all caught up",
-                            body:
-                                'New jobs, reviews and office updates will appear here',
-                          ),
-                          _EmptyTab(
-                            theme: theme,
-                            title: 'No new notifications',
-                            body:
-                                'New jobs, reviews and office updates will appear here',
-                          ),
-                          _EmptyTab(
-                            theme: theme,
-                            title: 'Nothing to read yet',
-                            body:
-                                "Once you've opened a notification, it will appear here",
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              ),
+              title: Text(
+                'Notifications',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6,
+                  color: theme.dashTitle,
                 ),
+              ),
+              bottom: TabBar(
+                tabAlignment: TabAlignment.fill,
+                indicatorColor: theme.accent,
+                indicatorWeight: 2,
+                dividerColor: Colors.transparent,
+                splashFactory: NoSplash.splashFactory,
+                overlayColor: WidgetStateProperty.all(Colors.transparent),
+                labelColor: theme.text,
+                unselectedLabelColor: theme.textMuted,
+                labelStyle: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+                unselectedLabelStyle: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w500,
+                ),
+                tabs: const [
+                  Tab(text: 'All'),
+                  Tab(text: 'Unread'),
+                  Tab(text: 'Read'),
+                ],
+              ),
+            ),
+            body: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: TabBarView(
+                children: [
+                  _EmptyTab(
+                    theme: theme,
+                    title: "You're all caught up",
+                    body:
+                        'New jobs, reviews and office updates will appear here',
+                  ),
+                  _EmptyTab(
+                    theme: theme,
+                    title: 'No new notifications',
+                    body:
+                        'New jobs, reviews and office updates will appear here',
+                  ),
+                  _EmptyTab(
+                    theme: theme,
+                    title: 'Nothing to read yet',
+                    body:
+                        "Once you've opened a notification, it will appear here",
+                  ),
+                ],
               ),
             ),
           ),

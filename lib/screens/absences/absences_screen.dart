@@ -56,9 +56,32 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
 
   bool get _canSubmit => _selectedReason != null;
 
+
+  final _scrollController = ScrollController();
+
+  /// 0.0 = expanded, 1.0 = collapsed — updated every scroll frame.
+  final ValueNotifier<double> _collapseProgress = ValueNotifier(0);
+
+  static const double _brandingExpandedHeight = 72;
+  static const double _brandingCollapsedHeight = 54;
+  static const double _scrollThreshold = 100;
+
+  static double _easedCollapseProgress(double offset) {
+    final raw = (offset / _scrollThreshold).clamp(0.0, 1.0);
+    return Curves.easeOutCubic.transform(raw);
+  }
+
+  void _onScroll() {
+    final progress = _easedCollapseProgress(_scrollController.offset);
+    if (_collapseProgress.value != progress) {
+      _collapseProgress.value = progress;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     _selectedDate = today;
@@ -106,156 +129,182 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
           child: Scaffold(
             backgroundColor: theme.base,
             body: SafeArea(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 112.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const AspectBranding(),
-                    SizedBox(height: 16.h),
-                    FadeSlideIn(
-                      child: AbsenceCalendar(
-                        markedDays: _calendarMarks,
-                        initialSelected: _selectedDate,
-                        onDateSelected: (date) =>
-                            setState(() => _selectedDate = date),
-                      ),
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
+                    controller: _scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.only(
+                      left: 16.w,
+                      right: 16.w,
+                      top: _brandingExpandedHeight + 28,
+                      bottom: 112.h,
                     ),
-                    SizedBox(height: 16.h),
-                    FadeSlideIn(
-                      delay: const Duration(milliseconds: 60),
-                      child: AbsenceFormCard(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 20.h,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // const AspectBranding(),
+                        SizedBox(height: 16.h),
+                        FadeSlideIn(
+                          child: AbsenceCalendar(
+                            markedDays: _calendarMarks,
+                            initialSelected: _selectedDate,
+                            onDateSelected: (date) =>
+                                setState(() => _selectedDate = date),
+                          ),
                         ),
-                        child: Column(
-                          children: [
-                            Text(
-                              'Please enter your start and end time',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w600,
-                                color: theme.dashTitle,
-                              ),
+                        SizedBox(height: 16.h),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 60),
+                          child: AbsenceFormCard(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 20.h,
                             ),
-                            SizedBox(height: 16.h),
-                            Row(
+                            child: Column(
                               children: [
-                                Expanded(
-                                  child: AbsenceTimeField(
-                                    label: 'Start Time:',
-                                    time: _wholeDay ? null : _startTime,
-                                    enabled: !_wholeDay,
-                                    onTap: () => _pickTime(isStart: true),
+                                Text(
+                                  'Please enter your start and end time',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.dashTitle,
                                   ),
                                 ),
-                                SizedBox(width: 12.w),
-                                Expanded(
-                                  child: AbsenceTimeField(
-                                    label: 'End Time:',
-                                    time: _wholeDay ? null : _endTime,
-                                    enabled: !_wholeDay,
-                                    onTap: () => _pickTime(isStart: false),
-                                  ),
+                                SizedBox(height: 16.h),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: AbsenceTimeField(
+                                        label: 'Start Time:',
+                                        time: _wholeDay ? null : _startTime,
+                                        enabled: !_wholeDay,
+                                        onTap: () => _pickTime(isStart: true),
+                                      ),
+                                    ),
+                                    SizedBox(width: 12.w),
+                                    Expanded(
+                                      child: AbsenceTimeField(
+                                        label: 'End Time:',
+                                        time: _wholeDay ? null : _endTime,
+                                        enabled: !_wholeDay,
+                                        onTap: () => _pickTime(isStart: false),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 16.h),
+                                AbsenceWholeDaySwitch(
+                                  value: _wholeDay,
+                                  onChanged: (val) => setState(() {
+                                    _wholeDay = val;
+                                    if (val) {
+                                      _startTime = null;
+                                      _endTime = null;
+                                    } else {
+                                      _startTime = _defaultStart;
+                                      _endTime = _defaultEnd;
+                                    }
+                                  }),
                                 ),
                               ],
                             ),
-                            SizedBox(height: 16.h),
-                            AbsenceWholeDaySwitch(
-                              value: _wholeDay,
-                              onChanged: (val) => setState(() {
-                                _wholeDay = val;
-                                if (val) {
-                                  _startTime = null;
-                                  _endTime = null;
-                                } else {
-                                  _startTime = _defaultStart;
-                                  _endTime = _defaultEnd;
-                                }
-                              }),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    FadeSlideIn(
-                      delay: const Duration(milliseconds: 100),
-                      child: AbsenceFormCard(
-                        showShadow: true,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              'Submit an Absence',
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
-                                color: theme.dashTitle,
-                              ),
-                            ),
-                            SizedBox(height: 2.h),
-                            Text(
-                              'Please choose from the below reasons',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w400,
-                                color: theme.dashSubtitle,
-                              ),
-                            ),
-                            SizedBox(height: 16.h),
-                            _absenceReasonDropdown(theme),
-                            SizedBox(height: 16.h),
-                            Text(
-                              'Detailed Description',
-                              style: TextStyle(
-                                color: theme.dashSubtitle,
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            SizedBox(height: 4.h),
-                            _descriptionField(theme),
-                            SizedBox(height: 16.h),
-                            Opacity(
-                              opacity: _canSubmit ? 1 : 0.5,
-                              child: PrimaryCtaButton(
-                                label: 'Submit absence',
-                                icon: LucideIcons.calendar_check,
-                                borderRadius: 8.r,
-                                height: 48.h,
-                                onTap: _canSubmit ? () {} : null,
-                              ),
-                            ),
-                            if (_absencesLoadFailed) ...[
-                              SizedBox(height: 12.h),
-                              Text(
-                                'Could not load your absences.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.accent,
+                        SizedBox(height: 16.h),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 100),
+                          child: AbsenceFormCard(
+                            showShadow: true,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  'Submit an Absence',
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.dashTitle,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ],
+                                SizedBox(height: 2.h),
+                                Text(
+                                  'Please choose from the below reasons',
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w400,
+                                    color: theme.dashSubtitle,
+                                  ),
+                                ),
+                                SizedBox(height: 16.h),
+                                _absenceReasonDropdown(theme),
+                                SizedBox(height: 16.h),
+                                Text(
+                                  'Detailed Description',
+                                  style: TextStyle(
+                                    color: theme.dashSubtitle,
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                                SizedBox(height: 4.h),
+                                _descriptionField(theme),
+                                SizedBox(height: 16.h),
+                                Opacity(
+                                  opacity: _canSubmit ? 1 : 0.5,
+                                  child: PrimaryCtaButton(
+                                    label: 'Submit absence',
+                                    icon: LucideIcons.calendar_check,
+                                    borderRadius: 8.r,
+                                    height: 48.h,
+                                    onTap: _canSubmit ? () {} : null,
+                                  ),
+                                ),
+                                if (_absencesLoadFailed) ...[
+                                  SizedBox(height: 12.h),
+                                  Text(
+                                    'Could not load your absences.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.accent,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        SizedBox(height: 24.h),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 140),
+                          child: MyAbsencesSection(
+                            records: _myAbsences,
+                            loadFailed: false,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 24.h),
-                    FadeSlideIn(
-                      delay: const Duration(milliseconds: 140),
-                      child: MyAbsencesSection(
-                        records: _myAbsences,
-                        loadFailed: false,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  ValueListenableBuilder<double>(
+                    valueListenable: _collapseProgress,
+                    builder: (context, progress, _) {
+                      return Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: AspectBranding(
+                          progress: progress,
+                          expandedHeight: _brandingExpandedHeight,
+                          collapsedHeight: _brandingCollapsedHeight,
+                          theme: theme,
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ),

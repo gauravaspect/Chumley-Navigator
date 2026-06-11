@@ -105,6 +105,16 @@ class DashboardTheme {
   Color get chartGridLine =>
       isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
+  /// Skeleton shimmer tones — high contrast against [base].
+  Color get shimmerBase =>
+      isDark ? AppColors.darkSurfaceDeep : AppColors.dividerLight;
+  Color get shimmerBaseDeep =>
+      isDark ? AppColors.darkBorder : AppColors.borderDefault;
+  Color get shimmerHighlight =>
+      isDark
+          ? AppColors.darkTextMuted.withValues(alpha: 0.55)
+          : AppColors.white;
+
   BoxDecoration cardDecoration({double radius = 16}) {
     return BoxDecoration(
       color: surface,
