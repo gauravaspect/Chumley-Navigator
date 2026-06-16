@@ -12,6 +12,7 @@ class AspectBranding extends StatelessWidget {
     required this.collapsedHeight,
     required this.theme,
     this.title,
+    this.hasBackButton = false,
   });
 
   final double progress;
@@ -19,6 +20,7 @@ class AspectBranding extends StatelessWidget {
   final double collapsedHeight;
   final DashboardTheme theme;
   final Widget? title;
+  final bool hasBackButton;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +54,14 @@ class AspectBranding extends StatelessWidget {
                   child: Opacity(
                     opacity: t,
                     child: Transform.translate(
-                      offset: Offset(lerpDouble(-16.w, 0, t)!, 0),
+                      offset: Offset(
+                        lerpDouble(
+                          hasBackButton ? 20.w : -16.w,
+                          hasBackButton ? 36.w : 0,
+                          t,
+                        )!,
+                        0,
+                      ),
                       child: title!,
                     ),
                   ),

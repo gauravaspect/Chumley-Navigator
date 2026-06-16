@@ -7,15 +7,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:chumley_navigator/data/milestone_definitions.dart';
 import 'package:chumley_navigator/models/milestone_badge.dart';
+import 'package:confetti/confetti.dart';
+import 'package:chumley_navigator/widgets/ui/celebration_card.dart';
+import 'package:chumley_navigator/widgets/ui/xp_float_label.dart';
 
 Color tierColor(BadgeTier tier) {
   switch (tier) {
-    case BadgeTier.bronze:   return AppColors.tierBronze;
-    case BadgeTier.silver:   return AppColors.tierSilver;
-    case BadgeTier.gold:     return AppColors.tierGold;
-    case BadgeTier.platinum: return AppColors.tierPlatinum;
-    case BadgeTier.diamond:  return AppColors.tierDiamond;
-    case BadgeTier.oneOff:   return AppColors.tierOneOff;
+    case BadgeTier.bronze:
+      return AppColors.tierBronze;
+    case BadgeTier.silver:
+      return AppColors.tierSilver;
+    case BadgeTier.gold:
+      return AppColors.tierGold;
+    case BadgeTier.platinum:
+      return AppColors.tierPlatinum;
+    case BadgeTier.diamond:
+      return AppColors.tierDiamond;
+    case BadgeTier.oneOff:
+      return AppColors.tierOneOff;
   }
 }
 
@@ -29,11 +38,31 @@ class MilestoneScreen extends StatefulWidget {
 class _MilestoneScreenState extends State<MilestoneScreen> {
   final _scrollController = ScrollController();
   final ValueNotifier<double> _collapseProgress = ValueNotifier(0);
-  final ValueNotifier<MilestoneCategory?> _selectedCategory = ValueNotifier(null);
+  final ValueNotifier<MilestoneCategory?> _selectedCategory = ValueNotifier(
+    null,
+  );
 
   static const double _brandingExpandedHeight = 72;
   static const double _brandingCollapsedHeight = 54;
   static const double _scrollThreshold = 100;
+
+  final ValueNotifier<int> _totalXP = ValueNotifier(2450);
+  static const int _xpTarget = 4000;
+
+  late ConfettiController _confettiController;
+  final ValueNotifier<bool> _flashActive = ValueNotifier(false);
+  BadgeTier? _lastUnlockedTier;
+
+  final Map<MilestoneCategory, GlobalKey<_CategoryCardState>> _cardKeys = {};
+
+  static const Map<BadgeTier, int> _tierXP = {
+    BadgeTier.bronze: 150,
+    BadgeTier.silver: 300,
+    BadgeTier.gold: 600,
+    BadgeTier.platinum: 1000,
+    BadgeTier.diamond: 2000,
+    BadgeTier.oneOff: 500,
+  };
 
   static double _easedCollapseProgress(double offset) {
     final raw = (offset / _scrollThreshold).clamp(0.0, 1.0);
@@ -47,10 +76,101 @@ class _MilestoneScreenState extends State<MilestoneScreen> {
     }
   }
 
+  void _addXP(int amount) {
+    _totalXP.value += amount;
+    if (amount >= 300) {
+      _triggerScreenFlash();
+    }
+  }
+
+  void _triggerScreenFlash() {
+    _flashActive.value = true;
+    Future.delayed(const Duration(milliseconds: 180), () {
+      _flashActive.value = false;
+    });
+  }
+
+  void _triggerDotAnimation(MilestoneBadge badge) {
+    _cardKeys[badge.category]?.currentState?.triggerDotAnimation(badge);
+  }
+
+  void _triggerCardFlash(MilestoneCategory category) {
+    _cardKeys[category]?.currentState?.triggerFlash();
+  }
+
+  String? _getButtonLabel(MilestoneBadge badge) {
+    if (badge.progress < 1.0) {
+      return "Simulate Unlock (+10%)";
+    } else if (badge.progress >= 1.0 && !badge.unlocked) {
+      return "Claim Badge!";
+    }
+    return null;
+  }
+
+  void _onSimulate(MilestoneBadge badge) {
+    setState(() {
+      badge.progress = (badge.progress + 0.1).clamp(0.0, 1.0);
+      badge.currentValue = ((badge.progress) * badge.threshold).round();
+    });
+    _addXP(10);
+    _showXPFloat(10);
+  }
+
+  void _onClaim(MilestoneBadge badge) {
+    setState(() {
+      badge.unlocked = true;
+      _lastUnlockedTier = badge.tier;
+    });
+    _addXP(_tierXP[badge.tier] ?? 500);
+    _showCelebration(badge);
+  }
+
+  void _showCelebration(MilestoneBadge badge) {
+    _confettiController.play();
+    final theme = DashboardTheme.of(context);
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Celebration",
+      barrierColor: Colors.black.withOpacity(0.65),
+      transitionDuration: const Duration(milliseconds: 400),
+      transitionBuilder: (ctx, anim, secondaryAnim, child) {
+        final curved = CurvedAnimation(parent: anim, curve: Curves.elasticOut);
+        return ScaleTransition(
+          scale: curved,
+          child: FadeTransition(opacity: anim, child: child),
+        );
+      },
+      pageBuilder: (ctx, anim, secondaryAnim) => CelebrationCard(
+        badge: badge,
+        theme: theme,
+        onClaim: () {
+          Navigator.of(ctx).pop();
+          _triggerDotAnimation(badge);
+          _triggerCardFlash(badge.category);
+          _triggerScreenFlash();
+        },
+      ),
+    );
+  }
+
+  void _showXPFloat(int amount) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) =>
+          XPFloatLabel(amount: amount, onDone: () => entry.remove()),
+    );
+    overlay.insert(entry);
+  }
+
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 2),
+    );
   }
 
   @override
@@ -58,6 +178,9 @@ class _MilestoneScreenState extends State<MilestoneScreen> {
     _scrollController.dispose();
     _selectedCategory.dispose();
     _collapseProgress.dispose();
+    _totalXP.dispose();
+    _confettiController.dispose();
+    _flashActive.dispose();
     super.dispose();
   }
 
@@ -79,19 +202,38 @@ class _MilestoneScreenState extends State<MilestoneScreen> {
                   padding: EdgeInsets.only(
                     left: 16.w,
                     right: 16.w,
-                    top: _brandingExpandedHeight,
+                    top: _brandingExpandedHeight + 28,
                     bottom: 24.h,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      ValueListenableBuilder<double>(
+                        valueListenable: _collapseProgress,
+                        builder: (context, progress, _) {
+                          return Opacity(
+                            opacity: (1.0 - progress).clamp(0.0, 1.0),
+                            child: Text(
+                              'Milestones',
+                              textAlign: TextAlign.left,
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.6,
+                                color: theme.textBody,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 14.h),
                       _SummaryBar(badges: allMilestoneBadges, theme: theme),
                       SizedBox(height: 14.h),
                       Text(
                         'YOUR BADGES',
                         style: TextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: 0.4,
                           color: theme.textMuted,
                         ),
@@ -100,13 +242,16 @@ class _MilestoneScreenState extends State<MilestoneScreen> {
                       Text(
                         'Tap a category to filter',
                         style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w400,
                           color: theme.textMuted,
                         ),
                       ),
                       SizedBox(height: 8.h),
-                      _CategoryFilterStrip(selected: _selectedCategory, theme: theme),
+                      _CategoryFilterStrip(
+                        selected: _selectedCategory,
+                        theme: theme,
+                      ),
                       SizedBox(height: 12.h),
                       ValueListenableBuilder<MilestoneCategory?>(
                         valueListenable: _selectedCategory,
@@ -117,18 +262,31 @@ class _MilestoneScreenState extends State<MilestoneScreen> {
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: categoriesToRender.asMap().entries.map((entry) {
+                            children: categoriesToRender.asMap().entries.map((
+                              entry,
+                            ) {
                               final index = entry.key;
                               final cat = entry.value;
-                              final catBadges = allMilestoneBadges.where((b) => b.category == cat).toList();
-                              if (catBadges.isEmpty) return const SizedBox.shrink();
+                              final catBadges = allMilestoneBadges
+                                  .where((b) => b.category == cat)
+                                  .toList();
+                              if (catBadges.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
 
                               return FadeSlideIn(
                                 delay: Duration(milliseconds: 40 * index),
                                 child: _CategoryCard(
+                                  key: _cardKeys.putIfAbsent(
+                                    cat,
+                                    () => GlobalKey<_CategoryCardState>(),
+                                  ),
                                   category: cat,
                                   badges: catBadges,
                                   theme: theme,
+                                  getButtonLabel: _getButtonLabel,
+                                  onSimulate: _onSimulate,
+                                  onClaim: _onClaim,
                                 ),
                               );
                             }).toList(),
@@ -151,15 +309,144 @@ class _MilestoneScreenState extends State<MilestoneScreen> {
                         expandedHeight: _brandingExpandedHeight,
                         collapsedHeight: _brandingCollapsedHeight,
                         theme: theme,
-                        title: Text('Milestones' ,style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.6,
-                          color: theme.textBody,
-                        ),),
+                        title: Text(
+                          'Milestones',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.6,
+                            color: theme.textBody,
+                          ),
+                        ),
                       ),
                     );
                   },
+                ),
+                // XP Bar Positioned
+                ValueListenableBuilder<double>(
+                  valueListenable: _collapseProgress,
+                  builder: (context, progress, _) {
+                    final topOffset = _brandingExpandedHeight -
+                        (_brandingExpandedHeight - _brandingCollapsedHeight) *
+                            progress;
+                    return Positioned(
+                      top: topOffset,
+                      left: 0,
+                      right: 0,
+                      child: ValueListenableBuilder<int>(
+                        valueListenable: _totalXP,
+                        builder: (context, totalXpValue, _) {
+                          return Container(
+                            height: 20.h,
+                            padding: EdgeInsets.symmetric(horizontal: 16.w),
+                            color: theme.base,
+                            alignment: Alignment.center,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: 3.h,
+                                    decoration: BoxDecoration(
+                                      color: theme.surfaceDeep,
+                                      borderRadius: BorderRadius.circular(1.5.r),
+                                    ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: TweenAnimationBuilder<double>(
+                                      tween: Tween<double>(
+                                        begin: 0.0,
+                                        end: (totalXpValue / _xpTarget).clamp(
+                                          0.0,
+                                          1.0,
+                                        ),
+                                      ),
+                                      duration: const Duration(milliseconds: 1400),
+                                      curve: Curves.easeOutCubic,
+                                      builder: (context, val, child) {
+                                        return FractionallySizedBox(
+                                          alignment: Alignment.centerLeft,
+                                          widthFactor: val,
+                                          child: Container(
+                                            decoration: const BoxDecoration(
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  AppColors.kpiBarHigh,
+                                                  Color(0xFFFBBF24),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                TweenAnimationBuilder<double>(
+                                  tween: Tween<double>(
+                                    begin: 0.0,
+                                    end: totalXpValue.toDouble(),
+                                  ),
+                                  duration: const Duration(milliseconds: 1400),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (context, animValue, _) {
+                                    final formatted = animValue
+                                        .round()
+                                        .toString()
+                                        .replaceAllMapped(
+                                          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+                                          (Match m) => '${m[1]},',
+                                        );
+                                    return Text(
+                                      '$formatted / 4,000 XP',
+                                      style: TextStyle(
+                                        fontSize: 10.sp,
+                                        color: theme.textMuted,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+
+                // Screen Flash overlay
+                ValueListenableBuilder<bool>(
+                  valueListenable: _flashActive,
+                  builder: (context, active, child) => IgnorePointer(
+                    child: AnimatedOpacity(
+                      opacity: active ? 0.12 : 0.0,
+                      duration: Duration(milliseconds: active ? 80 : 400),
+                      child: Container(color: AppColors.kpiBarHigh),
+                    ),
+                  ),
+                ),
+                // Confetti overlay
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: ConfettiWidget(
+                    confettiController: _confettiController,
+                    blastDirectionality: BlastDirectionality.explosive,
+                    numberOfParticles: 30,
+                    colors: [
+                      AppColors.kpiBarHigh,
+                      tierColor(_lastUnlockedTier ?? BadgeTier.gold),
+                      const Color(0xFFF5C842),
+                      Colors.white,
+                      const Color(0xFFC084FC),
+                    ],
+                    gravity: 0.25,
+                    emissionFrequency: 0.04,
+                    minBlastForce: 5,
+                    maxBlastForce: 20,
+                  ),
                 ),
               ],
             ),
@@ -170,114 +457,187 @@ class _MilestoneScreenState extends State<MilestoneScreen> {
   }
 }
 
-class _SummaryBar extends StatelessWidget {
+class _SummaryBar extends StatefulWidget {
   final List<MilestoneBadge> badges;
   final DashboardTheme theme;
 
   const _SummaryBar({required this.badges, required this.theme});
 
   @override
+  State<_SummaryBar> createState() => _SummaryBarState();
+}
+
+class _SummaryBarState extends State<_SummaryBar> {
+  final List<ValueNotifier<double>> _pulses = [
+    ValueNotifier(0.0),
+    ValueNotifier(0.0),
+    ValueNotifier(0.0),
+  ];
+
+  int _prevUnlockedCount = 0;
+  int _prevActiveCategoriesCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _prevUnlockedCount = widget.badges.where((b) => b.unlocked).length;
+    final Set<MilestoneCategory> activeCategories = {};
+    for (final b in widget.badges) {
+      if (b.unlocked) activeCategories.add(b.category);
+    }
+    _prevActiveCategoriesCount = activeCategories.length;
+  }
+
+  @override
+  void didUpdateWidget(covariant _SummaryBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    int unlockedCount = 0;
+    final Set<MilestoneCategory> activeCategories = {};
+    for (final b in widget.badges) {
+      if (b.unlocked) {
+        unlockedCount++;
+        activeCategories.add(b.category);
+      }
+    }
+    if (unlockedCount > _prevUnlockedCount) {
+      _triggerPulse(0);
+      _prevUnlockedCount = unlockedCount;
+    }
+    if (activeCategories.length > _prevActiveCategoriesCount) {
+      _triggerPulse(1);
+      _prevActiveCategoriesCount = activeCategories.length;
+    }
+  }
+
+  void _triggerPulse(int index) {
+    _pulses[index].value = 1.0;
+  }
+
+  @override
+  void dispose() {
+    for (final p in _pulses) {
+      p.dispose();
+    }
+    super.dispose();
+  }
+
+  Widget _buildChip(int index, String label, String value, IconData icon) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _triggerPulse(index),
+        child: ValueListenableBuilder<double>(
+          valueListenable: _pulses[index],
+          builder: (context, pulseVal, child) {
+            return TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0.0, end: pulseVal),
+              duration: const Duration(milliseconds: 400),
+              onEnd: () {
+                if (pulseVal == 1.0) {
+                  _pulses[index].value = 0.0;
+                }
+              },
+              builder: (context, opacity, child) {
+                return Stack(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 12.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: widget.theme.surface,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icon, color: widget.theme.text, size: 18.sp),
+                          SizedBox(height: 4.h),
+                          Text(
+                            value,
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.bold,
+                              color: widget.theme.text,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: widget.theme.textMuted,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: Opacity(
+                          opacity: opacity,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8.r),
+                              gradient: RadialGradient(
+                                center: Alignment.topCenter,
+                                radius: 1.0,
+                                colors: [
+                                  AppColors.kpiBarHigh.withOpacity(0.4),
+                                  AppColors.kpiBarHigh.withOpacity(0.0),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     int unlockedCount = 0;
     final Set<MilestoneCategory> activeCategories = {};
-    MilestoneBadge? nextUnlockBadge;
-    double highestProgress = -1.0;
-
-    for (final badge in badges) {
+    for (final badge in widget.badges) {
       if (badge.unlocked) {
         unlockedCount++;
         activeCategories.add(badge.category);
-      } else {
-        if (badge.progress > highestProgress) {
-          highestProgress = badge.progress;
-          nextUnlockBadge = badge;
-        }
       }
     }
 
     return Row(
       children: [
-        Expanded(
-          child: _StatChip(
-            icon: Icons.emoji_events_outlined,
-            value: unlockedCount.toString(),
-            label: 'Badges Earned',
-            theme: theme,
-          ),
+        _buildChip(
+          0,
+          'Badges Earned',
+          unlockedCount.toString(),
+          Icons.emoji_events_outlined,
         ),
         SizedBox(width: 8.w),
-        Expanded(
-          child: _StatChip(
-            icon: Icons.category_outlined,
-            value: activeCategories.length.toString(),
-            label: 'Categories Active',
-            theme: theme,
-          ),
+        _buildChip(
+          1,
+          'Categories Active',
+          activeCategories.length.toString(),
+          Icons.category_outlined,
         ),
         SizedBox(width: 8.w),
-        Expanded(
-          child: _StatChip(
-            icon: Icons.lock_open_outlined,
-            value: nextUnlockBadge != null ? nextUnlockBadge.badgeName : 'All Done',
-            label: 'Next Unlock',
-            theme: theme,
-          ),
-        ),
+        _buildChip(2, 'Day Streak', '14', Icons.local_fire_department_outlined),
       ],
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String label;
-  final DashboardTheme theme;
-
-  const _StatChip({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.theme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: theme.surface,
-        borderRadius: BorderRadius.circular(8.r),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: theme.text, size: 18.sp),
-          SizedBox(height: 4.h),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.bold,
-              color: theme.text,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          SizedBox(height: 2.h),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9.sp,
-              color: theme.textMuted,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
     );
   }
 }
@@ -346,17 +706,17 @@ class _FilterChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 28.h,
+        height: 34.h,
         padding: EdgeInsets.symmetric(horizontal: 14.w),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(17.r),
         ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 10.sp,
+            fontSize: 13.sp,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             color: textColor,
           ),
@@ -366,157 +726,304 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _CategoryCard extends StatelessWidget {
+class _CategoryCard extends StatefulWidget {
   final MilestoneCategory category;
   final List<MilestoneBadge> badges;
   final DashboardTheme theme;
+  final String? Function(MilestoneBadge) getButtonLabel;
+  final void Function(MilestoneBadge) onSimulate;
+  final void Function(MilestoneBadge) onClaim;
 
   const _CategoryCard({
+    super.key,
     required this.category,
     required this.badges,
     required this.theme,
+    required this.getButtonLabel,
+    required this.onSimulate,
+    required this.onClaim,
   });
 
   @override
+  State<_CategoryCard> createState() => _CategoryCardState();
+}
+
+class _CategoryCardState extends State<_CategoryCard>
+    with TickerProviderStateMixin {
+  final Map<String, AnimationController> _dotControllers = {};
+  final ValueNotifier<bool> _justUnlocked = ValueNotifier(false);
+
+  @override
+  void initState() {
+    super.initState();
+    for (final badge in widget.badges) {
+      _dotControllers[badge.id] = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 600),
+        value: badge.unlocked ? 1.0 : 0.0,
+      );
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _CategoryCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    for (final badge in widget.badges) {
+      if (!_dotControllers.containsKey(badge.id)) {
+        _dotControllers[badge.id] = AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 600),
+          value: badge.unlocked ? 1.0 : 0.0,
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _dotControllers.values) {
+      controller.dispose();
+    }
+    _justUnlocked.dispose();
+    super.dispose();
+  }
+
+  void triggerDotAnimation(MilestoneBadge badge) {
+    _dotControllers[badge.id]?.forward(from: 0.0);
+  }
+
+  void triggerFlash() {
+    _justUnlocked.value = true;
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        _justUnlocked.value = false;
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final meta = categoryMeta[category]!;
-    final unlockedCount = badges.where((b) => b.unlocked).length;
-    final totalCount = badges.length;
-    
+    final meta = categoryMeta[widget.category]!;
+    final unlockedCount = widget.badges.where((b) => b.unlocked).length;
+    final totalCount = widget.badges.length;
+
     MilestoneBadge? highestUnlocked;
     MilestoneBadge? nextToUnlock;
-    
-    for (final b in badges) {
+
+    for (final b in widget.badges) {
       if (b.unlocked) {
         highestUnlocked = b;
       } else {
-        if (nextToUnlock == null) {
-          nextToUnlock = b;
-        }
+        nextToUnlock ??= b;
       }
     }
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: theme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Icon(meta.icon, color: theme.text, size: 16.sp),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  meta.label,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: theme.text,
-                  ),
-                ),
-              ),
-              if (highestUnlocked != null) ...[
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: tierColor(highestUnlocked.tier).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Text(
-                    highestUnlocked.badgeName,
-                    style: TextStyle(
-                      fontSize: 9.sp,
-                      fontWeight: FontWeight.w600,
-                      color: tierColor(highestUnlocked.tier),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8.w),
-              ],
-              Text(
-                '$unlockedCount / $totalCount',
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: theme.textMuted,
-                ),
-              ),
-            ],
+    return ValueListenableBuilder<bool>(
+      valueListenable: _justUnlocked,
+      builder: (context, justUnlockedVal, child) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          margin: EdgeInsets.only(bottom: 10.h),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            color: widget.theme.surface,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: justUnlockedVal
+                  ? AppColors.tierGold.withOpacity(.7)
+                  : widget.theme.surfaceDeep.withOpacity(0),
+              width: 1.5,
+            ),
           ),
-          SizedBox(height: 12.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: badges.map((badge) {
-              final isUnlocked = badge.unlocked;
-              final color = tierColor(badge.tier);
-              
-              String tierName = badge.tier.name.toUpperCase();
-              if (badge.tier == BadgeTier.oneOff) {
-                tierName = 'DONE';
-              }
-              
-              return Column(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
                 children: [
-                  Container(
-                    width: 10.w,
-                    height: 10.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isUnlocked ? color : theme.surfaceDeep,
-                      border: isUnlocked ? null : Border.all(color: color, width: 1),
+                  Icon(meta.icon, color: widget.theme.text, size: 16.sp),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      meta.label,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w700,
+                        color: widget.theme.text,
+                      ),
                     ),
                   ),
-                  SizedBox(height: 4.h),
+                  if (highestUnlocked != null) ...[
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: tierColor(
+                          highestUnlocked.tier,
+                        ).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Text(
+                        highestUnlocked.badgeName,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: tierColor(highestUnlocked.tier),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                  ],
                   Text(
-                    tierName,
+                    '$unlockedCount / $totalCount',
                     style: TextStyle(
-                      fontSize: 8.sp,
-                      color: theme.textMuted,
+                      fontSize: 13.sp,
+                      color: widget.theme.textMuted,
                     ),
                   ),
                 ],
-              );
-            }).toList(),
-          ),
-          if (nextToUnlock != null) ...[
-            SizedBox(height: 12.h),
-            Stack(
-              children: [
-                Container(
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: theme.surfaceDeep,
-                    borderRadius: BorderRadius.circular(2.r),
-                  ),
-                ),
-                FractionallySizedBox(
-                  widthFactor: nextToUnlock.progress,
-                  child: Container(
-                    height: 4.h,
+              ),
+              SizedBox(height: 12.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: widget.badges.map((badge) {
+                  final isUnlocked = badge.unlocked;
+                  final color = tierColor(badge.tier);
+
+                  String tierName = badge.tier.name.toUpperCase();
+                  if (badge.tier == BadgeTier.oneOff) {
+                    tierName = 'DONE';
+                  }
+
+                  final controller = _dotControllers[badge.id];
+
+                  Widget dot = Container(
+                    width: 11.w,
+                    height: 11.w,
                     decoration: BoxDecoration(
-                      color: tierColor(nextToUnlock.tier),
-                      borderRadius: BorderRadius.circular(2.r),
+                      shape: BoxShape.circle,
+                      color: isUnlocked ? color : Colors.transparent,
+                      border: isUnlocked
+                          ? null
+                          : Border.all(color: color, width: 1.5),
+                      boxShadow: isUnlocked
+                          ? [
+                              BoxShadow(
+                                color: color.withOpacity(.5),
+                                blurRadius: 6.r,
+                                spreadRadius: 1.r,
+                              ),
+                            ]
+                          : null,
                     ),
+                  );
+
+                  if (controller != null) {
+                    dot = ScaleTransition(
+                      scale: CurvedAnimation(
+                        parent: controller,
+                        curve: const ElasticOutCurve(0.8),
+                      ),
+                      child: dot,
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      dot,
+                      SizedBox(height: 4.h),
+                      Text(
+                        tierName,
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w500,
+                          color: widget.theme.textMuted,
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+              if (nextToUnlock != null) ...[
+                SizedBox(height: 12.h),
+                Stack(
+                  children: [
+                    Container(
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: widget.theme.surfaceDeep,
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: nextToUnlock.progress,
+                      child: Container(
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: tierColor(nextToUnlock.tier),
+                          borderRadius: BorderRadius.circular(2.r),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  '${nextToUnlock.currentValue ?? 0} / ${nextToUnlock.threshold} ${nextToUnlock.unit}',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: widget.theme.textMuted,
                   ),
+                  textAlign: TextAlign.center,
+                ),
+                Builder(
+                  builder: (context) {
+                    final nextBadge = nextToUnlock!;
+                    final label = widget.getButtonLabel(nextBadge);
+                    if (label == null) return const SizedBox.shrink();
+
+                    return Padding(
+                      padding: EdgeInsets.only(top: 12.h),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 36.h,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            if (nextBadge.progress < 1.0) {
+                              widget.onSimulate(nextBadge);
+                            } else {
+                              widget.onClaim(nextBadge);
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: AppColors.kpiBarHigh,
+                              width: 1,
+                            ),
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: AppColors.kpiBarHigh,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                          ),
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              '${nextToUnlock.currentValue ?? 0} / ${nextToUnlock.threshold} ${nextToUnlock.unit}',
-              style: TextStyle(
-                fontSize: 9.sp,
-                color: theme.textMuted,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ],
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

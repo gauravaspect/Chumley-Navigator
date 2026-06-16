@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/core/app_constants.dart';
 import 'package:chumley_navigator/core/app_dependencies.dart';
 import 'package:chumley_navigator/models/vcr_submit_payload.dart';
 import 'package:chumley_navigator/screens/vehicle_check/service/vehicle_check_api_service.dart';
@@ -10,6 +11,7 @@ import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
+import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
 import 'package:chumley_navigator/widgets/vehicle/vcr_capture_slot.dart';
 import 'package:chumley_navigator/widgets/vehicle/vcr_example_photo_card.dart';
 import 'package:chumley_navigator/widgets/vehicle/vcr_form_card.dart';
@@ -219,12 +221,84 @@ class _VehicleFormState extends State<VehicleForm> {
   }
 
   Future<void> _pickPhoto(String slotId) async {
+    ImageSource? source = ImageSource.camera;
+
+    if (!AppConstants.isProduction) {
+      source = await _showImageSourceSelector();
+      if (source == null || !mounted) return;
+    }
+
     final file = await _imagePicker.pickImage(
-      source: ImageSource.camera,
+      source: source,
       preferredCameraDevice: CameraDevice.rear,
     );
     if (file == null || !mounted) return;
     setState(() => _captures[slotId] = File(file.path));
+  }
+
+  Future<ImageSource?> _showImageSourceSelector() {
+    final theme = DashboardTheme.of(context);
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.surfaceDeep,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20.r),
+              topRight: Radius.circular(20.r),
+            ),
+            border: Border.all(
+              color: theme.border,
+              width: 0.5,
+            ),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Select Image Source',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: theme.text,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16.h),
+              _ImageSourceButton(
+                theme: theme,
+                icon: Icons.camera_alt_rounded,
+                label: 'Take Photo (Camera)',
+                onTap: () => Navigator.of(context).pop(ImageSource.camera),
+              ),
+              SizedBox(height: 10.h),
+              _ImageSourceButton(
+                theme: theme,
+                icon: Icons.photo_library_rounded,
+                label: 'Choose from Gallery',
+                onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+              ),
+              SizedBox(height: 12.h),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: theme.textMuted,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _goToStep(int index) {
@@ -269,22 +343,30 @@ class _VehicleFormState extends State<VehicleForm> {
                   padding: EdgeInsets.only(
                     left: 16.w,
                     right: 16.w,
-                    top: 16.h,
+                    top: _brandingExpandedHeight + 28,
                     bottom: 2.h,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(height: 14.h),
-                      Text(
-                        'Vehicle details',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.6,
-                          color: theme.textMuted,
-                        ),
+                      ValueListenableBuilder<double>(
+                        valueListenable: _collapseProgress,
+                        builder: (context, progress, _) {
+                          return Opacity(
+                            opacity: (1.0 - progress).clamp(0.0, 1.0),
+                            child: Text(
+                              'Vehicle details',
+                              textAlign: TextAlign.left,
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.6,
+                                color: theme.textBody,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       SizedBox(height: 14.h),
                       const FadeSlideIn(child: VcrPageHeader()),
@@ -317,9 +399,26 @@ class _VehicleFormState extends State<VehicleForm> {
                         expandedHeight: _brandingExpandedHeight,
                         collapsedHeight: _brandingCollapsedHeight,
                         theme: theme,
+                        hasBackButton: true,
+                        title: Text(
+                          'Vehicle details',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.6,
+                            color: theme.textBody,
+                          ),
+                        ),
                       ),
                     );
                   },
+                ),
+                Positioned(
+                  top: 8.h,
+                  left: 16.w,
+                  child: CommandCentreBackButton(
+                    onTap: () => Navigator.maybePop(context),
+                  ),
                 ),
               ],
             )
@@ -339,18 +438,18 @@ class _VehicleFormState extends State<VehicleForm> {
           Text(
             'VEHICLE DETAILS',
             style: TextStyle(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w600,
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.4,
-              color: theme.textMuted,
+              color: theme.textBody,
             ),
           ),
           SizedBox(height: 6.h),
           Text(
             'Select your allocated vehicle and record inspection details',
             style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w500,
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w400,
               color: theme.textMuted,
             ),
           ),
@@ -378,7 +477,7 @@ class _VehicleFormState extends State<VehicleForm> {
           Text(
             'Description',
             style: TextStyle(
-              fontSize: 10.sp,
+              fontSize: 13.sp,
               fontWeight: FontWeight.w500,
               color: theme.textMuted,
             ),
@@ -396,7 +495,7 @@ class _VehicleFormState extends State<VehicleForm> {
           Text(
             'Internal notes',
             style: TextStyle(
-              fontSize: 10.sp,
+              fontSize: 13.sp,
               fontWeight: FontWeight.w500,
               color: theme.textMuted,
             ),
@@ -414,7 +513,7 @@ class _VehicleFormState extends State<VehicleForm> {
           Text(
             'Inspection result',
             style: TextStyle(
-              fontSize: 10.sp,
+              fontSize: 13.sp,
               fontWeight: FontWeight.w500,
               color: theme.textMuted,
             ),
@@ -447,16 +546,16 @@ class _VehicleFormState extends State<VehicleForm> {
               Text(
                 step.title,
                 style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w700,
                   color: theme.text,
                 ),
               ),
               Text(
                 '$_capturedCount/${step.captures.length} captured',
                 style: TextStyle(
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
                   color: theme.textMuted,
                 ),
               ),
@@ -484,7 +583,7 @@ class _VehicleFormState extends State<VehicleForm> {
                   Text(
                     'Example photos (use as a guide)',
                     style: TextStyle(
-                      fontSize: 10.sp,
+                      fontSize: 13.sp,
                       fontWeight: FontWeight.w500,
                       color: theme.textMuted,
                     ),
@@ -522,7 +621,7 @@ class _VehicleFormState extends State<VehicleForm> {
           Text(
             'Your photos',
             style: TextStyle(
-              fontSize: 10.sp,
+              fontSize: 13.sp,
               fontWeight: FontWeight.w600,
               color: theme.textMuted,
             ),
@@ -600,10 +699,10 @@ class _VehicleFormState extends State<VehicleForm> {
         maxLines: 3,
         onTap: () => onFocusChanged(true),
         onTapOutside: (_) => onFocusChanged(false),
-        style: TextStyle(fontSize: 11.sp, color: theme.text),
+        style: TextStyle(fontSize: 13.sp, color: theme.text),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: TextStyle(fontSize: 11.sp, color: theme.textMuted),
+          hintStyle: TextStyle(fontSize: 13.sp, color: theme.textMuted),
           border: InputBorder.none,
           contentPadding: EdgeInsets.all(12.r),
         ),
@@ -628,7 +727,7 @@ class _VehicleFormState extends State<VehicleForm> {
             color: theme.textMuted,
             size: 20.sp,
           ),
-          style: TextStyle(fontSize: 11.sp, color: theme.text),
+          style: TextStyle(fontSize: 13.sp, color: theme.text),
           items: _inspectionResults
               .map(
                 (result) => DropdownMenuItem(
@@ -662,7 +761,7 @@ class _VehicleFormState extends State<VehicleForm> {
       scale: 0.98,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 40.h,
+        height: 46.h,
         alignment: Alignment.center,
         decoration: isPrimary
             ? BoxDecoration(
@@ -689,8 +788,8 @@ class _VehicleFormState extends State<VehicleForm> {
             : Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
                   color: isPrimary
                       ? AppColors.white
                       : (enabled ? theme.text : theme.textMuted),
@@ -723,11 +822,11 @@ class _VehicleDetailRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 96.w,
+            width: 110.w,
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 10.sp,
+                fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
                 color: theme.textMuted,
               ),
@@ -737,13 +836,66 @@ class _VehicleDetailRow extends StatelessWidget {
             child: Text(
               trimmed,
               style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w500,
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
                 color: theme.text,
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ImageSourceButton extends StatelessWidget {
+  const _ImageSourceButton({
+    required this.theme,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final DashboardTheme theme;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      onTap: onTap,
+      scale: 0.98,
+      child: Container(
+        height: 50.h,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: theme.surface,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(
+            color: theme.border,
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: theme.dashPrimary,
+              size: 20.sp,
+            ),
+            SizedBox(width: 10.w),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: theme.text,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

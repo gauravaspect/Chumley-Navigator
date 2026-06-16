@@ -15,6 +15,9 @@ import 'package:chumley_navigator/screens/vehicle_check/repo/vcr_examples_reposi
 import 'package:chumley_navigator/screens/vehicle_check/service/vcr_examples_api_service.dart';
 import 'package:chumley_navigator/screens/login/repo/login_repository.dart';
 import 'package:chumley_navigator/screens/login/service/login_api_service.dart';
+import 'package:chumley_navigator/screens/absences/cubit/absences_cubit.dart';
+import 'package:chumley_navigator/screens/absences/repo/absences_repository.dart';
+import 'package:chumley_navigator/screens/absences/service/absences_api_service.dart';
 import 'package:chumley_navigator/service/auth_service.dart';
 import 'package:chumley_navigator/utils/routes.dart';
 import 'package:flutter/material.dart';
@@ -57,6 +60,11 @@ class AppDependencies {
   static final VcrExamplesRepository vcrExamplesRepository =
       VcrExamplesRepository(vcrExamplesApiService);
 
+  static final AbsencesApiService absencesApiService =
+      AbsencesApiService(apiClient);
+  static final AbsencesRepository absencesRepository =
+      AbsencesRepository(absencesApiService);
+
   static DashboardCubit createDashboardCubit() =>
       DashboardCubit(dashboardRepository);
 
@@ -68,6 +76,9 @@ class AppDependencies {
 
   static VcrExamplesCubit createVcrExamplesCubit() =>
       VcrExamplesCubit(vcrExamplesRepository);
+
+  static AbsencesCubit createAbsencesCubit() =>
+      AbsencesCubit(absencesRepository);
 
   static void initialize() {
     DioInterceptor.onUnauthorized = () async {

@@ -522,7 +522,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 11.sp,
+            fontSize: 13.sp,
             fontWeight: FontWeight.w600,
             color: _t.textMuted,
             letterSpacing: 0.3,
@@ -931,7 +931,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
           label,
           style: TextStyle(
               color: fg,
-              fontSize: 12.sp,
+              fontSize: 13.sp,
               fontWeight: FontWeight.w700),
         ),
       ),
@@ -1177,6 +1177,16 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
                               expandedHeight: _brandingExpandedHeight,
                               collapsedHeight: _brandingCollapsedHeight,
                               theme: _t,
+                              hasBackButton: true,
+                              title: Text(
+                                'Inspection Report',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.6,
+                                  color: _t.textBody,
+                                ),
+                              ),
                             ),
                           );
                         },

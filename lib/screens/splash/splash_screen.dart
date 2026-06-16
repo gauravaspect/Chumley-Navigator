@@ -3,6 +3,7 @@ import 'package:chumley_navigator/screens/login/cubit/login_state.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import '../../utils/routes.dart';
 
@@ -103,7 +104,7 @@ class _SplashScreenState extends State<SplashScreen>
   void _initVideo() {
     _videoCtrl =
         VideoPlayerController.asset(
-            'assets/videos/navigator-splash.mp4',
+            'assets/videos/navigator-splash-1.mp4',
             videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
           )
           ..initialize().then((_) async {
@@ -191,7 +192,8 @@ class _SplashScreenState extends State<SplashScreen>
     return FadeTransition(
       opacity: _rootFadeAnim,
       child: Scaffold(
-        backgroundColor: AppColors.splashBackground,
+        // backgroundColor: AppColors.splashBackground,
+        backgroundColor: AppColors.white,
         body: Stack(children: [_buildVideo(screenH), _buildWordmark(screenH)]),
       ),
     );
@@ -247,7 +249,7 @@ class _SplashScreenState extends State<SplashScreen>
         child: RichText(
           text: TextSpan(
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: GoogleFonts.montserrat().fontFamily,
               fontWeight: FontWeight.w700,
               fontSize: _kWordmarkFontSize,
               letterSpacing: _kWordmarkFontSize * -0.02,

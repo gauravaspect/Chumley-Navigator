@@ -5,7 +5,6 @@ import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/utils/number_display.dart';
-import 'package:chumley_navigator/utils/routes.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:flutter/material.dart';
@@ -56,16 +55,16 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
                             Text(
                               'Your rewards journey',
                               style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w600,
                                 color: theme.text,
                               ),
                             ),
-                            SizedBox(height: 2.h),
+                            SizedBox(height: 4.h),
                             Text(
                               'Earn points, unlock rewards',
                               style: TextStyle(
-                                fontSize: 11.sp,
+                                fontSize: 13.sp,
                                 color: theme.textMuted,
                               ),
                             ),
@@ -163,7 +162,6 @@ class _HeaderIconButton extends StatelessWidget {
 
 class _AvailablePointsCard extends StatefulWidget {
   const _AvailablePointsCard({
-    super.key,
     required this.theme,
     required this.user,
     required this.performanceHistory,
@@ -257,7 +255,7 @@ class _AvailablePointsCardState extends State<_AvailablePointsCard> with SingleT
                     child: ClipRect(
                       clipper: _RevealClipper(progress),
                       child: CustomPaint(
-                        size: Size(300.w, 304.w),
+                        size: Size(350.w, 274.w),
                         painter: _SvgBackgroundPainter(),
                       ),
                     ),
@@ -266,16 +264,16 @@ class _AvailablePointsCardState extends State<_AvailablePointsCard> with SingleT
               ),
               // Card Content
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 42.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'AVAILABLE POINTS',
                       style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.white,
-                        fontSize: 10.sp,
+                        fontSize: 13.sp,
                         letterSpacing: 0.4,
                       ),
                     ),
@@ -287,7 +285,7 @@ class _AvailablePointsCardState extends State<_AvailablePointsCard> with SingleT
                           currentPointsLabel,
                           style: TextStyle(
                             fontSize: 48.sp,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.white,
                             height: 1,
                             fontFeatures: const [FontFeature.tabularFigures()],
@@ -298,8 +296,8 @@ class _AvailablePointsCardState extends State<_AvailablePointsCard> with SingleT
                           child: Text(
                             'pts',
                             style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.kpiBarHigh,
                             ),
                           ),
@@ -319,15 +317,15 @@ class _AvailablePointsCardState extends State<_AvailablePointsCard> with SingleT
                         children: [
                           Icon(
                             Icons.trending_up_rounded,
-                            size: 11.sp,
+                            size: 14.sp,
                             color: AppColors.kpiBarHigh,
                           ),
                           SizedBox(width: 4.w),
                           Text(
                             thisMonthLabel,
                             style: TextStyle(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
                               color: AppColors.kpiBarHigh,
                             ),
                           ),
@@ -371,34 +369,6 @@ class _SvgBackgroundPainter extends CustomPainter {
     final fillPaint = Paint()
       ..color = const Color(0xFFF1FF24)
       ..style = PaintingStyle.fill;
-
-    // Path 1 (Outline)
-    final path1 = Path()
-      ..moveTo(59.5146, 26.0258)
-      ..lineTo(43.2282, 2.24617)
-      ..cubicTo(42.2722, 0.836112, 40.6882, 0, 39.0065, 0)
-      ..lineTo(5.14272, 0)
-      ..cubicTo(2.30969, 0, 0, 2.34536, 0, 5.22216)
-      ..lineTo(0, 56.7635)
-      ..cubicTo(0, 59.6403, 2.30969, 61.9857, 5.14272, 61.9857)
-      ..lineTo(38.9926, 61.9857)
-      ..cubicTo(40.6743, 61.9857, 42.2513, 61.1495, 43.2142, 59.7466)
-      ..lineTo(59.5076, 35.9599)
-      ..cubicTo(61.5452, 32.9839, 61.5452, 28.9947, 59.5076, 26.0187);
-
-    canvas.drawPath(
-      path1,
-      Paint()
-        ..color = const Color(0xFFF1FF24).withOpacity(0.04)
-        ..style = PaintingStyle.fill,
-    );
-    canvas.drawPath(
-      path1,
-      Paint()
-        ..color = const Color(0xFFF1FF24).withOpacity(0.15)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
 
     // Path 2
     final path2 = Path()
@@ -575,8 +545,8 @@ class _ClaimedRewards extends StatelessWidget {
         Text(
           'CLAIMED REWARDS',
           style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 10.sp,
+            fontWeight: FontWeight.w700,
+            fontSize: 13.sp,
             letterSpacing: 0.4,
             color: theme.textMuted,
           ),
@@ -617,17 +587,17 @@ class _ClaimedRewards extends StatelessWidget {
                           Text(
                             '${item.reward} ${item.amount}',
                             style: TextStyle(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
                               color: theme.text,
                               height: 1.2,
                             ),
                           ),
-                          SizedBox(height: 2.h),
+                          SizedBox(height: 4.h),
                           Text(
                             'Redeemed · ${item.redeemDate}',
                             style: TextStyle(
-                              fontSize: 10.sp,
+                              fontSize: 13.sp,
                               color: theme.textMuted,
                             ),
                           ),
@@ -637,8 +607,8 @@ class _ClaimedRewards extends StatelessWidget {
                     Text(
                       '−${item.pts} pts',
                       style: TextStyle(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
                         color: theme.textMuted,
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
@@ -690,8 +660,8 @@ class _BrandCard extends StatelessWidget {
           Text(
             amount,
             style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w600,
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w700,
               color: AppColors.white,
               height: 1,
             ),

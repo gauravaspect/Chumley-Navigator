@@ -107,7 +107,11 @@ class KpiOverview extends StatelessWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    Navigator.pushNamed(context, AppRoutes.goals);
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.goals,
+                      arguments: user,
+                    );
                   },
                   borderRadius: BorderRadius.circular(18.r),
                   child: _KpiCard(

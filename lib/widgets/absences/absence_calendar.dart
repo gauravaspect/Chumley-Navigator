@@ -149,7 +149,7 @@ class _AbsenceCalendarState extends State<AbsenceCalendar> {
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
               mainAxisSpacing: 0,
-              childAspectRatio: 1,
+              childAspectRatio: 28 / 34,
             ),
             itemCount: days.length,
             itemBuilder: (_, index) {
@@ -158,6 +158,7 @@ class _AbsenceCalendarState extends State<AbsenceCalendar> {
               final isToday = normalized == _today;
               final isSelected = _selectedDate != null &&
                   normalized == _normalize(_selectedDate!);
+              final mark = widget.markedDays[normalized];
 
               Color bgColor = Colors.transparent;
               Color textColor = day.isCurrentMonth
@@ -192,22 +193,41 @@ class _AbsenceCalendarState extends State<AbsenceCalendar> {
                       }
                     : null,
                 child: Center(
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOutCubic,
-                    width: 28.w,
-                    height: 28.w,
-                    alignment: Alignment.center,
-                    decoration: decoration,
-                    child: Text(
-                      '${day.date.day}',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: fontWeight,
-                        color: textColor,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOutCubic,
+                        width: 28.w,
+                        height: 28.w,
+                        alignment: Alignment.center,
+                        decoration: decoration,
+                        child: Text(
+                          '${day.date.day}',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: fontWeight,
+                            color: textColor,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
                       ),
-                    ),
+                      if (mark != null && day.isCurrentMonth)
+                        Container(
+                          margin: EdgeInsets.only(top: 2.h),
+                          width: 4.w,
+                          height: 4.w,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.white
+                                : (mark == AbsenceDayMark.absence
+                                    ? AppColors.errorText
+                                    : AppColors.successText),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               );

@@ -91,7 +91,6 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SizedBox(height: 14.h),
                       ValueListenableBuilder<double>(
                         valueListenable: _collapseProgress,
                         builder: (context, progress, _) {
@@ -121,18 +120,18 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
                               Text(
                                 'SUBMIT ENQUIRY',
                                 style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w700,
                                   letterSpacing: 0.4,
-                                  color: theme.textMuted,
+                                  color: theme.textBody,
                                 ),
                               ),
                               SizedBox(height: 6.h),
                               Text(
                                 "We're here to help with any issue",
                                 style: TextStyle(
-                                  fontSize: 11.sp,
-                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w400,
                                   color: theme.textMuted,
                                 ),
                               ),
@@ -142,7 +141,7 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
                               Text(
                                 'Description',
                                 style: TextStyle(
-                                  fontSize: 10.sp,
+                                  fontSize: 13.sp,
                                   fontWeight: FontWeight.w500,
                                   color: theme.textMuted,
                                 ),
@@ -159,7 +158,7 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
                       Text(
                         'ACTIVE ENQUIRIES',
                         style: TextStyle(
-                          fontSize: 10.sp,
+                          fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.4,
                           color: theme.textMuted,
@@ -188,7 +187,7 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
                         title: Text(
                           'Enquiries',
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.6,
                             color: theme.textBody,
@@ -239,7 +238,7 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
           Text(
             'Select a category',
             style: TextStyle(
-              fontSize: 11.sp,
+              fontSize: 13.sp,
               color: theme.textMuted,
             ),
           ),
@@ -264,7 +263,7 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
         height: 40.h,
       ),
       style: TextStyle(
-        fontSize: 11.sp,
+        fontSize: 13.sp,
         fontWeight: FontWeight.w500,
         color: theme.text,
       ),
@@ -293,14 +292,14 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
         onTap: () => setState(() => _descriptionFocused = true),
         onTapOutside: (_) => setState(() => _descriptionFocused = false),
         style: TextStyle(
-          fontSize: 11.sp,
+          fontSize: 13.sp,
           height: 1.45,
           color: theme.text,
         ),
         decoration: InputDecoration(
           hintText: 'Describe your issue in detail…',
           hintStyle: TextStyle(
-            fontSize: 11.sp,
+            fontSize: 13.sp,
             color: theme.textMuted,
           ),
           border: InputBorder.none,
@@ -383,8 +382,8 @@ class _EmptyEnquiriesCard extends StatelessWidget {
           Text(
             'No active enquiries',
             style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w500,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
               color: theme.text,
             ),
           ),
@@ -393,8 +392,8 @@ class _EmptyEnquiriesCard extends StatelessWidget {
             'Submitted enquiries will appear here',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w500,
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w400,
               color: theme.textMuted,
             ),
           ),

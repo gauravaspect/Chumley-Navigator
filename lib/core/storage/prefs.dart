@@ -4,6 +4,7 @@ import 'package:chumley_navigator/core/storage/session_storage.dart';
 import 'package:chumley_navigator/models/auth_user.dart';
 import 'package:chumley_navigator/models/leaderboard_model.dart';
 import 'package:chumley_navigator/models/points_model.dart';
+import 'package:chumley_navigator/models/list_absence_model.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/models/vehicle_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,6 +18,7 @@ class Prefs {
   static const _refreshTokenKey = 'refreshToken';
   static const _pointsKey = 'performanceHistory';
   static const _vehicleAllocationsKey = 'vehicleAllocations';
+  static const _absencesKey = 'absences';
 
   static Future<SharedPreferences> getPrefs() async {
     return await SharedPreferences.getInstance();
@@ -190,6 +192,29 @@ class Prefs {
     return null;
   }
 
+  static Future<void> saveAbsences(AbsenceCache cache) async {
+    final prefs = await getPrefs();
+    await prefs.setString(_absencesKey, jsonEncode(cache.toJson()));
+  }
+
+  static Future<AbsenceCache?> getAbsences() async {
+    final prefs = await getPrefs();
+    final json = prefs.getString(_absencesKey);
+    if (json == null || json.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(json);
+      if (decoded is Map<String, dynamic>) {
+        return AbsenceCache.fromJson(decoded);
+      }
+      if (decoded is Map) {
+        return AbsenceCache.fromJson(Map<String, dynamic>.from(decoded));
+      }
+    } catch (_) {
+      await prefs.remove(_absencesKey);
+    }
+    return null;
+  }
+
   static Future<void> clearAuth() async {
     await SessionStorage.delete();
     final prefs = await getPrefs();
@@ -201,6 +226,7 @@ class Prefs {
     await prefs.remove(_refreshTokenKey);
     await prefs.remove(_pointsKey);
     await prefs.remove(_vehicleAllocationsKey);
+    await prefs.remove(_absencesKey);
   }
 
   static Future<void> clearAll() async {

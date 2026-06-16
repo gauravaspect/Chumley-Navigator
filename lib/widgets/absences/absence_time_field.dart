@@ -9,12 +9,14 @@ class AbsenceTimeField extends StatelessWidget {
     required this.time,
     required this.onTap,
     this.enabled = true,
+    this.hasError = false,
   });
 
   final String label;
   final TimeOfDay? time;
   final VoidCallback onTap;
   final bool enabled;
+  final bool hasError;
 
   String get _display {
     if (time == null) return '--:--';
@@ -36,10 +38,13 @@ class AbsenceTimeField extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           opacity: enabled ? 1 : 0.5,
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 12.h),
             decoration: BoxDecoration(
               color: theme.dashPrimary,
               borderRadius: BorderRadius.circular(12.r),
+              border: hasError
+                  ? Border.all(color: Colors.red, width: 1.5)
+                  : null,
             ),
             child: Column(
               children: [

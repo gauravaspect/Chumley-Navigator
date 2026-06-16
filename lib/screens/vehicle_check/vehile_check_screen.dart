@@ -118,7 +118,6 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
               return Scaffold(
                 backgroundColor: theme.base,
                 body: SafeArea(
-                  bottom: false,
                   child: Stack(
                     children: [
                       RefreshIndicator(
@@ -132,31 +131,13 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
                           padding: EdgeInsets.only(
                             left: 16.w,
                             right: 16.w,
-                            top: _brandingExpandedHeight,
+                            top: _brandingExpandedHeight + 28,
                             bottom: 112.h,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              ValueListenableBuilder<double>(
-                                valueListenable: _collapseProgress,
-                                builder: (context, progress, _) {
-                                  return Opacity(
-                                    opacity: (1.0 - progress).clamp(0.0, 1.0),
-                                    child: Text(
-                                      'Vehicle check',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 10.sp,
-                                        fontWeight: FontWeight.w500,
-                                        letterSpacing: 0.6,
-                                        color: theme.textMuted,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              SizedBox(height: 14.h),
+                              // SizedBox(height: 14.h),
                               const FadeSlideIn(child: VcrPageHeader()),
                               SizedBox(height: 12.h),
                               if (showVehicleShimmer)
@@ -194,26 +175,26 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
                                         Text(
                                           'YOUR ALLOCATED VEHICLE',
                                           style: TextStyle(
-                                            fontSize: 10.sp,
-                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15.sp,
+                                            fontWeight: FontWeight.w700,
                                             letterSpacing: 0.4,
-                                            color: theme.textMuted,
+                                            color: theme.textBody,
                                           ),
                                         ),
-                                        SizedBox(height: 4.h),
+                                        SizedBox(height: 6.h),
                                         Text(
                                           'Select the vehicle for this inspection',
                                           style: TextStyle(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.w500,
-                                            color: theme.text,
+                                            fontSize: 13.sp,
+                                            fontWeight: FontWeight.w400,
+                                            color: theme.textMuted,
                                           ),
                                         ),
                                         SizedBox(height: 12.h),
                                         Text(
                                           'Vehicle',
                                           style: TextStyle(
-                                            fontSize: 10.sp,
+                                            fontSize: 13.sp,
                                             fontWeight: FontWeight.w500,
                                             color: theme.textMuted,
                                           ),
@@ -242,7 +223,7 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
                                                 ? 'No vehicles available'
                                                 : 'Select vehicle',
                                             style: TextStyle(
-                                              fontSize: 11.sp,
+                                              fontSize: 13.sp,
                                               color: theme.textMuted,
                                             ),
                                           ),
@@ -265,7 +246,7 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
                                             ),
                                           ),
                                           style: TextStyle(
-                                            fontSize: 11.sp,
+                                            fontSize: 13.sp,
                                             color: theme.text,
                                           ),
                                           items: vehicles
@@ -342,19 +323,19 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
                                       Text(
                                         'STEP 1 INSTRUCTIONS',
                                         style: TextStyle(
-                                          fontSize: 10.sp,
-                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w700,
                                           letterSpacing: 0.4,
-                                          color: theme.textMuted,
+                                          color: theme.textBody,
                                         ),
                                       ),
-                                      SizedBox(height: 4.h),
+                                      SizedBox(height: 6.h),
                                       Text(
                                         'Read before starting the vehicle check',
                                         style: TextStyle(
-                                          fontSize: 12.sp,
-                                          fontWeight: FontWeight.w500,
-                                          color: theme.text,
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w400,
+                                          color: theme.textMuted,
                                         ),
                                       ),
                                       SizedBox(height: 12.h),
@@ -366,7 +347,7 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
                                         Text(
                                           VehileCheckScreen._instructions[i],
                                           style: TextStyle(
-                                            fontSize: 11.sp,
+                                            fontSize: 13.sp,
                                             fontWeight: FontWeight.w400,
                                             height: 1.45,
                                             color: theme.textMuted,
@@ -412,7 +393,7 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
                               title: Text(
                                 'Vehicle check Report',
                                 style: TextStyle(
-                                  fontSize: 14.sp,
+                                  fontSize: 16.sp,
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: 0.6,
                                   color: theme.textBody,
@@ -456,11 +437,11 @@ class _VehicleDetailRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 96.w,
+            width: 110.w,
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 10.sp,
+                fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
                 color: theme.textMuted,
               ),
@@ -470,8 +451,8 @@ class _VehicleDetailRow extends StatelessWidget {
             child: Text(
               trimmed,
               style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w500,
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
                 color: theme.text,
               ),
             ),
@@ -502,7 +483,7 @@ class _ContinueButton extends StatelessWidget {
         scale: 0.98,
         child: Container(
           width: double.infinity,
-          height: 40.h,
+          height: 46.h,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: enabled
@@ -513,8 +494,8 @@ class _ContinueButton extends StatelessWidget {
           child: Text(
             'Continue to vehicle details',
             style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w700,
               color: AppColors.white,
             ),
           ),

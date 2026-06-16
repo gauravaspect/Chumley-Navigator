@@ -11,7 +11,8 @@ class ApiEndpoints {
   static const getLeaderboardData = '/api/leaderboard';
   static String getVcrExamples(String section) => '/api/vcr/examples/$section';
   static const submitVcr = '/api/vcr/submit';
-
+  static const listMyAbsences = '/api/engineer/absences';
+  static const postMyAbsence = '/api/engineer/absences';
   static String get baseUrl {
     final raw = AppConstants.apiBaseUrl.trim();
     if (raw.isEmpty) return '';

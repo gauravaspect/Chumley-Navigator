@@ -89,31 +89,32 @@ class _FormsScreenState extends State<FormsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SizedBox(height: 14.h),
+
                       ValueListenableBuilder<double>(
                         valueListenable: _collapseProgress,
                         builder: (context, progress, _) {
                           return Opacity(
                             opacity: (1.0 - progress).clamp(0.0, 1.0),
                             child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Forms',
-                                  textAlign: TextAlign.center,
+                                  textAlign: TextAlign.left,
                                   style: TextStyle(
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.w500,
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w600,
                                     letterSpacing: 0.6,
-                                    color: theme.textMuted,
+                                    color: theme.dashTitle,
                                   ),
                                 ),
                                 SizedBox(height: 6.h),
                                 Text(
                                   'Select a work type to start a new form',
-                                  textAlign: TextAlign.center,
+                                  textAlign: TextAlign.left,
                                   style: TextStyle(
-                                    fontSize: 11.sp,
-                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w400,
                                     color: theme.textMuted,
                                   ),
                                 ),
@@ -160,7 +161,7 @@ class _FormsScreenState extends State<FormsScreen> {
                         title: Text(
                           'Forms',
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.6,
                             color: theme.textBody,
@@ -233,17 +234,17 @@ class _FormListTile extends StatelessWidget {
                     title,
                     style: TextStyle(
                       color: theme.text,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
                       height: 1.3,
                     ),
                   ),
-                  SizedBox(height: 2.h),
+                  SizedBox(height: 4.h),
                   Text(
                     subtitle,
                     style: TextStyle(
                       color: theme.textMuted,
-                      fontSize: 10.sp,
+                      fontSize: 13.sp,
                       fontWeight: FontWeight.w400,
                       height: 1.4,
                     ),

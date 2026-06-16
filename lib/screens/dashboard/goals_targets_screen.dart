@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
-import 'package:chumley_navigator/utils/routes.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
@@ -72,6 +72,36 @@ class _GoalsTargetsScreenState extends State<GoalsTargetsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = ModalRoute.of(context)?.settings.arguments as UserModel?;
+    final List<_CardData> cards;
+    if (user != null) {
+      cards = [
+        _CardData(
+          label: 'Conversion Pool',
+          value: user.conversion.score,
+          max: 20,
+        ),
+        _CardData(
+          label: 'Productivity Pool',
+          value: user.productivity.score,
+          max: 20,
+        ),
+        _CardData(
+          label: 'Procedural Pool',
+          value: user.procedural.score,
+          max: 20,
+        ),
+        _CardData(
+          label: 'Vehicular Pool',
+          value: user.vehicular.score,
+          max: 20,
+        ),
+        _CardData(label: 'Satisfaction Pool', value: user.cSat.score, max: 20),
+      ];
+    } else {
+      cards = _cards;
+    }
+
     return ListenableBuilder(
       listenable: ThemeScope.of(context),
       builder: (context, _) {
@@ -102,12 +132,12 @@ class _GoalsTargetsScreenState extends State<GoalsTargetsScreen> {
                             opacity: (1.0 - progress).clamp(0.0, 1.0),
                             child: Text(
                               'Goals & targets',
-                              textAlign: TextAlign.center,
+                              textAlign: TextAlign.left,
                               style: TextStyle(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w600,
                                 letterSpacing: 0.6,
-                                color: theme.textMuted,
+                                color: theme.textBody,
                               ),
                             ),
                           );
@@ -151,11 +181,11 @@ class _GoalsTargetsScreenState extends State<GoalsTargetsScreen> {
                         },
                       ),
                       SizedBox(height: 14.h),
-                      for (var i = 0; i < _cards.length; i++) ...[
+                      for (var i = 0; i < cards.length; i++) ...[
                         if (i > 0) SizedBox(height: 8.h),
                         FadeSlideIn(
                           delay: Duration(milliseconds: 50 * i),
-                          child: _KpiCard(theme: theme, data: _cards[i]),
+                          child: _KpiCard(theme: theme, data: cards[i]),
                         ),
                       ],
                     ],
@@ -199,7 +229,7 @@ class _CloseButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PressableScale(
-      onTap: () => Navigator.popAndPushNamed(context, AppRoutes.home),
+      onTap: () => Navigator.pop(context),
       scale: 0.92,
       child: Container(
         width: 32.w,
@@ -210,11 +240,7 @@ class _CloseButton extends StatelessWidget {
           border: Border.all(color: theme.border, width: 0.5),
         ),
         alignment: Alignment.center,
-        child: Icon(
-          Icons.close_rounded,
-          size: 16.sp,
-          color: theme.textMuted,
-        ),
+        child: Icon(Icons.close_rounded, size: 16.sp, color: theme.textMuted),
       ),
     );
   }
@@ -229,8 +255,7 @@ class _KpiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = (data.value / data.max).clamp(0.0, 1.0);
-    final arcColor =
-        progress >= 0.7 ? theme.kpiBarHighColor : theme.accent;
+    final arcColor = progress >= 0.7 ? theme.kpiBarHighColor : theme.accent;
 
     final valueText = data.value % 1 == 0
         ? '${data.value.toInt()}/${data.max.toInt()}'
@@ -262,11 +287,7 @@ class _KpiCard extends StatelessWidget {
                       fillColor: arcColor,
                     ),
                   ),
-                  Icon(
-                    Icons.trending_up_rounded,
-                    size: 22.sp,
-                    color: arcColor,
-                  ),
+                  Icon(Icons.trending_up_rounded, size: 22.sp, color: arcColor),
                 ],
               ),
             ),

@@ -185,7 +185,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                SizedBox(height: 14.h),
                                 ValueListenableBuilder<double>(
                                   valueListenable: _collapseProgress,
                                   builder: (context, progress, _) {
@@ -289,7 +288,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                 title: Text(
                                   'Engineer leaderboard',
                                   style: TextStyle(
-                                    fontSize: 14.sp,
+                                    fontSize: 16.sp,
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.6,
                                     color: theme.textBody,
@@ -379,8 +378,8 @@ class _LeaderboardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 36.h,
-      padding: EdgeInsets.symmetric(horizontal: 8.w),
+      height: 40.h,
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
         color: theme.surface,
         border: Border.all(color: theme.border, width: 0.5),
@@ -388,14 +387,14 @@ class _LeaderboardHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _headerCell('Rank', width: 28.w, align: TextAlign.center),
+          _headerCell('Rank', width: 36.w.clamp(36.0, 50.0), align: TextAlign.center),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(left: 12.w),
+              padding: EdgeInsets.only(left: 4.w),
               child: _headerCell('Engineer', align: TextAlign.left),
             ),
           ),
-          _headerCell('Score', width: 80.w, align: TextAlign.right),
+          _headerCell('Score', width: 106.w.clamp(96.0, 130.0), align: TextAlign.right),
         ],
       ),
     );
@@ -407,18 +406,32 @@ class _LeaderboardHeader extends StatelessWidget {
     required TextAlign align,
   }) {
     final style = TextStyle(
-      fontSize: 10.sp,
-      fontWeight: FontWeight.w500,
+      fontSize: 12.sp,
+      fontWeight: FontWeight.w600,
       color: theme.textMuted,
     );
 
     if (width != null) {
       return SizedBox(
         width: width,
-        child: Text(text, textAlign: align, style: style),
+        child: Text(
+          text,
+          textAlign: align,
+          style: style,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
+        ),
       );
     }
-    return Text(text, textAlign: align, style: style);
+    return Text(
+      text,
+      textAlign: align,
+      style: style,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      softWrap: false,
+    );
   }
 }
 
@@ -439,7 +452,7 @@ class _LeaderboardRowTile extends StatelessWidget {
         onTap: () {},
         scale: 0.99,
         child: Container(
-          height: 40.h,
+          height: 44.h,
           padding: EdgeInsets.symmetric(horizontal: 12.w),
           decoration: BoxDecoration(
             color: theme.surfaceDeep,
@@ -449,13 +462,13 @@ class _LeaderboardRowTile extends StatelessWidget {
           child: Row(
             children: [
               SizedBox(
-                width: 24.w,
+                width: 36.w.clamp(36.0, 50.0),
                 child: Text(
                   '${row.rank}',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
                     color: theme.textMuted,
                   ),
                 ),
@@ -468,15 +481,15 @@ class _LeaderboardRowTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
                       color: theme.text,
                     ),
                   ),
                 ),
               ),
               SizedBox(
-                width: 100.w,
+                width: 106.w.clamp(96.0, 130.0),
                 child: _KpiCell(theme: theme, kpi: row.kpi),
               ),
             ],
@@ -521,13 +534,13 @@ class _KpiCell extends StatelessWidget {
         ),
         SizedBox(width: 6.w),
         SizedBox(
-          width: 28.w,
+          width: 34.w.clamp(34.0, 50.0),
           child: Text(
             kpi.toStringAsFixed(1),
             textAlign: TextAlign.right,
             style: TextStyle(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w500,
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
               color: theme.textMuted,
             ),
           ),

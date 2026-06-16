@@ -43,8 +43,8 @@ class MyApp extends StatelessWidget {
                   theme: ThemeData(
                     brightness: Brightness.light,
                     scaffoldBackgroundColor: AppColors.lightBase,
-                    fontFamily: GoogleFonts.inter().fontFamily,
-                    textTheme: GoogleFonts.interTextTheme(),
+                    fontFamily: GoogleFonts.montserrat().fontFamily,
+                    textTheme: GoogleFonts.montserratTextTheme(),
                     colorScheme: ColorScheme.fromSeed(
                       seedColor: AppColors.primaryBlue,
                       brightness: Brightness.light,
@@ -53,8 +53,8 @@ class MyApp extends StatelessWidget {
                   darkTheme: ThemeData(
                     brightness: Brightness.dark,
                     scaffoldBackgroundColor: AppColors.darkBase,
-                    fontFamily: GoogleFonts.inter().fontFamily,
-                    textTheme: GoogleFonts.interTextTheme(
+                    fontFamily: GoogleFonts.montserrat().fontFamily,
+                    textTheme: GoogleFonts.montserratTextTheme(
                       ThemeData.dark().textTheme,
                     ),
                     colorScheme: ColorScheme.fromSeed(
