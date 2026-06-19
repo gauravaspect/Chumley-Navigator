@@ -7,6 +7,7 @@ class ApiEndpoints {
   static  String profile(String id, {String dateRange = 'all_time'}) =>
       '/api/engineer/$id?date_range=$dateRange';
   static String getPointsData(String id,{int month =12}) => '/api/engineers/$id/points/summary?months=$month';
+  static String getMilestones(String id) => '/api/engineers/$id/milestones';
   static const getVehicleAllocations = '/api/vcr/allocations';
   static const getLeaderboardData = '/api/leaderboard';
   static String getVcrExamples(String section) => '/api/vcr/examples/$section';

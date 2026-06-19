@@ -18,6 +18,9 @@ import 'package:chumley_navigator/screens/login/service/login_api_service.dart';
 import 'package:chumley_navigator/screens/absences/cubit/absences_cubit.dart';
 import 'package:chumley_navigator/screens/absences/repo/absences_repository.dart';
 import 'package:chumley_navigator/screens/absences/service/absences_api_service.dart';
+import 'package:chumley_navigator/screens/milestones/cubit/milestones_cubit.dart';
+import 'package:chumley_navigator/screens/milestones/repo/milestones_repository.dart';
+import 'package:chumley_navigator/screens/milestones/service/milestones_api_service.dart';
 import 'package:chumley_navigator/service/auth_service.dart';
 import 'package:chumley_navigator/utils/routes.dart';
 import 'package:flutter/material.dart';
@@ -65,6 +68,11 @@ class AppDependencies {
   static final AbsencesRepository absencesRepository =
       AbsencesRepository(absencesApiService);
 
+  static final MilestonesApiService milestonesApiService =
+      MilestonesApiService(apiClient);
+  static final MilestonesRepository milestonesRepository =
+      MilestonesRepository(milestonesApiService);
+
   static DashboardCubit createDashboardCubit() =>
       DashboardCubit(dashboardRepository);
 
@@ -79,6 +87,9 @@ class AppDependencies {
 
   static AbsencesCubit createAbsencesCubit() =>
       AbsencesCubit(absencesRepository);
+
+  static MilestonesCubit createMilestonesCubit() =>
+      MilestonesCubit(milestonesRepository);
 
   static void initialize() {
     DioInterceptor.onUnauthorized = () async {

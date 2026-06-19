@@ -13,11 +13,13 @@ class VcrCaptureSlot extends StatelessWidget {
     required this.label,
     this.imageFile,
     this.onTap,
+    this.isCompressing = false,
   });
 
   final String label;
   final File? imageFile;
   final VoidCallback? onTap;
+  final bool isCompressing;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,7 @@ class VcrCaptureSlot extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           PressableScale(
-            onTap: onTap,
+            onTap: isCompressing ? null : onTap,
             scale: 0.98,
             child: VcrDashedBorder(
               color: theme.border,
@@ -42,35 +44,46 @@ class VcrCaptureSlot extends StatelessWidget {
                   color: theme.surfaceDeep,
                   borderRadius: BorderRadius.circular(12.r),
                 ),
-                child: imageFile != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(10.r),
-                        child: Image.file(
-                          imageFile!,
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.photo_camera_outlined,
-                            size: 24.sp,
+                child: isCompressing
+                    ? Center(
+                        child: SizedBox(
+                          width: 24.w,
+                          height: 24.w,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
                             color: AppColors.primaryBlue,
                           ),
-                          SizedBox(height: 6.h),
-                          Text(
-                            'Tap to Capture',
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primaryBlue,
+                        ),
+                      )
+                    : imageFile != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(10.r),
+                            child: Image.file(
+                              imageFile!,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
                             ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.photo_camera_outlined,
+                                size: 24.sp,
+                                color: AppColors.primaryBlue,
+                              ),
+                              SizedBox(height: 6.h),
+                              Text(
+                                'Tap to Capture',
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primaryBlue,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
               ),
             ),
           ),

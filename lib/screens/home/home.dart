@@ -1,6 +1,5 @@
 import 'package:chumley_navigator/screens/absences/absences_screen.dart';
 import 'package:chumley_navigator/screens/enquiries/enquiries_screen.dart';
-import 'package:chumley_navigator/screens/forms/forms_screen.dart';
 import 'package:chumley_navigator/screens/leaderboard/leaderboard_screen.dart';
 import 'package:chumley_navigator/screens/milestones/milestone_screen.dart';
 import 'package:chumley_navigator/screens/vehicle_check/vehile_check_screen.dart';
@@ -48,12 +47,6 @@ class _HomeState extends State<Home> {
       icon: Icons.flag_outlined,
       activeIcon: Icons.flag_rounded,
       screen: const VehileCheckScreen(),
-    ),
-    _NavItem(
-      label: 'Forms',
-      icon: Icons.task_alt_outlined,
-      activeIcon: Icons.task_alt_rounded,
-      screen: const FormsScreen(),
     ),
     _NavItem(
       label: 'Enquiries',

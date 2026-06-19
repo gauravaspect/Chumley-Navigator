@@ -60,7 +60,7 @@ class ProfileStatGridCard extends StatelessWidget {
                   child: Text(
                     title,
                     style: TextStyle(
-                      fontSize: 10.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w500,
                       height: 1.25,
                       color: theme.textMuted,
@@ -75,8 +75,8 @@ class ProfileStatGridCard extends StatelessWidget {
             Text(
               body,
               style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
                 height: 1.2,
                 color: theme.text,
               ),

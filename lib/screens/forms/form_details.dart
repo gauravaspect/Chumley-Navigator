@@ -266,6 +266,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
         backgroundColor: AppColors.primaryBlue,
       ),
     );
+    Navigator.of(context).pop(true);
   }
 
   Widget _sectionWrap({required Widget child, double top = 16}) {

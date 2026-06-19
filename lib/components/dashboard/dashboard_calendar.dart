@@ -1,9 +1,11 @@
 import 'package:chumley_navigator/components/calendar/calendar_bottom_sheet.dart';
 import 'package:chumley_navigator/models/user_model.dart';
+import 'package:chumley_navigator/screens/job_details/job_detail_page.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class DashboardCalendar extends StatefulWidget {
   const DashboardCalendar({
@@ -100,6 +102,7 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
 
   bool _hasAppointment(DateTime date) {
     for (final appointment in widget.appointments) {
+      if (appointment.status.toLowerCase() == 'scheduled') continue;
       final start = appointment.scheduledStart;
       if (start == null) continue;
       if (start.year == date.year &&
@@ -126,6 +129,7 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
         : "Schedule for ${_shortMonthNames[selectedDate.month - 1]} ${_getDayWithSuffix(selectedDate.day)}";
 
     final filteredAppointments = widget.appointments.where((appointment) {
+      if (appointment.status.toLowerCase() == 'scheduled') return false;
       final start = appointment.scheduledStart;
       if (start == null) return false;
       return start.year == selectedDate.year &&
@@ -384,7 +388,10 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
             ...filteredAppointments.map((appointment) {
               return Padding(
                 padding: EdgeInsets.only(bottom: 12.h),
-                child: JobScheduleCard(appointment: appointment),
+                child: GestureDetector(
+                  onTap: () => JobDetailPage.open(context, appointment),
+                  child: JobScheduleCard(appointment: appointment),
+                ),
               );
             }),
         ],
@@ -429,93 +436,150 @@ class JobScheduleCard extends StatelessWidget {
     required this.appointment,
   });
 
-  String _getDayWithSuffix(int day) {
-    if (day >= 11 && day <= 13) {
-      return '${day}th';
-    }
-    switch (day % 10) {
-      case 1:
-        return '${day}st';
-      case 2:
-        return '${day}nd';
-      case 3:
-        return '${day}rd';
-      default:
-        return '${day}th';
-    }
-  }
+  // ── Helpers ────────────────────────────────────────────────────
 
   static const List<String> _shortMonthNames = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
 
-  String _formatTime(DateTime? dt) {
-    if (dt == null) return '--:--';
-    final hour = dt.hour.toString().padLeft(2, '0');
-    final minute = dt.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+  String _getDayWithSuffix(int day) {
+    if (day >= 11 && day <= 13) return '${day}th';
+    switch (day % 10) {
+      case 1: return '${day}st';
+      case 2: return '${day}nd';
+      case 3: return '${day}rd';
+      default: return '${day}th';
+    }
   }
+
+  String _formatTimeRange(DateTime? start) {
+    if (start == null) return '--:--';
+    final h = start.hour.toString().padLeft(2, '0');
+    final m = start.minute.toString().padLeft(2, '0');
+    final endHour = (start.hour + 2).toString().padLeft(2, '0');
+    return '$h:$m – $endHour:$m';
+  }
+
+  // Return a short version of the site from the job title string
+  // "J-410295 - Phil Harris - New Ashby Road - LE11 4EU" → "New Ashby Road"
+  String _shortSite(String title) {
+    final parts = title.split(' - ');
+    if (parts.length >= 3) return parts[2];
+    return title;
+  }
+
+  String _customerName(String title) {
+    final parts = title.split(' - ');
+    if (parts.length > 1) return parts[1];
+    return 'Customer';
+  }
+
+  String _jobTask(Appointment a) {
+    if (a.type.isNotEmpty) return a.type;
+    final parts = a.title.split(' - ');
+    if (parts.isNotEmpty && !parts[0].startsWith('J-')) return parts[0];
+    return 'EML Emergency Light Test';
+  }
+
+  // Status → colour mapping  (mirrors the 8-state lifecycle from JobDetailPage)
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'scheduled':   return const Color(0xFF6728C8);
+      case 'dispatched':  return const Color(0xFF2563EB);
+      case 'received':    return const Color(0xFF0891B2);
+      case 'in transit':  return const Color(0xFFF59E0B);
+      case 'on site':     return const Color(0xFF10B981);
+      case 'in progress': return const Color(0xFF8B5CF6);
+      case 'forms':       return const Color(0xFFEC4899);
+      case 'job completed': return const Color(0xFF22C55E);
+      default:            return const Color(0xFF2563EB); // fallback = blue
+    }
+  }
+
+  IconData _statusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'scheduled':     return LucideIcons.calendarClock;
+      case 'dispatched':    return LucideIcons.send;
+      case 'received':      return LucideIcons.checkCheck;
+      case 'in transit':    return LucideIcons.navigation;
+      case 'on site':       return LucideIcons.mapPin;
+      case 'in progress':   return LucideIcons.wrench;
+      case 'forms':         return LucideIcons.clipboardList;
+      case 'job completed': return LucideIcons.badgeCheck;
+      default:              return LucideIcons.send;
+    }
+  }
+
+  // ── Build ──────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
     final isDark = theme.isDark;
 
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.white;
-    final cardBorderColor = isDark ? AppColors.darkBorder : AppColors.accentBlue;
-    final headerBgColor = isDark ? AppColors.darkSurfaceDeep : AppColors.accentBlue;
-    
-    final iconBgColor = isDark ? AppColors.darkProgressTrack : AppColors.accentLime;
-    final iconBorderColor = isDark ? AppColors.darkBorder : AppColors.primaryBlue;
-    final iconColor = isDark ? AppColors.accentBlue : AppColors.primaryBlue;
+    final start     = appointment.scheduledStart;
+    final monthStr  = start != null ? _shortMonthNames[start.month - 1] : '--';
+    final dayStr    = start != null ? _getDayWithSuffix(start.day) : '--';
+    final timeRange = _formatTimeRange(start);
 
-    final dateBoxBgColor = isDark ? AppColors.darkSurface : AppColors.white;
-    final dateBoxBorderColor = isDark ? AppColors.darkBorder : AppColors.primaryBlue;
-    final dateBoxMonthColor = isDark ? AppColors.darkTextMuted : AppColors.textDarkBlue;
-    final dateBoxDayColor = isDark ? AppColors.darkText : AppColors.textDarkBlue;
-
-    final detailBoxBgColor = isDark ? AppColors.darkSurfaceDeep : AppColors.surfaceLightBlue;
-    final detailBoxBorderColor = isDark ? AppColors.darkBorder : AppColors.borderLightBlue;
-    final detailLabelColor = isDark ? AppColors.darkTextMuted : AppColors.primaryBlue;
-    final detailValueColor = isDark ? AppColors.darkText : AppColors.textDarkBlue;
-
-    final statusPillBgColor = isDark ? AppColors.darkProgressTrack : AppColors.chartFillBlue;
-    final statusPillTextColor = isDark ? AppColors.accentBlue : AppColors.primaryBlue;
-
-    final start = appointment.scheduledStart;
-    final monthStr = start != null ? _shortMonthNames[start.month - 1] : '--';
-    final dayStr = start != null ? _getDayWithSuffix(start.day) : '--';
-    final timeStr = _formatTime(start);
-
-    final jobType = appointment.type.isNotEmpty ? appointment.type : 'Reactive';
-    final jobNo = appointment.appointmentNumber.isNotEmpty
+    final jobType  = appointment.type.isNotEmpty ? appointment.type : 'Reactive';
+    final jobNo    = appointment.appointmentNumber.isNotEmpty
         ? appointment.appointmentNumber
         : 'SA-799913';
-    final jobTitle = appointment.title.isNotEmpty
+    final jobTitle  = appointment.title.isNotEmpty
         ? appointment.title
         : 'J-410295 - Phil Harris - New Ashby Road - LE11 4EU';
-    final jobStatus = appointment.status.isNotEmpty
-        ? appointment.status
-        : 'Received';
+    final jobStatus = appointment.status.isNotEmpty ? appointment.status : 'Received';
+    final siteShort = _shortSite(jobTitle);
+    final customer  = _customerName(jobTitle);
+    final taskLabel = _jobTask(appointment);
+
+    final statusColor = _statusColor(jobStatus);
+    final statusIcon  = _statusIcon(jobStatus);
+
+    // ── Theme tokens ──────────────────────────────────────────────
+    final cardBg      = isDark ? AppColors.darkSurface          : AppColors.white;
+    final cardBorder  = isDark ? AppColors.darkBorder           : AppColors.borderDefault;
+    final headerBg    = isDark ? AppColors.darkSurfaceDeep      : AppColors.primaryBlue;
+
+    final iconBoxBg   = isDark ? AppColors.darkProgressTrack    : AppColors.surfaceBlueTint;
+    final iconColor   = isDark ? AppColors.accentBlue           : AppColors.primaryBlue;
+
+    final dateBadgeBg       = isDark ? AppColors.darkBase    : AppColors.white;
+    final dateBadgeBorder   = isDark ? AppColors.darkBorder  : AppColors.borderDefault;
+    final dateMonColor      = isDark ? AppColors.darkTextMuted  : AppColors.primaryBlue;
+    final dateDayColor      = isDark ? AppColors.darkText       : AppColors.textDarkBlue;
+
+    final statBoxBg     = isDark ? AppColors.darkBase           : AppColors.surfaceLightBlue;
+    final statBoxBorder = isDark ? AppColors.darkBorder         : AppColors.borderLightBlue;
+    final statLabel     = isDark ? AppColors.darkTextMuted      : AppColors.textSecondary;
+    final statValue     = isDark ? AppColors.darkText           : AppColors.textDarkBlue;
+
+    final customerRowBg     = isDark ? AppColors.darkBase       : AppColors.surfaceBlueTint;
+    final customerRowBorder = isDark ? AppColors.darkBorder     : AppColors.borderLightBlue;
+
+    // Status pill colours
+    final pillBg     = isDark
+        ? statusColor.withValues(alpha: 0.15)
+        : statusColor.withValues(alpha: 0.10);
+    final pillBorder = statusColor.withValues(alpha: isDark ? 0.35 : 0.25);
+    // On the blue header (light) the pill has white text; on dark surface use colour
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
         decoration: BoxDecoration(
           color: cardBg,
-          border: Border.all(
-            color: cardBorderColor,
-            width: 0.5.w,
-          ),
           borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: cardBorder, width: 0.5),
           boxShadow: isDark
               ? null
               : [
                   BoxShadow(
-                    color: const Color(0x0A323843),
+                    color: AppColors.shadowSubtle,
                     offset: Offset(0, 2.h),
-                    blurRadius: 4.r,
+                    blurRadius: 6.r,
                   ),
                 ],
         ),
@@ -523,310 +587,252 @@ class JobScheduleCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header
+
+            // ── HEADER ─────────────────────────────────────────────
             Container(
-              color: headerBgColor,
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+              color: headerBg,
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40.w,
-                        height: 40.w,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: iconBgColor,
-                          border: Border.all(
-                            color: iconBorderColor,
-                            width: 0.25.w,
-                          ),
-                          borderRadius: BorderRadius.circular(11.r),
-                        ),
-                        child: BriefcaseIcon(
-                          size: 20.w,
-                          color: iconColor,
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            jobType,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 10.sp,
-                              color: AppColors.white,
-                              height: 1.1,
-                            ),
-                          ),
-                          Text(
-                            jobNo,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16.sp,
-                              color: AppColors.white,
-                              height: 1.1,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                  // Briefcase icon box
                   Container(
-                    constraints: BoxConstraints(minWidth: 50.w),
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                    width: 40.w,
+                    height: 40.w,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: dateBoxBgColor,
+                      color: iconBoxBg,
+                      borderRadius: BorderRadius.circular(10.r),
                       border: Border.all(
-                        color: dateBoxBorderColor,
-                        width: 0.5.w,
+                        color: isDark
+                            ? AppColors.darkBorder
+                            : AppColors.white.withValues(alpha: 0.3),
+                        width: 0.5,
                       ),
-                      borderRadius: BorderRadius.circular(8.r),
                     ),
+                    child: Icon(LucideIcons.briefcase, size: 20.sp, color: iconColor),
+                  ),
+                  SizedBox(width: 12.w),
+
+                  // Job type + number
+                  Expanded(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          monthStr.toUpperCase(),
+                          jobType.toUpperCase(),
                           style: TextStyle(
+                            fontSize: 9.sp,
                             fontWeight: FontWeight.w600,
-                            fontSize: 7.sp,
-                            color: dateBoxMonthColor,
                             letterSpacing: 0.5,
+                            color: isDark
+                                ? AppColors.darkTextMuted
+                                : AppColors.white.withValues(alpha: 0.70),
+                            height: 1.1,
                           ),
                         ),
                         Text(
-                          dayStr,
+                          jobNo,
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14.sp,
-                            color: dateBoxDayColor,
-                            height: 1.1,
+                            fontSize: 17.sp,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.4,
+                            color: isDark ? AppColors.darkText : AppColors.white,
+                            height: 1.15,
                           ),
                         ),
                       ],
                     ),
                   ),
+
+                  // Status pill + date badge — right side
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // Status pill
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: isDark ? pillBg : AppColors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20.r),
+                          border: Border.all(
+                            color: isDark
+                                ? pillBorder
+                                : AppColors.white.withValues(alpha: 0.35),
+                            width: 0.75,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              statusIcon,
+                              size: 11.sp,
+                              color: isDark ? statusColor : AppColors.white,
+                            ),
+                            SizedBox(width: 5.w),
+                            Text(
+                              jobStatus,
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? statusColor : AppColors.white,
+                                letterSpacing: 0.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+
+                      // Date badge
+                      Container(
+                        constraints: BoxConstraints(minWidth: 44.w),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 10.w, vertical: 5.h),
+                        decoration: BoxDecoration(
+                          color: dateBadgeBg,
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(color: dateBadgeBorder, width: 0.5),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              monthStr.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.6,
+                                color: dateMonColor,
+                                height: 1.0,
+                              ),
+                            ),
+                            Text(
+                              dayStr,
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                                color: dateDayColor,
+                                height: 1.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-            // Body (Three columns)
+
+            // ── THREE STAT BOXES ────────────────────────────────────
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+              padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 0),
               child: Row(
                 children: [
-                  // Box 1: Time
-                  Expanded(
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-                      decoration: BoxDecoration(
-                        color: detailBoxBgColor,
-                        border: Border.all(
-                          color: detailBoxBorderColor,
-                          width: 0.6.w,
-                        ),
-                        borderRadius: BorderRadius.circular(6.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 24.w,
-                            height: 24.w,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: iconBgColor,
-                              border: Border.all(
-                                color: iconBorderColor,
-                                width: 0.25.w,
-                              ),
-                              borderRadius: BorderRadius.circular(7.r),
-                            ),
-                            child: DocumentIcon(
-                              size: 12.w,
-                              color: iconColor,
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Time',
-                                  style: TextStyle(
-                                    fontSize: 7.sp,
-                                    color: detailLabelColor,
-                                    height: 1.1,
-                                  ),
-                                ),
-                                Text(
-                                  timeStr,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 8.sp,
-                                    color: detailValueColor,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  _StatBox(
+                    theme: theme,
+                    icon: LucideIcons.clock,
+                    label: 'Time',
+                    value: timeRange,
+                    boxBg: statBoxBg,
+                    boxBorder: statBoxBorder,
+                    iconBg: iconBoxBg,
+                    iconColor: iconColor,
+                    labelColor: statLabel,
+                    valueColor: statValue,
                   ),
                   SizedBox(width: 8.w),
-                  // Box 2: Task
-                  Expanded(
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-                      decoration: BoxDecoration(
-                        color: detailBoxBgColor,
-                        border: Border.all(
-                          color: detailBoxBorderColor,
-                          width: 0.6.w,
-                        ),
-                        borderRadius: BorderRadius.circular(6.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 24.w,
-                            height: 24.w,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: iconBgColor,
-                              border: Border.all(
-                                color: iconBorderColor,
-                                width: 0.25.w,
-                              ),
-                              borderRadius: BorderRadius.circular(7.r),
-                            ),
-                            child: LocationIcon(
-                              size: 12.w,
-                              color: iconColor,
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Task',
-                                  style: TextStyle(
-                                    fontSize: 7.sp,
-                                    color: detailLabelColor,
-                                    height: 1.1,
-                                  ),
-                                ),
-                                Text(
-                                  jobTitle,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 8.sp,
-                                    color: detailValueColor,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  _StatBox(
+                    theme: theme,
+                    icon: LucideIcons.fileText,
+                    label: 'Task',
+                    value: taskLabel,
+                    boxBg: statBoxBg,
+                    boxBorder: statBoxBorder,
+                    iconBg: iconBoxBg,
+                    iconColor: iconColor,
+                    labelColor: statLabel,
+                    valueColor: statValue,
                   ),
                   SizedBox(width: 8.w),
-                  // Box 3: Status
-                  Expanded(
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-                      decoration: BoxDecoration(
-                        color: detailBoxBgColor,
-                        border: Border.all(
-                          color: detailBoxBorderColor,
-                          width: 0.6.w,
-                        ),
-                        borderRadius: BorderRadius.circular(6.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 24.w,
-                            height: 24.w,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: iconBgColor,
-                              border: Border.all(
-                                color: iconBorderColor,
-                                width: 0.25.w,
-                              ),
-                              borderRadius: BorderRadius.circular(7.r),
-                            ),
-                            child: UserIcon(
-                              size: 12.w,
-                              color: iconColor,
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Status',
-                                  style: TextStyle(
-                                    fontSize: 7.sp,
-                                    color: detailLabelColor,
-                                    height: 1.1,
-                                  ),
-                                ),
-                                SizedBox(height: 1.h),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 6.w,
-                                    vertical: 2.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: statusPillBgColor,
-                                    borderRadius: BorderRadius.circular(12.r),
-                                  ),
-                                  child: Text(
-                                    jobStatus,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 8.sp,
-                                      color: statusPillTextColor,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  _StatBox(
+                    theme: theme,
+                    icon: LucideIcons.mapPin,
+                    label: 'Site',
+                    value: siteShort,
+                    boxBg: statBoxBg,
+                    boxBorder: statBoxBorder,
+                    iconBg: iconBoxBg,
+                    iconColor: iconColor,
+                    labelColor: statLabel,
+                    valueColor: statValue,
                   ),
                 ],
               ),
             ),
-            // Bottom gradient indicator line
-            Container(
-              height: 2.5.h,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.accentBlue,
-                    AppColors.accentBlueGradientEnd,
+
+            // ── CUSTOMER ROW ────────────────────────────────────────
+            Padding(
+              padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 12.h),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 9.h),
+                decoration: BoxDecoration(
+                  color: customerRowBg,
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: customerRowBorder, width: 0.5),
+                ),
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.user,
+                        size: 15.sp, color: iconColor),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'Customer',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w500,
+                        color: statLabel,
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Text(
+                        customer,
+                        textAlign: TextAlign.end,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w700,
+                          color: statValue,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                    SizedBox(width: 4.w),
+                    Icon(LucideIcons.chevronRight,
+                        size: 13.sp, color: statLabel),
                   ],
+                ),
+              ),
+            ),
+
+            // ── BOTTOM STRIPE ───────────────────────────────────────
+            Container(
+              height: 3.h,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [
+                          AppColors.darkBorder,
+                          AppColors.accentBlue,
+                          AppColors.darkBorder,
+                        ]
+                      : [
+                          AppColors.accentBlue,
+                          AppColors.accentBlueGradientEnd,
+                        ],
                 ),
               ),
             ),
@@ -837,200 +843,92 @@ class JobScheduleCard extends StatelessWidget {
   }
 }
 
-class BriefcaseIcon extends StatelessWidget {
-  final double size;
-  final Color color;
-  const BriefcaseIcon({super.key, this.size = 20, required this.color});
+class _StatBox extends StatelessWidget {
+  final DashboardTheme theme;
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color boxBg;
+  final Color boxBorder;
+  final Color iconBg;
+  final Color iconColor;
+  final Color labelColor;
+  final Color valueColor;
+
+  const _StatBox({
+    required this.theme,
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.boxBg,
+    required this.boxBorder,
+    required this.iconBg,
+    required this.iconColor,
+    required this.labelColor,
+    required this.valueColor,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _BriefcasePainter(color),
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: boxBg,
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(color: boxBorder, width: 0.5),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 24.w,
+              height: 24.w,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(6.r),
+                border: Border.all(
+                  color: iconColor.withValues(alpha: 0.18),
+                  width: 0.5,
+                ),
+              ),
+              child: Icon(icon, size: 12.sp, color: iconColor),
+            ),
+            SizedBox(width: 6.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 9.sp,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.4,
+                      color: labelColor,
+                      height: 1.1,
+                    ),
+                  ),
+                  SizedBox(height: 3.h),
+                  Text(
+                    value.isNotEmpty ? value : '—',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w700,
+                      color: valueColor,
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
-}
-
-class _BriefcasePainter extends CustomPainter {
-  final Color color;
-  _BriefcasePainter(this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeCap = StrokeCap.round;
-
-    final scaleX = size.width / 24;
-    final scaleY = size.height / 24;
-    canvas.scale(scaleX, scaleY);
-
-    final rect = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(3, 7, 18, 13),
-      const Radius.circular(2),
-    );
-    canvas.drawRRect(rect, paint);
-
-    final handlePath = Path()
-      ..moveTo(8, 7)
-      ..lineTo(8, 5)
-      ..arcToPoint(const Offset(10, 3), radius: const Radius.circular(2))
-      ..lineTo(14, 3)
-      ..arcToPoint(const Offset(16, 5), radius: const Radius.circular(2))
-      ..lineTo(16, 7);
-    canvas.drawPath(handlePath, paint);
-
-    canvas.drawLine(const Offset(12, 12), const Offset(12, 14), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class DocumentIcon extends StatelessWidget {
-  final double size;
-  final Color color;
-  const DocumentIcon({super.key, this.size = 12, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _DocumentPainter(color),
-      ),
-    );
-  }
-}
-
-class _DocumentPainter extends CustomPainter {
-  final Color color;
-  _DocumentPainter(this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;
-
-    final scaleX = size.width / 24;
-    final scaleY = size.height / 24;
-    canvas.scale(scaleX, scaleY);
-
-    final rect = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(3, 3, 18, 18),
-      const Radius.circular(2),
-    );
-    canvas.drawRRect(rect, paint);
-
-    canvas.drawLine(const Offset(9, 8), const Offset(15, 8), paint);
-    canvas.drawLine(const Offset(9, 12), const Offset(15, 12), paint);
-    canvas.drawLine(const Offset(9, 16), const Offset(12, 16), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class LocationIcon extends StatelessWidget {
-  final double size;
-  final Color color;
-  const LocationIcon({super.key, this.size = 12, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _LocationPainter(color),
-      ),
-    );
-  }
-}
-
-class _LocationPainter extends CustomPainter {
-  final Color color;
-  _LocationPainter(this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;
-
-    final scaleX = size.width / 24;
-    final scaleY = size.height / 24;
-    canvas.scale(scaleX, scaleY);
-
-    final path = Path()
-      ..moveTo(12, 2)
-      ..cubicTo(8.13, 2, 5, 5.13, 5, 9)
-      ..cubicTo(5, 14.25, 12, 22, 12, 22)
-      ..cubicTo(12, 22, 19, 14.25, 19, 9)
-      ..cubicTo(19, 5.13, 15.87, 2, 12, 2)
-      ..close();
-    canvas.drawPath(path, paint);
-
-    canvas.drawCircle(const Offset(12, 9), 2.5, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class UserIcon extends StatelessWidget {
-  final double size;
-  final Color color;
-  const UserIcon({super.key, this.size = 12, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _UserPainter(color),
-      ),
-    );
-  }
-}
-
-class _UserPainter extends CustomPainter {
-  final Color color;
-  _UserPainter(this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;
-
-    final scaleX = size.width / 24;
-    final scaleY = size.height / 24;
-    canvas.scale(scaleX, scaleY);
-
-    canvas.drawCircle(const Offset(12, 8), 4, paint);
-
-    final path = Path()
-      ..moveTo(4, 20)
-      ..cubicTo(4, 16, 8, 14, 12, 14)
-      ..cubicTo(16, 14, 20, 16, 20, 20);
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

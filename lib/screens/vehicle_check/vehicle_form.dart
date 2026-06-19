@@ -24,6 +24,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:chumley_navigator/models/vehicle_model.dart';
 import 'package:chumley_navigator/screens/vehicle_check/cubit/vcr_examples_cubit.dart';
 import 'package:chumley_navigator/screens/vehicle_check/cubit/vcr_examples_state.dart';
+import 'package:chumley_navigator/utils/image_compressor.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -49,6 +50,7 @@ class _VehicleFormState extends State<VehicleForm> {
   final _notesController = TextEditingController();
   final _imagePicker = ImagePicker();
   final Map<String, File?> _captures = {};
+  final Map<String, bool> _compressingSlots = {};
 
   int _currentStepIndex = 0;
   bool _notesFocused = false;
@@ -233,7 +235,22 @@ class _VehicleFormState extends State<VehicleForm> {
       preferredCameraDevice: CameraDevice.rear,
     );
     if (file == null || !mounted) return;
-    setState(() => _captures[slotId] = File(file.path));
+
+    setState(() => _compressingSlots[slotId] = true);
+
+    try {
+      final compressed = await ImageCompressor.compressImage(File(file.path));
+      if (!mounted) return;
+      if (compressed != null) {
+        setState(() => _captures[slotId] = compressed);
+      } else {
+        setState(() => _captures[slotId] = File(file.path));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _compressingSlots[slotId] = false);
+      }
+    }
   }
 
   Future<ImageSource?> _showImageSourceSelector() {
@@ -640,6 +657,7 @@ class _VehicleFormState extends State<VehicleForm> {
                   label: slot.label,
                   imageFile: _captures[slot.id],
                   onTap: () => _pickPhoto(slot.id),
+                  isCompressing: _compressingSlots[slot.id] ?? false,
                 );
               },
             ),

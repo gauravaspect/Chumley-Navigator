@@ -49,5 +49,20 @@
 	<string>Camera access is required to capture vehicle inspection photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Photo library access is required to attach vehicle inspection images.</string>
+	<!-- Location permissions -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Chumley Navigator needs your location to navigate to the job site.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Chumley Navigator needs your location to track transit to the job site.</string>
+
+	<!-- map_launcher URL schemes — needed to detect installed apps -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>comgooglemaps</string>
+		<string>waze</string>
+		<string>citymapper</string>
+		<string>osmandmaps</string>
+		<string>dgis</string>
+	</array>
 </dict>
 </plist>

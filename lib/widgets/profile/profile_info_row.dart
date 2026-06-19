@@ -36,7 +36,7 @@ class ProfileInfoRow extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 10.sp,
+                fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
                 color: theme.textMuted,
               ),
@@ -46,7 +46,7 @@ class ProfileInfoRow extends StatelessWidget {
                 value,
                 textAlign: TextAlign.right,
                 style: TextStyle(
-                  fontSize: 10.sp,
+                  fontSize: 13.sp,
                   fontWeight: FontWeight.w500,
                   color: theme.text,
                 ),

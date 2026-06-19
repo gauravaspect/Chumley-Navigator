@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:chumley_navigator/core/network/api_client.dart';
 import 'package:chumley_navigator/core/network/api_endpoints.dart';
 import 'package:chumley_navigator/core/network/api_response_helper.dart';
@@ -20,6 +22,8 @@ class VehicleCheckApiService {
 
     try {
       final response = await _apiClient.get(ApiEndpoints.getVehicleAllocations);
+      log('getVehicleAllocations response status: ${response.statusCode}');
+      log('getVehicleAllocations response data: ${response.data}');
       final body = ApiResponseHelper.toMap(response.data);
 
       if (body['success'] == false) {
@@ -91,6 +95,8 @@ class VehicleCheckApiService {
       }
 
       final response = await _apiClient.post(ApiEndpoints.submitVcr, formData);
+      log('submitVcrInspection response status: ${response.statusCode}');
+      log('submitVcrInspection response data: ${response.data}');
       final body = ApiResponseHelper.toMap(response.data);
 
       if (body['success'] == false) {
@@ -105,6 +111,8 @@ class VehicleCheckApiService {
     } on VehicleCheckApiException {
       rethrow;
     } on DioException catch (e) {
+      log(NetworkExceptions.getError(e));
+
       throw VehicleCheckApiException(NetworkExceptions.getError(e));
     }
   }

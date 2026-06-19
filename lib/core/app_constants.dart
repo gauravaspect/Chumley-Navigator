@@ -3,6 +3,10 @@ class AppConstants {
     'API_BASE_URL',
     defaultValue: 'https://navigator.chumley.ai',
   );
+  static const String tomtomApiKey = String.fromEnvironment(
+    'TOMTOM_API_KEY',
+    defaultValue: 'yiwXMa528qlf1Z4kZR0ocVkDVYCLb4sw',
+  );
 
   static const String tenantId = String.fromEnvironment(
     'AZURE_TENANT_ID',
@@ -19,6 +23,6 @@ class AppConstants {
 
   static const bool isProduction = bool.fromEnvironment(
     'IS_PRODUCTION',
-    defaultValue: false,
+    defaultValue: true,
   );
 }

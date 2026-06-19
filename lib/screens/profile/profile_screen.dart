@@ -36,10 +36,8 @@ class ProfileScreen extends StatefulWidget {
   static void open(BuildContext context, DashboardCubit cubit) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => BlocProvider.value(
-          value: cubit,
-          child: const ProfileScreen(),
-        ),
+        builder: (_) =>
+            BlocProvider.value(value: cubit, child: const ProfileScreen()),
       ),
     );
   }
@@ -56,8 +54,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// 0.0 = expanded, 1.0 = collapsed — updated every scroll frame.
   final ValueNotifier<double> _collapseProgress = ValueNotifier(0);
 
-  static const double _brandingExpandedHeight = 56;
-  static const double _brandingCollapsedHeight = 44;
+  static const double _brandingExpandedHeight = 72;
+  static const double _brandingCollapsedHeight = 54;
   static const double _scrollThreshold = 100;
 
   static double _easedCollapseProgress(double offset) {
@@ -71,8 +69,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _collapseProgress.value = progress;
     }
   }
-
-
 
   @override
   void initState() {
@@ -143,11 +139,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: 'Engineer Satisfaction',
         body: metric('engineer_satisfaction_survey'),
       ),
-      _GridItem(
-        icon: LucideIcons.lightbulb,
-        title: 'Skills',
-        body: skillsBody,
-      ),
+      _GridItem(icon: LucideIcons.lightbulb, title: 'Skills', body: skillsBody),
       _GridItem(
         icon: LucideIcons.map_pin,
         title: 'Sites Covered',
@@ -181,7 +173,7 @@ class _ProfileContent extends StatelessWidget {
     required this.scrollController,
     required this.brandingCollapsedHeight,
     required this.brandingExpandedHeight,
-    required this.collapseProgress
+    required this.collapseProgress,
   });
 
   final UserModel user;
@@ -214,7 +206,7 @@ class _ProfileContent extends StatelessWidget {
                   padding: EdgeInsets.only(
                     left: 16.w,
                     right: 16.w,
-                    top: brandingExpandedHeight,
+                    top: brandingExpandedHeight + 28,
                     bottom: 24.h,
                   ),
                   child: Column(
@@ -227,96 +219,96 @@ class _ProfileContent extends StatelessWidget {
                             opacity: (1.0 - progress).clamp(0.0, 1.0),
                             child: Text(
                               'User profile',
-                              textAlign: TextAlign.center,
+                              textAlign: TextAlign.left,
                               style: TextStyle(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w600,
                                 letterSpacing: 0.6,
-                                color: theme.textMuted,
+                                color: theme.dashTitle,
                               ),
                             ),
                           );
                         },
                       ),
                       SizedBox(height: 14.h),
-                        FadeSlideIn(
-                          child: _ProfileHeroCard(theme: theme, user: user),
-                        ),
-                        SizedBox(height: 10.h),
-                        FadeSlideIn(
-                          delay: const Duration(milliseconds: 50),
-                          child: _SectionLabel(theme: theme, label: 'DETAILS'),
-                        ),
-                        SizedBox(height: 8.h),
+                      FadeSlideIn(
+                        child: _ProfileHeroCard(theme: theme, user: user),
+                      ),
+                      SizedBox(height: 10.h),
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 50),
+                        child: _SectionLabel(theme: theme, label: 'DETAILS'),
+                      ),
+                      SizedBox(height: 8.h),
+                      ProfileInfoRow(
+                        label: 'Trade',
+                        value: _display(user.bio.trade),
+                      ),
+                      ProfileInfoRow(
+                        label: 'Position',
+                        value: _display(user.position),
+                      ),
+                      if (user.bio.rateTier.trim().isNotEmpty)
                         ProfileInfoRow(
-                          label: 'Trade',
-                          value: _display(user.bio.trade),
+                          label: 'Rate tier',
+                          value: user.bio.rateTier.trim(),
                         ),
+                      if (user.bio.description.trim().isNotEmpty) ...[
+                        SizedBox(height: 6.h),
                         ProfileInfoRow(
-                          label: 'Position',
-                          value: _display(user.position),
-                        ),
-                        if (user.bio.rateTier.trim().isNotEmpty)
-                          ProfileInfoRow(
-                            label: 'Rate tier',
-                            value: user.bio.rateTier.trim(),
-                          ),
-                        if (user.bio.description.trim().isNotEmpty) ...[
-                          SizedBox(height: 6.h),
-                          ProfileInfoRow(
-                            label: 'About',
-                            value: user.bio.description.trim(),
-                          ),
-                        ],
-                        SizedBox(height: 6.h),
-                        FadeSlideIn(
-                          delay: const Duration(milliseconds: 80),
-                          child: _SectionLabel(theme: theme, label: 'STATS'),
-                        ),
-                        SizedBox(height: 8.h),
-                        GridView.builder(
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 8.h,
-                            crossAxisSpacing: 8.w,
-                            childAspectRatio: 1.12,
-                          ),
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: gridItems.length,
-                          itemBuilder: (context, index) {
-                            final data = gridItems[index];
-                            return FadeSlideIn(
-                              delay: Duration(milliseconds: 35 * index),
-                              offsetY: 8,
-                              child: ProfileStatGridCard(
-                                icon: data.icon,
-                                title: data.title,
-                                body: data.body,
-                              ),
-                            );
-                          },
-                        ),
-                        SizedBox(height: 6.h),
-                        FadeSlideIn(
-                          delay: const Duration(milliseconds: 120),
-                          child: _AddressTile(
-                            theme: theme,
-                            address: user.bio.address,
-                          ),
-                        ),
-                        FadeSlideIn(
-                          delay: const Duration(milliseconds: 150),
-                          child: _AppearanceToggle(theme: theme),
-                        ),
-                        SizedBox(height: 10.h),
-                        FadeSlideIn(
-                          delay: const Duration(milliseconds: 180),
-                          child: _LogoutButton(theme: theme),
+                          label: 'About',
+                          value: user.bio.description.trim(),
                         ),
                       ],
-                    ),
+                      SizedBox(height: 6.h),
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 80),
+                        child: _SectionLabel(theme: theme, label: 'STATS'),
+                      ),
+                      SizedBox(height: 8.h),
+                      GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 8.h,
+                          crossAxisSpacing: 8.w,
+                          childAspectRatio: 1.08,
+                        ),
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: gridItems.length,
+                        itemBuilder: (context, index) {
+                          final data = gridItems[index];
+                          return FadeSlideIn(
+                            delay: Duration(milliseconds: 35 * index),
+                            offsetY: 8,
+                            child: ProfileStatGridCard(
+                              icon: data.icon,
+                              title: data.title,
+                              body: data.body,
+                            ),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 6.h),
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 120),
+                        child: _AddressTile(
+                          theme: theme,
+                          address: user.bio.address,
+                        ),
+                      ),
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 150),
+                        child: _AppearanceToggle(theme: theme),
+                      ),
+                      SizedBox(height: 10.h),
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 180),
+                        child: _LogoutButton(theme: theme),
+                      ),
+                    ],
                   ),
+                ),
                 ValueListenableBuilder<double>(
                   valueListenable: collapseProgress,
                   builder: (context, progress, _) {
@@ -329,6 +321,16 @@ class _ProfileContent extends StatelessWidget {
                         expandedHeight: brandingExpandedHeight,
                         collapsedHeight: brandingCollapsedHeight,
                         theme: theme,
+                        hasBackButton: true,
+                        title: Text(
+                          'User profile',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.6,
+                            color: theme.dashTitle,
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -361,7 +363,7 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       label,
       style: TextStyle(
-        fontSize: 10.sp,
+        fontSize: 13.sp,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.4,
         color: theme.textMuted,
@@ -371,10 +373,7 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _ProfileHeroCard extends StatelessWidget {
-  const _ProfileHeroCard({
-    required this.theme,
-    required this.user,
-  });
+  const _ProfileHeroCard({required this.theme, required this.user});
 
   final DashboardTheme theme;
   final UserModel user;
@@ -462,7 +461,7 @@ class _ProfileHeroCard extends StatelessWidget {
                       child: Icon(
                         Icons.edit_outlined,
                         color: theme.textMuted,
-                        size: 14.sp,
+                        size: 16.sp,
                       ),
                     ),
                   ),
@@ -474,16 +473,16 @@ class _ProfileHeroCard extends StatelessWidget {
           Text(
             user.name.trim().isEmpty ? 'Engineer' : user.name.trim(),
             style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w500,
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w600,
               color: theme.text,
             ),
           ),
-          SizedBox(height: 2.h),
+          SizedBox(height: 4.h),
           Text(
             _subtitle(),
             style: TextStyle(
-              fontSize: 10.sp,
+              fontSize: 13.sp,
               fontWeight: FontWeight.w500,
               color: theme.textMuted,
             ),
@@ -492,9 +491,11 @@ class _ProfileHeroCard extends StatelessWidget {
           Text(
             _ratingLabel(),
             style: TextStyle(
-              fontSize: 10.sp,
+              fontSize: 13.sp,
               fontWeight: FontWeight.w600,
-              color: theme.isDark ? AppColors.kpiBarHigh : AppColors.primaryBlue,
+              color: theme.isDark
+                  ? AppColors.kpiBarHigh
+                  : AppColors.primaryBlue,
             ),
           ),
         ],
@@ -529,22 +530,19 @@ class _AppearanceToggle extends StatelessWidget {
             secondary: Icon(
               isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
               color: theme.textMuted,
-              size: 20.sp,
+              size: 22.sp,
             ),
             title: Text(
               'Dark mode',
               style: TextStyle(
-                fontSize: 12.sp,
+                fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
                 color: theme.text,
               ),
             ),
             subtitle: Text(
               isDark ? 'Command centre theme' : 'Light theme',
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: theme.textMuted,
-              ),
+              style: TextStyle(fontSize: 11.sp, color: theme.textMuted),
             ),
             value: isDark,
             activeThumbColor: AppColors.white,
@@ -559,20 +557,19 @@ class _AppearanceToggle extends StatelessWidget {
 }
 
 class _AddressTile extends StatelessWidget {
-  const _AddressTile({
-    required this.theme,
-    required this.address,
-  });
+  const _AddressTile({required this.theme, required this.address});
 
   final DashboardTheme theme;
   final String address;
 
   @override
   Widget build(BuildContext context) {
-    final displayAddress = address.trim().isEmpty ? 'No address on file' : address.trim();
+    final displayAddress = address.trim().isEmpty
+        ? 'No address on file'
+        : address.trim();
 
     return Semantics(
-      label: 'Home address',
+      label: 'Residential Post Code',
       button: true,
       child: PressableScale(
         onTap: () {},
@@ -601,19 +598,34 @@ class _AddressTile extends StatelessWidget {
                   color: theme.isDark
                       ? AppColors.kpiBarHigh
                       : AppColors.primaryBlue,
-                  size: 16.sp,
+                  size: 18.sp,
                 ),
               ),
               SizedBox(width: 10.w),
               Expanded(
-                child: Text(
-                  displayAddress,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w500,
-                    height: 1.35,
-                    color: theme.text,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Residential Post Code',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w500,
+                        color: theme.textMuted,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      displayAddress,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
+                        color: theme.text,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -643,7 +655,7 @@ class _LogoutButton extends StatelessWidget {
         scale: 0.98,
         child: Container(
           width: double.infinity,
-          height: 40.h,
+          height: 44.h,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: theme.surface,
@@ -656,14 +668,14 @@ class _LogoutButton extends StatelessWidget {
             children: [
               Icon(
                 Icons.logout_rounded,
-                size: 16.sp,
+                size: 18.sp,
                 color: AppColors.streakOrange,
               ),
               SizedBox(width: 6.w),
               Text(
                 'Log out',
                 style: TextStyle(
-                  fontSize: 12.sp,
+                  fontSize: 13.sp,
                   fontWeight: FontWeight.w500,
                   color: AppColors.streakOrange,
                 ),

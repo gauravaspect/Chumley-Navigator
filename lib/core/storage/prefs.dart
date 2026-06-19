@@ -7,6 +7,7 @@ import 'package:chumley_navigator/models/points_model.dart';
 import 'package:chumley_navigator/models/list_absence_model.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/models/vehicle_model.dart';
+import 'package:chumley_navigator/models/milestones_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Prefs {
@@ -19,6 +20,7 @@ class Prefs {
   static const _pointsKey = 'performanceHistory';
   static const _vehicleAllocationsKey = 'vehicleAllocations';
   static const _absencesKey = 'absences';
+  static const _milestonesKey = 'milestones_cache';
 
   static Future<SharedPreferences> getPrefs() async {
     return await SharedPreferences.getInstance();
@@ -215,6 +217,29 @@ class Prefs {
     return null;
   }
 
+  static Future<void> saveMilestonesCache(MilestonesResponse cache) async {
+    final prefs = await getPrefs();
+    await prefs.setString(_milestonesKey, jsonEncode(cache.toJson()));
+  }
+
+  static Future<MilestonesResponse?> getMilestonesCache() async {
+    final prefs = await getPrefs();
+    final json = prefs.getString(_milestonesKey);
+    if (json == null || json.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(json);
+      if (decoded is Map<String, dynamic>) {
+        return MilestonesResponse.fromJson(decoded);
+      }
+      if (decoded is Map) {
+        return MilestonesResponse.fromJson(Map<String, dynamic>.from(decoded));
+      }
+    } catch (_) {
+      await prefs.remove(_milestonesKey);
+    }
+    return null;
+  }
+
   static Future<void> clearAuth() async {
     await SessionStorage.delete();
     final prefs = await getPrefs();
@@ -227,6 +252,7 @@ class Prefs {
     await prefs.remove(_pointsKey);
     await prefs.remove(_vehicleAllocationsKey);
     await prefs.remove(_absencesKey);
+    await prefs.remove(_milestonesKey);
   }
 
   static Future<void> clearAll() async {
