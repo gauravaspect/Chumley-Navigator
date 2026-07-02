@@ -8,6 +8,7 @@ import 'package:chumley_navigator/models/list_absence_model.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/models/vehicle_model.dart';
 import 'package:chumley_navigator/models/milestones_model.dart';
+import 'package:chumley_navigator/models/fixed_price_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Prefs {
@@ -21,6 +22,7 @@ class Prefs {
   static const _vehicleAllocationsKey = 'vehicleAllocations';
   static const _absencesKey = 'absences';
   static const _milestonesKey = 'milestones_cache';
+  static const _fixedPriceTradesKey = 'fixed_price_trades_cache';
 
   static Future<SharedPreferences> getPrefs() async {
     return await SharedPreferences.getInstance();
@@ -240,6 +242,75 @@ class Prefs {
     return null;
   }
 
+  static Future<void> saveFixedPriceTrades(FixedPriceTradesResponse cache) async {
+    final prefs = await getPrefs();
+    await prefs.setString(_fixedPriceTradesKey, jsonEncode(cache.toJson()));
+  }
+
+  static Future<FixedPriceTradesResponse?> getFixedPriceTrades() async {
+    final prefs = await getPrefs();
+    final json = prefs.getString(_fixedPriceTradesKey);
+    if (json == null || json.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(json);
+      if (decoded is Map<String, dynamic>) {
+        return FixedPriceTradesResponse.fromJson(decoded);
+      }
+      if (decoded is Map) {
+        return FixedPriceTradesResponse.fromJson(Map<String, dynamic>.from(decoded));
+      }
+    } catch (_) {
+      await prefs.remove(_fixedPriceTradesKey);
+    }
+    return null;
+  }
+
+  static Future<void> saveFixedPriceCategories(String tradeId, FixedPriceCategoriesResponse cache) async {
+    final prefs = await getPrefs();
+    await prefs.setString('${_fixedPriceTradesKey}_categories_$tradeId', jsonEncode(cache.toJson()));
+  }
+
+  static Future<FixedPriceCategoriesResponse?> getFixedPriceCategories(String tradeId) async {
+    final prefs = await getPrefs();
+    final json = prefs.getString('${_fixedPriceTradesKey}_categories_$tradeId');
+    if (json == null || json.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(json);
+      if (decoded is Map<String, dynamic>) {
+        return FixedPriceCategoriesResponse.fromJson(decoded);
+      }
+      if (decoded is Map) {
+        return FixedPriceCategoriesResponse.fromJson(Map<String, dynamic>.from(decoded));
+      }
+    } catch (_) {
+      await prefs.remove('${_fixedPriceTradesKey}_categories_$tradeId');
+    }
+    return null;
+  }
+
+  static Future<void> saveFixedPriceWorkTypes(String groupId, FixedPriceWorkTypesResponse cache) async {
+    final prefs = await getPrefs();
+    await prefs.setString('${_fixedPriceTradesKey}_worktypes_$groupId', jsonEncode(cache.toJson()));
+  }
+
+  static Future<FixedPriceWorkTypesResponse?> getFixedPriceWorkTypes(String groupId) async {
+    final prefs = await getPrefs();
+    final json = prefs.getString('${_fixedPriceTradesKey}_worktypes_$groupId');
+    if (json == null || json.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(json);
+      if (decoded is Map<String, dynamic>) {
+        return FixedPriceWorkTypesResponse.fromJson(decoded);
+      }
+      if (decoded is Map) {
+        return FixedPriceWorkTypesResponse.fromJson(Map<String, dynamic>.from(decoded));
+      }
+    } catch (_) {
+      await prefs.remove('${_fixedPriceTradesKey}_worktypes_$groupId');
+    }
+    return null;
+  }
+
   static Future<void> clearAuth() async {
     await SessionStorage.delete();
     final prefs = await getPrefs();
@@ -253,6 +324,7 @@ class Prefs {
     await prefs.remove(_vehicleAllocationsKey);
     await prefs.remove(_absencesKey);
     await prefs.remove(_milestonesKey);
+    await prefs.remove(_fixedPriceTradesKey);
   }
 
   static Future<void> clearAll() async {

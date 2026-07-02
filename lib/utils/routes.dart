@@ -1,6 +1,7 @@
 import 'package:chumley_navigator/core/app_dependencies.dart';
 import 'package:chumley_navigator/screens/dashboard/earnings_detail_screen.dart';
 import 'package:chumley_navigator/screens/dashboard/goals_targets_screen.dart';
+import 'package:chumley_navigator/screens/job_details/fixed_price_page.dart';
 import 'package:chumley_navigator/screens/notifications/notification_screen.dart';
 import 'package:chumley_navigator/screens/redeemPoints/redeem_points.dart';
 import 'package:chumley_navigator/screens/vehicle_check/vehicle_form.dart';
@@ -23,7 +24,7 @@ class AppRoutes {
   static const profile = "/profile";
   static const vehicleForm = "/vehicleForm";
   static const earningsDetail = "/earningsDetail";
-
+  static const fixedPriceScreen = "/fixedPriceScreen";
   static Map<String, WidgetBuilder> routes = {
     AppRoutes.splash: (context) => SplashScreen(),
     AppRoutes.login: (context) => LoginScreen(),
@@ -41,5 +42,9 @@ class AppRoutes {
       child: const VehicleForm(),
     ),
     AppRoutes.earningsDetail: (context) => const EarningsDetailScreen(),
+    AppRoutes.fixedPriceScreen: (context) => BlocProvider(
+          create: (_) => AppDependencies.createFixedPriceCubit()..loadTrades(),
+          child: const FixedPricePage(),
+        ),
   };
 }

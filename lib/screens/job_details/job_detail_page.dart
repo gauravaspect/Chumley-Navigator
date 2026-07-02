@@ -6,6 +6,7 @@ import 'package:chumley_navigator/core/app_constants.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/utils/routes.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -1814,7 +1815,8 @@ class _JobDetailPageState extends State<JobDetailPage>
               subtitle: 'Create a new Fixed Price work order for this site',
               icon: LucideIcons.fileText,
               enabled: onSite,
-              onTap: () => _handleRaiseJob('Fixed Price (FP)'),
+              // onTap: () => _handleRaiseJob('Fixed Price (FP)'),
+              onTap: () {Navigator.pushNamed(context, AppRoutes.fixedPriceScreen);}
             ),
             SizedBox(height: 8.h),
             _buildRaiseJobItem(

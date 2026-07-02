@@ -21,6 +21,9 @@ import 'package:chumley_navigator/screens/absences/service/absences_api_service.
 import 'package:chumley_navigator/screens/milestones/cubit/milestones_cubit.dart';
 import 'package:chumley_navigator/screens/milestones/repo/milestones_repository.dart';
 import 'package:chumley_navigator/screens/milestones/service/milestones_api_service.dart';
+import 'package:chumley_navigator/screens/job_details/cubit/fixed_price_cubit.dart';
+import 'package:chumley_navigator/screens/job_details/repo/fixed_price_repository.dart';
+import 'package:chumley_navigator/screens/job_details/service/fixed_price_api_service.dart';
 import 'package:chumley_navigator/service/auth_service.dart';
 import 'package:chumley_navigator/utils/routes.dart';
 import 'package:flutter/material.dart';
@@ -73,6 +76,11 @@ class AppDependencies {
   static final MilestonesRepository milestonesRepository =
       MilestonesRepository(milestonesApiService);
 
+  static final FixedPriceApiService fixedPriceApiService =
+      FixedPriceApiService(apiClient);
+  static final FixedPriceRepository fixedPriceRepository =
+      FixedPriceRepository(fixedPriceApiService);
+
   static DashboardCubit createDashboardCubit() =>
       DashboardCubit(dashboardRepository);
 
@@ -90,6 +98,9 @@ class AppDependencies {
 
   static MilestonesCubit createMilestonesCubit() =>
       MilestonesCubit(milestonesRepository);
+
+  static FixedPriceCubit createFixedPriceCubit() =>
+      FixedPriceCubit(fixedPriceRepository);
 
   static void initialize() {
     DioInterceptor.onUnauthorized = () async {

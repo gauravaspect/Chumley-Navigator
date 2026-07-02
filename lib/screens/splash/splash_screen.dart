@@ -104,7 +104,7 @@ class _SplashScreenState extends State<SplashScreen>
   void _initVideo() {
     _videoCtrl =
         VideoPlayerController.asset(
-            'assets/videos/navigator-splash-1.mp4',
+            'assets/videos/navigator-splash-new.mp4',
             videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
           )
           ..initialize().then((_) async {

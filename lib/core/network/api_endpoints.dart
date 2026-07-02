@@ -19,7 +19,9 @@ class ApiEndpoints {
     if (raw.isEmpty) return '';
     return raw.endsWith('/') ? raw : '$raw/';
   }
-
+  static const getFixedPriceTrades = "/api/work-orders/catalog/trades";
+  static const getFixedPriceCategories = "/api/work-orders/catalog/categories";
+  static const getFixedPriceWorkTypes = "/api/work-orders/catalog/work-types";
   static bool get isConfigured => baseUrl.isNotEmpty;
 
 
