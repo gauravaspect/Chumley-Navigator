@@ -2,6 +2,7 @@ import 'package:chumley_navigator/core/app_dependencies.dart';
 import 'package:chumley_navigator/providers/theme_notifier.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/routes.dart';
+import 'package:chumley_navigator/widgets/chumley_ai_floating_button.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -36,10 +37,16 @@ class MyApp extends StatelessWidget {
                 final isDark = themeNotifier.isDark;
                 return MaterialApp(
                   navigatorKey: AppDependencies.navigatorKey,
+                  navigatorObservers: [ChumleyAiRouteObserver()],
                   debugShowCheckedModeBanner: false,
                   title: 'Chumley Navigator',
                   routes: AppRoutes.routes,
                   initialRoute: AppRoutes.splash,
+                  builder: (context, child) {
+                    return ChumleyAiAppOverlay(
+                      child: child ?? const SizedBox.shrink(),
+                    );
+                  },
                   theme: ThemeData(
                     brightness: Brightness.light,
                     scaffoldBackgroundColor: AppColors.lightBase,

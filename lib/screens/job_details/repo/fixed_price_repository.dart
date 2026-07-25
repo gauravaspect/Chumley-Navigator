@@ -1,5 +1,6 @@
 import 'package:chumley_navigator/core/storage/prefs.dart';
 import 'package:chumley_navigator/models/fixed_price_model.dart';
+import 'package:chumley_navigator/models/fixed_price_submit_payload.dart';
 import 'package:chumley_navigator/screens/job_details/service/fixed_price_api_service.dart';
 
 class FixedPriceRepository {
@@ -31,5 +32,17 @@ class FixedPriceRepository {
 
   Future<List<FixedPriceWorkTypeModel>> fetchFixedPriceWorkTypes(String groupId) async {
     return _apiService.fetchFixedPriceWorkTypes(groupId);
+  }
+
+  Future<Map<String, dynamic>> submitFixedPriceWorkOrder({
+    required FixedPriceSubmitPayload payload,
+    required FixedPriceSalesforceContext context,
+    bool dryRun = false,
+  }) {
+    return _apiService.submitFixedPriceWorkOrder(
+      payload: payload,
+      context: context,
+      dryRun: dryRun,
+    );
   }
 }

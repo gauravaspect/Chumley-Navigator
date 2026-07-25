@@ -30,6 +30,8 @@ class FixedPriceLoaded extends FixedPriceState {
     this.workTypes = const [],
     this.loadingWorkTypes = false,
     this.workTypeError,
+    this.isSubmitting = false,
+    this.submitError,
   });
 
   final List<FixedPriceModel> trades;
@@ -39,6 +41,8 @@ class FixedPriceLoaded extends FixedPriceState {
   final List<FixedPriceWorkTypeModel> workTypes;
   final bool loadingWorkTypes;
   final String? workTypeError;
+  final bool isSubmitting;
+  final String? submitError;
 
   FixedPriceLoaded copyWith({
     List<FixedPriceModel>? trades,
@@ -48,6 +52,8 @@ class FixedPriceLoaded extends FixedPriceState {
     List<FixedPriceWorkTypeModel>? workTypes,
     bool? loadingWorkTypes,
     String? workTypeError,
+    bool? isSubmitting,
+    String? submitError,
   }) {
     return FixedPriceLoaded(
       trades: trades ?? this.trades,
@@ -57,6 +63,8 @@ class FixedPriceLoaded extends FixedPriceState {
       workTypes: workTypes ?? this.workTypes,
       loadingWorkTypes: loadingWorkTypes ?? this.loadingWorkTypes,
       workTypeError: workTypeError ?? this.workTypeError,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
+      submitError: submitError,
     );
   }
 
@@ -69,6 +77,8 @@ class FixedPriceLoaded extends FixedPriceState {
         workTypes,
         loadingWorkTypes,
         workTypeError,
+        isSubmitting,
+        submitError,
       ];
 }
 
@@ -110,6 +120,11 @@ extension FixedPriceStateX on FixedPriceState {
 
   bool get loadingWorkTypes => switch (this) {
         FixedPriceLoaded(:final loadingWorkTypes) => loadingWorkTypes,
+        _ => false,
+      };
+
+  bool get isSubmitting => switch (this) {
+        FixedPriceLoaded(:final isSubmitting) => isSubmitting,
         _ => false,
       };
 }

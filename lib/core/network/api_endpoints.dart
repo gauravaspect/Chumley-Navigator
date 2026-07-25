@@ -22,6 +22,26 @@ class ApiEndpoints {
   static const getFixedPriceTrades = "/api/work-orders/catalog/trades";
   static const getFixedPriceCategories = "/api/work-orders/catalog/categories";
   static const getFixedPriceWorkTypes = "/api/work-orders/catalog/work-types";
+  static const submitWorkOrder = '/api/work-orders';
+
+  // Chumley / Navigator chat
+  static const chatToken = '/api/auth/chat-token';
+  static const permissionsMe = '/api/permissions/me';
+  static const dailyBriefing = '/api/insights/daily-briefing';
+  static const navigatorHealth = '/api/navigator/health';
+  static const navigatorConversations = '/api/navigator/conversations';
+  static String navigatorConversationMessages(String id) =>
+      '/api/navigator/conversations/$id/messages';
+  static const navigatorQuery = '/api/navigator/query';
+  static String addressVisitSummary(String postcode) =>
+      '/api/scheduling/address-visit-summary?postcode=${Uri.encodeComponent(postcode)}';
+
+  static String get chumleyChatBaseUrl {
+    final raw = AppConstants.chumleyChatBaseUrl.trim();
+    if (raw.isEmpty) return '';
+    return raw.endsWith('/') ? raw.substring(0, raw.length - 1) : raw;
+  }
+
   static bool get isConfigured => baseUrl.isNotEmpty;
 
 

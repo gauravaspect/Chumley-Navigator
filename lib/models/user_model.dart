@@ -34,6 +34,14 @@ class Appointment extends Equatable {
     this.status = '',
     this.title = '',
     this.type = '',
+    this.sourceWorkOrderId = '',
+    this.siteId = '',
+    this.accountId = '',
+    this.contactId = '',
+    this.customerEmail = '',
+    this.resolvedServiceFeePct = 0.0,
+    this.resolvedMarkupPct = 0.0,
+    this.operativeSharePct = 40.0,
   });
 
   final String id;
@@ -42,8 +50,21 @@ class Appointment extends Equatable {
   final String status;
   final String title;
   final String type;
+  final String sourceWorkOrderId;
+  final String siteId;
+  final String accountId;
+  final String contactId;
+  final String customerEmail;
+  final double resolvedServiceFeePct;
+  final double resolvedMarkupPct;
+  final double operativeSharePct;
 
   factory Appointment.fromJson(Map<String, dynamic> json) {
+    final workOrder = _asMap(json['work_order'] ?? json['workOrder']);
+    final site = _asMap(json['site'] ?? workOrder?['site']);
+    final account = _asMap(json['account'] ?? workOrder?['account']);
+    final contact = _asMap(json['contact'] ?? workOrder?['contact']);
+
     return Appointment(
       id: (json['id'] ?? '').toString(),
       appointmentNumber: (json['appointment_number'] ?? '').toString(),
@@ -53,6 +74,47 @@ class Appointment extends Equatable {
       status: (json['status'] ?? '').toString(),
       title: (json['title'] ?? '').toString(),
       type: (json['type'] ?? '').toString(),
+      sourceWorkOrderId: _readNestedId(json, const [
+        'source_work_order_id',
+        'work_order_id',
+        'workOrderId',
+        'parent_work_order_id',
+        'work_order',
+      ], nested: workOrder, nestedKeys: const ['id', 'source_work_order_id']),
+      siteId: _readNestedId(json, const [
+        'site_id',
+        'siteId',
+        'SiteId',
+        'site',
+      ], nested: site, nestedKeys: const ['id', 'site_id']),
+      accountId: _readNestedId(json, const [
+        'account_id',
+        'accountId',
+        'AccountId',
+        'account',
+      ], nested: account, nestedKeys: const ['id', 'account_id']),
+      contactId: _readNestedId(json, const [
+        'contact_id',
+        'contactId',
+        'ContactId',
+        'contact',
+      ], nested: contact, nestedKeys: const ['id', 'contact_id']),
+      customerEmail: (json['customer_email'] ??
+              contact?['email'] ??
+              json['email'] ??
+              '')
+          .toString(),
+      resolvedServiceFeePct: _readDouble(
+        json['resolved_service_fee_pct'] ??
+            workOrder?['resolved_service_fee_pct'],
+      ),
+      resolvedMarkupPct: _readDouble(
+        json['resolved_markup_pct'] ?? workOrder?['resolved_markup_pct'],
+      ),
+      operativeSharePct: _readDouble(
+        json['operative_share_pct'] ?? workOrder?['operative_share_pct'],
+        40.0,
+      ),
     );
   }
 
@@ -63,6 +125,14 @@ class Appointment extends Equatable {
     'status': status,
     'title': title,
     'type': type,
+    'source_work_order_id': sourceWorkOrderId,
+    'site_id': siteId,
+    'account_id': accountId,
+    'contact_id': contactId,
+    'customer_email': customerEmail,
+    'resolved_service_fee_pct': resolvedServiceFeePct,
+    'resolved_markup_pct': resolvedMarkupPct,
+    'operative_share_pct': operativeSharePct,
   };
 
   @override
@@ -73,6 +143,14 @@ class Appointment extends Equatable {
     status,
     title,
     type,
+    sourceWorkOrderId,
+    siteId,
+    accountId,
+    contactId,
+    customerEmail,
+    resolvedServiceFeePct,
+    resolvedMarkupPct,
+    operativeSharePct,
   ];
 }
 
@@ -408,4 +486,45 @@ double _readDouble(dynamic value, [double fallback = 0]) {
   if (value is double) return value;
   if (value is num) return value.toDouble();
   return double.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+Map<String, dynamic>? _asMap(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return null;
+}
+
+String _readNestedId(
+  Map<String, dynamic> json,
+  List<String> keys, {
+  Map<String, dynamic>? nested,
+  List<String> nestedKeys = const ['id'],
+}) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    if (value is Map) {
+      final map = Map<String, dynamic>.from(value);
+      for (final nestedKey in nestedKeys) {
+        final id = map[nestedKey];
+        if (id != null && id.toString().trim().isNotEmpty) {
+          return id.toString().trim();
+        }
+      }
+      continue;
+    }
+    final text = value.toString().trim();
+    if (text.isNotEmpty) return text;
+  }
+
+  if (nested != null) {
+    for (final nestedKey in nestedKeys) {
+      final id = nested[nestedKey];
+      if (id != null && id.toString().trim().isNotEmpty) {
+        return id.toString().trim();
+      }
+    }
+  }
+
+  return '';
 }

@@ -24,6 +24,11 @@ import 'package:chumley_navigator/screens/milestones/service/milestones_api_serv
 import 'package:chumley_navigator/screens/job_details/cubit/fixed_price_cubit.dart';
 import 'package:chumley_navigator/screens/job_details/repo/fixed_price_repository.dart';
 import 'package:chumley_navigator/screens/job_details/service/fixed_price_api_service.dart';
+import 'package:chumley_navigator/screens/chumley_ai/auth/chumley_auth_provider.dart';
+import 'package:chumley_navigator/screens/chumley_ai/cubit/chumley_chat_cubit.dart';
+import 'package:chumley_navigator/screens/chumley_ai/repo/chumley_chat_repository.dart';
+import 'package:chumley_navigator/screens/chumley_ai/service/chumley_chat_api_service.dart';
+import 'package:chumley_navigator/screens/chumley_ai/service/navigator_chat_api_service.dart';
 import 'package:chumley_navigator/service/auth_service.dart';
 import 'package:chumley_navigator/utils/routes.dart';
 import 'package:flutter/material.dart';
@@ -81,6 +86,19 @@ class AppDependencies {
   static final FixedPriceRepository fixedPriceRepository =
       FixedPriceRepository(fixedPriceApiService);
 
+  static final ChumleyAuthProvider chumleyAuthProvider =
+      ChumleyAuthProvider(apiClient);
+  static final NavigatorChatApiService navigatorChatApiService =
+      NavigatorChatApiService(apiClient);
+  static final ChumleyChatApiService chumleyChatApiService =
+      ChumleyChatApiService(chumleyAuthProvider);
+  static final ChumleyChatRepository chumleyChatRepository =
+      ChumleyChatRepository(
+    authProvider: chumleyAuthProvider,
+    navigatorApi: navigatorChatApiService,
+    chumleyApi: chumleyChatApiService,
+  );
+
   static DashboardCubit createDashboardCubit() =>
       DashboardCubit(dashboardRepository);
 
@@ -102,8 +120,17 @@ class AppDependencies {
   static FixedPriceCubit createFixedPriceCubit() =>
       FixedPriceCubit(fixedPriceRepository);
 
+  static ChumleyChatCubit createChumleyChatCubit() =>
+      ChumleyChatCubit(chumleyChatRepository);
+
   static void initialize() {
+    loginCubit.onAfterLogout = () async {
+      chumleyAuthProvider.clear();
+      await chumleyChatRepository.disconnectSocket();
+    };
     DioInterceptor.onUnauthorized = () async {
+      chumleyAuthProvider.clear();
+      await chumleyChatRepository.disconnectSocket();
       loginCubit.markUnauthenticated();
       final navigator = navigatorKey.currentState;
       if (navigator == null) return;

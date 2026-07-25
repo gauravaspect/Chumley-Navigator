@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:chumley_navigator/models/fixed_price_model.dart';
+import 'package:chumley_navigator/models/fixed_price_submit_payload.dart';
 import 'package:chumley_navigator/screens/job_details/repo/fixed_price_repository.dart';
 
 import 'fixed_price_state.dart';
@@ -82,6 +83,38 @@ class FixedPriceCubit extends Cubit<FixedPriceState> {
           workTypeError: error.toString(),
         ));
       }
+    }
+  }
+
+  Future<void> submitWorkOrder({
+    required FixedPriceSubmitPayload payload,
+    required FixedPriceSalesforceContext context,
+    bool dryRun = false,
+  }) async {
+    final currentState = state;
+    if (currentState is! FixedPriceLoaded) return;
+
+    emit(currentState.copyWith(isSubmitting: true, submitError: null));
+
+    try {
+      await _repository.submitFixedPriceWorkOrder(
+        payload: payload,
+        context: context,
+        dryRun: dryRun,
+      );
+      final latestState = state;
+      if (latestState is FixedPriceLoaded) {
+        emit(latestState.copyWith(isSubmitting: false, submitError: null));
+      }
+    } catch (error) {
+      final latestState = state;
+      if (latestState is FixedPriceLoaded) {
+        emit(latestState.copyWith(
+          isSubmitting: false,
+          submitError: error.toString(),
+        ));
+      }
+      rethrow;
     }
   }
 }

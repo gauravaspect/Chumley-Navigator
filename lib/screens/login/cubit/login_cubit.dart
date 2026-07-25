@@ -8,6 +8,9 @@ class LoginCubit extends Cubit<LoginState> {
 
   final LoginRepository _repository;
 
+  /// Optional cleanup hook (e.g. close chat socket / clear chat JWT).
+  Future<void> Function()? onAfterLogout;
+
   Future<void> checkAuthStatus() async {
     emit(const LoginLoading());
     try {
@@ -40,6 +43,7 @@ class LoginCubit extends Cubit<LoginState> {
   Future<void> logout() async {
     emit(const LoginLoading());
     await _repository.logout();
+    await onAfterLogout?.call();
     emit(const LoginUnauthenticated());
   }
 

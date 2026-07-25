@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/app_constants.dart';
 import 'package:chumley_navigator/models/user_model.dart';
+import 'package:chumley_navigator/models/fixed_price_job_context.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/utils/routes.dart';
@@ -1816,7 +1817,15 @@ class _JobDetailPageState extends State<JobDetailPage>
               icon: LucideIcons.fileText,
               enabled: onSite,
               // onTap: () => _handleRaiseJob('Fixed Price (FP)'),
-              onTap: () {Navigator.pushNamed(context, AppRoutes.fixedPriceScreen);}
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.fixedPriceScreen,
+                  arguments: FixedPriceJobContext.fromAppointment(
+                    widget.appointment,
+                  ),
+                );
+              },
             ),
             SizedBox(height: 8.h),
             _buildRaiseJobItem(

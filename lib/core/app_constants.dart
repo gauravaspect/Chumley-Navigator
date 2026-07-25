@@ -3,6 +3,10 @@ class AppConstants {
     'API_BASE_URL',
     defaultValue: 'https://navigator.chumley.ai',
   );
+  static const String chumleyChatBaseUrl = String.fromEnvironment(
+    'CHUMLEY_CHAT_BASE_URL',
+    defaultValue: 'https://chumley-chat-44vauyd3ma-nw.a.run.app',
+  );
   static const String tomtomApiKey = String.fromEnvironment(
     'TOMTOM_API_KEY',
     defaultValue: 'yiwXMa528qlf1Z4kZR0ocVkDVYCLb4sw',

@@ -11,6 +11,8 @@ import '../../widgets/ui/primary_cta_button.dart';
 import '../../widgets/ui/outlined_cta_button.dart';
 import '../../widgets/ui/screen_title_block.dart';
 import '../../models/user_model.dart';
+import '../../models/fixed_price_job_context.dart';
+import '../../models/fixed_price_submit_payload.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/fixed_price_model.dart';
 import 'cubit/fixed_price_cubit.dart';
@@ -118,6 +120,9 @@ class _FixedPricePageState extends State<FixedPricePage> {
 
   // Step 5: Operative Summary
   String? _selectedLabourRate;
+  final _durationHoursController = TextEditingController();
+  final _durationHoursFocusNode = FocusNode();
+  bool _durationHoursFocused = false;
 
   // Step 7: Customer Confirmation
   String? _customerConfirmationChoice;
@@ -187,6 +192,12 @@ class _FixedPricePageState extends State<FixedPricePage> {
             _descriptionMaterialsAspectFocusNode.hasFocus,
       );
     });
+    _durationHoursFocusNode.addListener(() {
+      setState(() => _durationHoursFocused = _durationHoursFocusNode.hasFocus);
+    });
+    _materialCostOperativeController.addListener(() => setState(() {}));
+    _materialCostAspectController.addListener(() => setState(() {}));
+    _durationHoursController.addListener(() => setState(() {}));
   }
 
   @override
@@ -201,6 +212,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
     _descriptionMaterialsOperativeController.dispose();
     _materialCostAspectController.dispose();
     _descriptionMaterialsAspectController.dispose();
+    _durationHoursController.dispose();
 
     _scopeOfWorkFocusNode.dispose();
     _additionalScope2FocusNode.dispose();
@@ -209,6 +221,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
     _descriptionMaterialsOperativeFocusNode.dispose();
     _materialCostAspectFocusNode.dispose();
     _descriptionMaterialsAspectFocusNode.dispose();
+    _durationHoursFocusNode.dispose();
 
     _scrollController.dispose();
     _scopeScrollController.dispose();
@@ -255,6 +268,37 @@ class _FixedPricePageState extends State<FixedPricePage> {
     }
   }
 
+  FixedPriceJobContext? _resolveJobContext() {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is FixedPriceJobContext) return args;
+    if (args is Appointment) return FixedPriceJobContext.fromAppointment(args);
+    return null;
+  }
+
+  bool _isValidMaterialCost(TextEditingController controller) {
+    final text = controller.text.trim();
+    if (text.isEmpty) return true;
+    final value = double.tryParse(text);
+    return value != null && value >= 0;
+  }
+
+  double _parsedMaterialCost(TextEditingController controller) {
+    final text = controller.text.trim();
+    if (text.isEmpty) return 0.0;
+    return double.tryParse(text) ?? 0.0;
+  }
+
+  String? _materialCostError(TextEditingController controller) {
+    if (_isValidMaterialCost(controller)) return null;
+    return 'Enter a valid amount (0 or greater).';
+  }
+
+  double? get _durationHours {
+    final value = double.tryParse(_durationHoursController.text.trim());
+    if (value == null || value <= 0) return null;
+    return value;
+  }
+
   // Validation checkers for Next buttons
   bool _isStepValid() {
     switch (_currentStep) {
@@ -268,15 +312,107 @@ class _FixedPricePageState extends State<FixedPricePage> {
       case 2:
         return _collectionFeeApplicable != null &&
             _selectedListPriceService != null &&
-            _ulezChargeApplicable != null;
+            _ulezChargeApplicable != null &&
+            _isValidMaterialCost(_materialCostOperativeController) &&
+            _isValidMaterialCost(_materialCostAspectController);
       case 3:
-        return _selectedLabourRate != null;
+        return _selectedLabourRate != null && _durationHours != null;
       case 4:
         return _customerConfirmationChoice != null;
       case 5:
-        return true;
+        return _resolveJobContext() != null;
       default:
         return true;
+    }
+  }
+
+  FixedPriceSubmitPayload _buildSubmitPayload(FixedPriceJobContext jobContext) {
+    return FixedPriceSubmitPayload.fromWizard(
+      workOrderId: jobContext.workOrderLabel.isNotEmpty
+          ? jobContext.workOrderLabel
+          : jobContext.sourceWorkOrderId,
+      sourceWorkOrderId: jobContext.sourceWorkOrderId,
+      customerEmail: jobContext.customerEmail,
+      earliestRequestedDate: jobContext.earliestRequestedDate,
+      tradeId: _selectedTrade!,
+      categoryId: _selectedCategory!,
+      workTypeId: _selectedWorkType!,
+      scopeOfWork: _scopeOfWorkController.text.trim(),
+      additionalScope2: _additionalScope2Controller.text.trim(),
+      additionalScope3: _additionalScope3Controller.text.trim(),
+      collectionFeeApplicable: _collectionFeeApplicable!,
+      listPriceServiceCode: _selectedListPriceService!,
+      operativeMaterialsCost:
+          _parsedMaterialCost(_materialCostOperativeController),
+      operativeMaterialsDescription:
+          _descriptionMaterialsOperativeController.text.trim(),
+      chargeDrainagePatches: _chargeDrainagePatches,
+      aspectMaterialsCost: _parsedMaterialCost(_materialCostAspectController),
+      aspectMaterialsDescription:
+          _descriptionMaterialsAspectController.text.trim(),
+      ulezChargeApplicable: _ulezChargeApplicable!,
+      labourRateLevel: _selectedLabourRate!,
+      customerConfirmationChoice: _customerConfirmationChoice!,
+      durationHours: _durationHours,
+    );
+  }
+
+  Future<void> _handleFinish(FixedPriceJobContext? jobContext) async {
+    if (jobContext == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Open this flow from a job appointment to submit the agreement.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final payload = _buildSubmitPayload(jobContext);
+    final salesforceContext = jobContext.toSalesforceContext();
+    final errors = [
+      ...jobContext.validate(),
+      ...payload.validate(salesforceContext: salesforceContext),
+    ];
+
+    debugPrint(
+      'FixedPrice submit context: '
+      'source=${jobContext.sourceWorkOrderId}, '
+      'site=${jobContext.siteId}, '
+      'account=${jobContext.accountId}, '
+      'contact=${jobContext.contactId}',
+    );
+
+    if (errors.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errors.first)),
+      );
+      return;
+    }
+
+    try {
+      await context.read<FixedPriceCubit>().submitWorkOrder(
+            payload: payload,
+            context: salesforceContext,
+          );
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _customerConfirmationChoice == 'Reject'
+                ? 'Fixed price estimate rejected and submitted.'
+                : 'Fixed Price Agreement created successfully.',
+          ),
+          backgroundColor: AppColors.successText,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
     }
   }
 
@@ -290,16 +426,17 @@ class _FixedPricePageState extends State<FixedPricePage> {
   }
 
   double get _materialsCharge {
-    final opMat = double.tryParse(_materialCostOperativeController.text) ?? 0.0;
-    final aspMat = double.tryParse(_materialCostAspectController.text) ?? 0.0;
+    final opMat = _parsedMaterialCost(_materialCostOperativeController);
+    final aspMat = _parsedMaterialCost(_materialCostAspectController);
     return opMat + aspMat;
   }
 
   double get _attendanceFee {
-    if (_selectedLabourRate == 'Rate 1') return 90.00;
-    if (_selectedLabourRate == 'Rate 2') return 110.00;
-    if (_selectedLabourRate == 'Rate 3') return 130.00;
-    return 0.00;
+    if (_selectedLabourRate == null) return 0.00;
+    return FixedPriceSubmitPayload.labourCharge(
+      labourRateLevel: _selectedLabourRate!,
+      durationHours: _durationHours,
+    );
   }
 
   double get _ulezCharge {
@@ -405,7 +542,8 @@ class _FixedPricePageState extends State<FixedPricePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Your selected labour rate is £${_attendanceFee.toStringAsFixed(2)}.',
+                'Your selected labour charge is £${_attendanceFee.toStringAsFixed(2)}'
+                '${_durationHours != null && _selectedLabourRate != null ? ' (${_durationHours!.toStringAsFixed(2)} hrs × £${FixedPriceSubmitPayload.hourlyRateForLevel(_selectedLabourRate!).toStringAsFixed(2)})' : ''}.',
                 style: TextStyle(color: theme.text, fontSize: 13.sp),
               ),
               SizedBox(height: 8.h),
@@ -459,7 +597,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
   }
 
   // Builder functions for wizard steps
-  Widget _buildStepContent(DashboardTheme theme, Appointment? appointment) {
+  Widget _buildStepContent(DashboardTheme theme, FixedPriceJobContext? jobContext) {
     switch (_currentStep) {
       case 0:
         return _buildStep1(theme);
@@ -472,7 +610,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
       case 4:
         return _buildStep7(theme);
       case 5:
-        return _buildStep8(theme, appointment);
+        return _buildStep8(theme, jobContext);
       default:
         return _buildStep1(theme);
     }
@@ -804,6 +942,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
                 focusNode: _materialCostOperativeFocusNode,
                 isFocused: _materialCostOperativeFocused,
                 theme: theme,
+                errorText: _materialCostError(_materialCostOperativeController),
               ),
               SizedBox(height: 12.h),
               _buildMultilineTextField(
@@ -829,6 +968,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
                 focusNode: _materialCostAspectFocusNode,
                 isFocused: _materialCostAspectFocused,
                 theme: theme,
+                errorText: _materialCostError(_materialCostAspectController),
               ),
               SizedBox(height: 12.h),
               _buildMultilineTextField(
@@ -894,6 +1034,40 @@ class _FixedPricePageState extends State<FixedPricePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
+                'Job Duration',
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
+                  color: theme.dashTitle,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              _buildDecimalField(
+                label: 'Duration (hours) *',
+                controller: _durationHoursController,
+                focusNode: _durationHoursFocusNode,
+                isFocused: _durationHoursFocused,
+                hintText: 'e.g. 2.83',
+                theme: theme,
+                errorText: _durationHours == null &&
+                        _durationHoursController.text.trim().isNotEmpty
+                    ? 'Enter a valid duration greater than 0.'
+                    : _durationHours == null &&
+                            _durationHoursController.text.trim().isEmpty
+                        ? 'Duration is required.'
+                        : null,
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 16.h),
+        ElevatedSurface(
+          padding: EdgeInsets.all(16.r),
+          backgroundColor: theme.surface,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
                 'Select Labour Rate',
                 style: TextStyle(
                   fontSize: 15.sp,
@@ -907,17 +1081,17 @@ class _FixedPricePageState extends State<FixedPricePage> {
                 selectedValue: _selectedLabourRate,
                 options: [
                   {
-                    'label': 'Rate 1 (£90.00)',
+                    'label': 'Rate 1 (£80.00/hr)',
                     'value': 'Rate 1',
                     'subtitle': 'Standard daytime rate',
                   },
                   {
-                    'label': 'Rate 2 (£110.00)',
+                    'label': 'Rate 2 (£90.00/hr)',
                     'value': 'Rate 2',
                     'subtitle': 'Evening/Saturday rate',
                   },
                   {
-                    'label': 'Rate 3 (£130.00)',
+                    'label': 'Rate 3 (£100.00/hr)',
                     'value': 'Rate 3',
                     'subtitle': 'Night/Sunday rate',
                   },
@@ -950,7 +1124,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
                 theme,
               ),
               _buildChargeRow('Materials Charge', _materialsCharge, theme),
-              _buildChargeRow('Attendance Fee', _attendanceFee, theme),
+              _buildChargeRow('Labour', _attendanceFee, theme),
               _buildChargeRow('ULEZ Charge', _ulezCharge, theme),
               _buildChargeRow('Collection Fee', _collectionFee, theme),
               if (_chargeDrainagePatches)
@@ -1105,16 +1279,22 @@ class _FixedPricePageState extends State<FixedPricePage> {
     );
   }
 
-  Widget _buildStep8(DashboardTheme theme, Appointment? appointment) {
-    final scheduledStart = appointment?.scheduledStart;
-    final dateStr = scheduledStart != null
-        ? '${scheduledStart.day.toString().padLeft(2, '0')}/${scheduledStart.month.toString().padLeft(2, '0')}/${scheduledStart.year}'
-        : '29/06/2026';
-    final workOrderId = appointment?.appointmentNumber.isNotEmpty == true
-        ? appointment!.appointmentNumber
-        : 'WO-98765432';
+  Widget _buildStep8(DashboardTheme theme, FixedPriceJobContext? jobContext) {
+    final scheduledStart = jobContext?.earliestRequestedDate;
+    final dateStr = scheduledStart != null && scheduledStart.isNotEmpty
+        ? scheduledStart
+        : '—';
+    final workOrderId = jobContext?.workOrderLabel.isNotEmpty == true
+        ? jobContext!.workOrderLabel
+        : jobContext?.sourceWorkOrderId ?? '—';
+    final customerEmail =
+        jobContext?.customerEmail.isNotEmpty == true
+            ? jobContext!.customerEmail
+            : '—';
 
     final deposit = (_totalCustomerCharges * 1.2) * 0.50;
+    final missingJobContext = jobContext == null;
+    final jobContextErrors = jobContext?.validate() ?? const <String>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1128,6 +1308,27 @@ class _FixedPricePageState extends State<FixedPricePage> {
           ),
         ),
         SizedBox(height: 16.h),
+        if (missingJobContext || jobContextErrors.isNotEmpty)
+          Container(
+            width: double.infinity,
+            margin: EdgeInsets.only(bottom: 16.h),
+            padding: EdgeInsets.all(12.r),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(color: Colors.red.withValues(alpha: 0.35)),
+            ),
+            child: Text(
+              missingJobContext
+                  ? 'This agreement must be opened from a job appointment before it can be submitted.'
+                  : jobContextErrors.first,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.red.shade700,
+                height: 1.4,
+              ),
+            ),
+          ),
         ElevatedSurface(
           padding: EdgeInsets.all(16.r),
           backgroundColor: theme.surface,
@@ -1143,7 +1344,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
                 ),
               ),
               SizedBox(height: 12.h),
-              _buildDetailRow('Contact Email', 'customer@example.com', theme),
+              _buildDetailRow('Contact Email', customerEmail, theme),
               _buildDetailRow(
                 'Earliest Work Order Requested Date',
                 dateStr,
@@ -1419,6 +1620,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
     required FocusNode focusNode,
     required bool isFocused,
     required DashboardTheme theme,
+    String? errorText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1440,7 +1642,9 @@ class _FixedPricePageState extends State<FixedPricePage> {
             color: theme.surfaceDeep,
             borderRadius: BorderRadius.circular(10.r),
             border: Border.all(
-              color: isFocused ? theme.accent : theme.border,
+              color: errorText != null
+                  ? Colors.red
+                  : (isFocused ? theme.accent : theme.border),
               width: 0.5,
             ),
           ),
@@ -1476,6 +1680,72 @@ class _FixedPricePageState extends State<FixedPricePage> {
             ],
           ),
         ),
+        if (errorText != null) ...[
+          SizedBox(height: 4.h),
+          Text(
+            errorText,
+            style: TextStyle(color: Colors.red, fontSize: 11.sp),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDecimalField({
+    required String label,
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required bool isFocused,
+    required String hintText,
+    required DashboardTheme theme,
+    String? errorText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+            color: theme.text,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
+          decoration: BoxDecoration(
+            color: theme.surfaceDeep,
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(
+              color: errorText != null
+                  ? Colors.red
+                  : (isFocused ? theme.accent : theme.border),
+              width: 0.5,
+            ),
+          ),
+          child: TextField(
+            controller: controller,
+            focusNode: focusNode,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (_) => setState(() {}),
+            style: TextStyle(fontSize: 13.sp, color: theme.text),
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              hintText: hintText,
+              hintStyle: TextStyle(color: theme.textMuted),
+            ),
+          ),
+        ),
+        if (errorText != null) ...[
+          SizedBox(height: 4.h),
+          Text(
+            errorText,
+            style: TextStyle(color: Colors.red, fontSize: 11.sp),
+          ),
+        ],
       ],
     );
   }
@@ -1785,10 +2055,14 @@ class _FixedPricePageState extends State<FixedPricePage> {
   }
 
   // Navigation button block builder
-  Widget _buildBottomButtons(DashboardTheme theme) {
+  Widget _buildBottomButtons(
+    DashboardTheme theme,
+    FixedPriceJobContext? jobContext,
+    bool isSubmitting,
+  ) {
     final isFirstScreen = _currentStep == 0;
     final isLastScreen = _currentStep == 5;
-    final isValid = _isStepValid();
+    final isValid = _isStepValid() && !isSubmitting;
 
     return Row(
       children: [
@@ -1813,7 +2087,9 @@ class _FixedPricePageState extends State<FixedPricePage> {
         SizedBox(width: 12.w),
         Expanded(
           child: PrimaryCtaButton(
-            label: isLastScreen ? 'Finish' : 'Next',
+            label: isLastScreen
+                ? (isSubmitting ? 'Submitting...' : 'Finish')
+                : 'Next',
             backgroundColor: isValid
                 ? AppColors.primaryBlue
                 : theme.isDark
@@ -1826,15 +2102,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
                     } else if (_currentStep == 3) {
                       _showConfirmLabourRateDialog();
                     } else if (isLastScreen) {
-                      Navigator.of(context).pop(true);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text(
-                            'Fixed Price Agreement Created Successfully',
-                          ),
-                          backgroundColor: AppColors.successText,
-                        ),
-                      );
+                      _handleFinish(jobContext);
                     } else {
                       setState(() => _currentStep++);
                       // Scroll back to top on step transition
@@ -1855,8 +2123,8 @@ class _FixedPricePageState extends State<FixedPricePage> {
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
-    final appointment =
-        ModalRoute.of(context)?.settings.arguments as Appointment?;
+    final jobContext = _resolveJobContext();
+    final isSubmitting = context.watch<FixedPriceCubit>().state.isSubmitting;
 
     return Scaffold(
       backgroundColor: theme.base,
@@ -1894,7 +2162,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
                           subtitle: 'Step ${_currentStepDisplay()}',
                         ),
                         SizedBox(height: 20.h),
-                        _buildStepContent(theme, appointment),
+                        _buildStepContent(theme, jobContext),
                       ],
                     ),
                   ),
@@ -1910,10 +2178,17 @@ class _FixedPricePageState extends State<FixedPricePage> {
                       top: BorderSide(color: theme.border, width: 0.5),
                     ),
                   ),
-                  child: _buildBottomButtons(theme),
+                  child: _buildBottomButtons(theme, jobContext, isSubmitting),
                 ),
               ],
             ),
+            if (isSubmitting)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+              ),
             Positioned(
               top: 12.h,
               left: 16.w,
