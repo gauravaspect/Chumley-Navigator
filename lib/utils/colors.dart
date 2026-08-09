@@ -125,6 +125,10 @@ class AppColors {
   static const trendUpBgLight = Color(0xFFDCF5E8);
   static const trendDownLight = Color(0xFFA32D2D);
 
+  /// PPM / demo jobs accent (distinct from appointment blue)
+  static const ppmAccent = Color(0xFF0D9488);
+  static const ppmAccentSoft = Color(0xFFCCFBF1);
+
   // Leaderboard podium (1st place accents)
   static const podiumFirstDarkBorder = Color(0xFF2A3A2A);
   static const podiumFirstLightBg = Color(0xFFEAF3DE);

@@ -1,6 +1,8 @@
 import 'package:chumley_navigator/components/calendar/calendar_bottom_sheet.dart';
+import 'package:chumley_navigator/models/ppm_jobs_models.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/screens/job_details/job_detail_page.dart';
+import 'package:chumley_navigator/screens/job_details/ppm_job_detail_page.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
@@ -11,9 +13,11 @@ class DashboardCalendar extends StatefulWidget {
   const DashboardCalendar({
     super.key,
     this.appointments = const [],
+    this.ppmTasks = const [],
   });
 
   final List<Appointment> appointments;
+  final List<PpmJobTask> ppmTasks;
 
   @override
   State<DashboardCalendar> createState() => _DashboardCalendarState();
@@ -102,7 +106,6 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
 
   bool _hasAppointment(DateTime date) {
     for (final appointment in widget.appointments) {
-      if (appointment.status.toLowerCase() == 'scheduled') continue;
       final start = appointment.scheduledStart;
       if (start == null) continue;
       if (start.year == date.year &&
@@ -113,6 +116,12 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
     }
     return false;
   }
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  bool _hasPpmOn(DateTime date) =>
+      widget.ppmTasks.isNotEmpty && _isSameDay(date, _today);
 
   @override
   Widget build(BuildContext context) {
@@ -129,13 +138,17 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
         : "Schedule for ${_shortMonthNames[selectedDate.month - 1]} ${_getDayWithSuffix(selectedDate.day)}";
 
     final filteredAppointments = widget.appointments.where((appointment) {
-      if (appointment.status.toLowerCase() == 'scheduled') return false;
       final start = appointment.scheduledStart;
       if (start == null) return false;
       return start.year == selectedDate.year &&
           start.month == selectedDate.month &&
           start.day == selectedDate.day;
     }).toList();
+
+    final filteredPpmTasks =
+        _isSameDay(selectedDate, _today) ? widget.ppmTasks : const <PpmJobTask>[];
+    final scheduleEmpty =
+        filteredAppointments.isEmpty && filteredPpmTasks.isEmpty;
 
     return Padding(
       padding: EdgeInsets.zero,
@@ -269,6 +282,7 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                     final isToday = _isToday(day.date);
                     final isSelected = _isSelected(day.date);
                     final hasAppointment = _hasAppointment(day.date);
+                    final hasPpm = _hasPpmOn(day.date);
 
                     Color bgColor = Colors.transparent;
                     Color textColor = day.isCurrentMonth
@@ -312,16 +326,37 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                                 child: Text('${day.date.day}'),
                               ),
                             ),
-                            if (hasAppointment && day.isCurrentMonth)
-                              Container(
-                                margin: EdgeInsets.only(top: 1.h),
-                                width: 4.w,
-                                height: 4.w,
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? AppColors.white
-                                      : theme.dashPrimary,
-                                  shape: BoxShape.circle,
+                            if ((hasAppointment || hasPpm) && day.isCurrentMonth)
+                              Padding(
+                                padding: EdgeInsets.only(top: 1.h),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (hasAppointment)
+                                      Container(
+                                        width: 4.w,
+                                        height: 4.w,
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? AppColors.white
+                                              : theme.dashPrimary,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    if (hasAppointment && hasPpm)
+                                      SizedBox(width: 3.w),
+                                    if (hasPpm)
+                                      Container(
+                                        width: 4.w,
+                                        height: 4.w,
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? AppColors.white
+                                              : AppColors.ppmAccent,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                           ],
@@ -346,7 +381,7 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
             ),
           ),
           SizedBox(height: 8.h),
-          if (filteredAppointments.isEmpty)
+          if (scheduleEmpty)
             Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 16.w),
@@ -384,7 +419,7 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                 ],
               ),
             )
-          else
+          else ...[
             ...filteredAppointments.map((appointment) {
               return Padding(
                 padding: EdgeInsets.only(bottom: 12.h),
@@ -394,6 +429,16 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                 ),
               );
             }),
+            ...filteredPpmTasks.map((task) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: 12.h),
+                child: GestureDetector(
+                  onTap: () => PpmJobDetailPage.open(context, task),
+                  child: PpmJobScheduleCard(task: task, date: _today),
+                ),
+              );
+            }),
+          ],
         ],
       ),
     );
@@ -932,3 +977,269 @@ class _StatBox extends StatelessWidget {
     );
   }
 }
+
+class PpmJobScheduleCard extends StatelessWidget {
+  const PpmJobScheduleCard({
+    super.key,
+    required this.task,
+    required this.date,
+  });
+
+  final PpmJobTask task;
+  final DateTime date;
+
+  static const List<String> _shortMonthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  String _getDayWithSuffix(int day) {
+    if (day >= 11 && day <= 13) return '${day}th';
+    switch (day % 10) {
+      case 1: return '${day}st';
+      case 2: return '${day}nd';
+      case 3: return '${day}rd';
+      default: return '${day}th';
+    }
+  }
+
+  String _formatHour(int hour) =>
+      '${hour.toString().padLeft(2, '0')}:00';
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+    final isDark = theme.isDark;
+    final monthStr = _shortMonthNames[date.month - 1];
+    final dayStr = _getDayWithSuffix(date.day);
+    final timeRange =
+        '${_formatHour(task.startHour)} – ${_formatHour(task.endHour)}';
+    final jobType =
+        task.jobType.isNotEmpty ? task.jobType : 'PPM';
+    final jobNo = task.appointmentNumber.isNotEmpty
+        ? task.appointmentNumber
+        : task.id;
+    final subject =
+        task.subject.isNotEmpty ? task.subject : 'PPM Job';
+    final status =
+        task.status.isNotEmpty ? task.status : 'Scheduled';
+
+    final cardBg = isDark ? AppColors.darkSurface : AppColors.white;
+    final cardBorder = AppColors.ppmAccent.withValues(alpha: isDark ? 0.45 : 0.35);
+    final headerBg = isDark ? const Color(0xFF134E4A) : AppColors.ppmAccent;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16.r),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: cardBorder, width: 1),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: AppColors.shadowSubtle,
+                    offset: Offset(0, 2.h),
+                    blurRadius: 6.r,
+                  ),
+                ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              color: headerBg,
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40.w,
+                    height: 40.w,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkProgressTrack
+                          : AppColors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Icon(
+                      LucideIcons.clipboardCheck,
+                      size: 20.sp,
+                      color: AppColors.white,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6.w,
+                                vertical: 2.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(6.r),
+                              ),
+                              child: Text(
+                                'PPM',
+                                style: TextStyle(
+                                  fontSize: 9.sp,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                  color: AppColors.white,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              jobType.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                                color: AppColors.white.withValues(alpha: 0.75),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          jobNo,
+                          style: TextStyle(
+                            fontSize: 17.sp,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.4,
+                            color: AppColors.white,
+                            height: 1.15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        status,
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.white,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 5.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkBase : AppColors.white,
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              monthStr.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.ppmAccent,
+                              ),
+                            ),
+                            Text(
+                              dayStr,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w800,
+                                color: isDark
+                                    ? AppColors.darkText
+                                    : AppColors.textDarkBlue,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 14.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    subject,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color: theme.dashTitle,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Row(
+                    children: [
+                      Icon(
+                        LucideIcons.clock,
+                        size: 14.sp,
+                        color: AppColors.ppmAccent,
+                      ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        timeRange,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: theme.dashMuted,
+                        ),
+                      ),
+                      if (task.postcode.isNotEmpty) ...[
+                        SizedBox(width: 12.w),
+                        Icon(
+                          LucideIcons.mapPin,
+                          size: 14.sp,
+                          color: AppColors.ppmAccent,
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          task.postcode,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: theme.dashMuted,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (task.workTypeName.isNotEmpty ||
+                      task.tradeGroup.isNotEmpty) ...[
+                    SizedBox(height: 8.h),
+                    Text(
+                      [
+                        if (task.tradeGroup.isNotEmpty) task.tradeGroup,
+                        if (task.workTypeName.isNotEmpty) task.workTypeName,
+                      ].join(' · '),
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: theme.dashMuted,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

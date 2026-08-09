@@ -1,4 +1,5 @@
 import 'package:chumley_navigator/models/points_model.dart';
+import 'package:chumley_navigator/models/ppm_jobs_models.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:equatable/equatable.dart';
 
@@ -14,26 +15,33 @@ class DashboardInitial extends DashboardState {
 }
 
 class DashboardLoading extends DashboardState {
-  const DashboardLoading({this.cachedUser, this.cachedPoints});
+  const DashboardLoading({
+    this.cachedUser,
+    this.cachedPoints,
+    this.cachedPpmTasks = const [],
+  });
 
   final UserModel? cachedUser;
   final EngineerPerformanceHistory? cachedPoints;
+  final List<PpmJobTask> cachedPpmTasks;
 
   @override
-  List<Object?> get props => [cachedUser, cachedPoints];
+  List<Object?> get props => [cachedUser, cachedPoints, cachedPpmTasks];
 }
 
 class DashboardLoaded extends DashboardState {
   const DashboardLoaded({
     required this.user,
     required this.performanceHistory,
+    this.ppmTasks = const [],
   });
 
   final UserModel user;
   final EngineerPerformanceHistory performanceHistory;
+  final List<PpmJobTask> ppmTasks;
 
   @override
-  List<Object?> get props => [user, performanceHistory];
+  List<Object?> get props => [user, performanceHistory, ppmTasks];
 }
 
 class DashboardError extends DashboardState {
@@ -41,14 +49,17 @@ class DashboardError extends DashboardState {
     required this.message,
     this.cachedUser,
     this.cachedPoints,
+    this.cachedPpmTasks = const [],
   });
 
   final String message;
   final UserModel? cachedUser;
   final EngineerPerformanceHistory? cachedPoints;
+  final List<PpmJobTask> cachedPpmTasks;
 
   @override
-  List<Object?> get props => [message, cachedUser, cachedPoints];
+  List<Object?> get props =>
+      [message, cachedUser, cachedPoints, cachedPpmTasks];
 }
 
 extension DashboardStateX on DashboardState {
@@ -64,5 +75,12 @@ extension DashboardStateX on DashboardState {
     DashboardLoading(:final cachedPoints) => cachedPoints,
     DashboardError(:final cachedPoints) => cachedPoints,
     _ => null,
+  };
+
+  List<PpmJobTask> get ppmTasksOrEmpty => switch (this) {
+    DashboardLoaded(:final ppmTasks) => ppmTasks,
+    DashboardLoading(:final cachedPpmTasks) => cachedPpmTasks,
+    DashboardError(:final cachedPpmTasks) => cachedPpmTasks,
+    _ => const [],
   };
 }

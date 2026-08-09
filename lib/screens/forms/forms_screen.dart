@@ -1,5 +1,8 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/screens/forms/damp_survey_form_page.dart';
 import 'package:chumley_navigator/screens/forms/form_details.dart';
+import 'package:chumley_navigator/screens/forms/ld_form_page.dart';
+import 'package:chumley_navigator/screens/forms/vent_hygiene_form_page.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
@@ -55,11 +58,18 @@ class _FormsScreenState extends State<FormsScreen> {
 
 
   void _openForm(BuildContext context, FormType type) {
+    final Widget page;
+    switch (type) {
+      case FormType.LDForm:
+        page = const LdFormPage();
+      case FormType.DampSurveyForm:
+        page = const DampSurveyFormPage();
+      case FormType.VentHygeineForm:
+        page = const VentHygieneFormPage();
+    }
     Navigator.push(
       context,
-      MaterialPageRoute<void>(
-        builder: (_) => InspectionReportPage(formType: type),
-      ),
+      MaterialPageRoute<void>(builder: (_) => page),
     );
   }
 
@@ -127,10 +137,10 @@ class _FormsScreenState extends State<FormsScreen> {
                       FadeSlideIn(
                         child: _FormListTile(
                           icon: LucideIcons.zap,
-                          title: 'EICR',
+                          title: 'LD FORM',
                           subtitle:
                           'Electrical Installation Condition Report · BS 7671:2018+A2:2022',
-                          onTap: () => _openForm(context, FormType.eicr),
+                          onTap: () => _openForm(context, FormType.LDForm),
                         ),
                       ),
                       SizedBox(height: 8.h),
@@ -138,13 +148,23 @@ class _FormsScreenState extends State<FormsScreen> {
                         delay: const Duration(milliseconds: 50),
                         child: _FormListTile(
                           icon: LucideIcons.droplets,
-                          title: 'Damp & Moisture Survey',
+                          title: 'Damp Survey Form',
                           subtitle: 'Surface / depth readings · BS 5250:2021',
-                          onTap: () => _openForm(context, FormType.dampSurvey),
+                          onTap: () => _openForm(context, FormType.DampSurveyForm),
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 50),
+                        child: _FormListTile(
+                          icon: LucideIcons.wind,
+                          title: 'Vent Hygiene Forms',
+                          subtitle: 'Vent heat loss calculation · BS 8204:2011',
+                          onTap: () => _openForm(context, FormType.VentHygeineForm),
                         ),
                       ),
                     ],
-                  ),
+                  ), 
                 ),
                 ValueListenableBuilder<double>(
                   valueListenable: _collapseProgress,

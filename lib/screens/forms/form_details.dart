@@ -13,7 +13,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 // Enums & Models
 // ─────────────────────────────────────────────────────────────
 
-enum FormType { eicr, dampSurvey }
+enum FormType { LDForm, DampSurveyForm, VentHygeineForm  }
 
 enum SeqStatus { none, confirmed, rejected, na }
 
@@ -52,68 +52,15 @@ class _FormContent {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Static form content
+// Static form content (Damp; LD / Vent use dedicated pages)
 // ─────────────────────────────────────────────────────────────
 
-const _eicrContent = _FormContent(
-  pageSubtitle: 'Electrical Installation Condition Report (EICR)',
-  badge: 'Electrical',
-  scopeSubtitle: 'Electrical · Periodic Inspection & Testing',
-  scopeBody:
-  'Periodic inspection and testing of an existing fixed electrical installation in accordance with BS 7671:2018+A2:2022 and IET Guidance Note 3. Outcome is an EICR with overall classification of Satisfactory or Unsatisfactory based on observation codes C1/C2/C3/FI.',
-  scopeRefs:
-  'BS 7671:2018+A2:2022 · IET Guidance Note 3 (8th ed) · Electricity at Work Regs 1989 · PRS Regs 2020 (if applicable)',
-  ppeItems: [
-    'Insulated gloves and eye protection in use',
-    'Voltage indicator proven live–dead–live before test',
-    'Warning notices and barriers in place where isolating',
-  ],
-  hseQuestions: [
-    _HseQ('Safe isolation procedure followed', [
-      'Yes — locked off and proved dead',
-      'Partial — supervised',
-      'Not possible — STOP',
-    ]),
-    _HseQ('Client briefed on power interruption', [
-      'Briefed and consent given',
-      'Unable to contact — proceed per instruction',
-      'Refused — STOP',
-    ]),
-    _HseQ('Vulnerable occupants considered (medical equipment, lifts)', [
-      'None present',
-      'Present — arrangements made',
-      'Present — STOP until arranged',
-    ]),
-  ],
-  seqGroups: [
-    _SeqGroup('Before work', [
-      'Extent and limitations agreed with client in writing',
-      'Previous EICR or installation certificate reviewed where available',
-      'Consumer unit / distribution boards identified and labelled',
-    ]),
-    _SeqGroup('During work', [
-      'Safe isolation — prove dead before test',
-      'Measure supply characteristics (Ze, PSCC, PFC)',
-      'Complete inspection schedule against BS 7671 checklist',
-      'Record test results per circuit (continuity, insulation resistance, polarity, Zs, RCD operation)',
-      'Classify each observation with C1, C2, C3 or FI and record BS 7671 regulation reference',
-    ]),
-    _SeqGroup('After work', [
-      'Determine overall classification (Satisfactory only if no C1/C2/FI)',
-      'Affix Electrical Installation Condition label at origin',
-      'Issue report, schedule of inspections, schedule of test results',
-      'Notify client immediately of any C1 findings; isolate or make safe on site',
-      'Recommend next inspection date per GN3 Table 3.1',
-    ]),
-  ],
-);
-
 const _dampContent = _FormContent(
-  pageSubtitle: 'Damp & Moisture Survey',
+  pageSubtitle: 'Damp Survey Form',
   badge: 'Building Fabric',
-  scopeSubtitle: 'Building Fabric · Damp, Condensation & Timber',
+  scopeSubtitle: 'Surface / depth readings · BS 5250:2021',
   scopeBody:
-  'Diagnostic damp and moisture survey of an occupied property to classify the cause of dampness (rising, penetrating, condensation, plumbing leak or a combination) and to recommend remediation. Carried out to BS 5250:2021, BRE Digest 245 and the Property Care Association (PCA) Code of Practice.',
+  'Diagnostic damp and moisture survey of an occupied property to classify the cause of dampness (rising, penetrating, condensation, plumbing leak or a combination) and to recommend remediation. Surface and depth moisture readings recorded to BS 5250:2021, BRE Digest 245 and the Property Care Association (PCA) Code of Practice.',
   scopeRefs: 'BS 5250:2021 · BRE Digest 245 · PCA CoP for remedial damp-proofing',
   ppeItems: [
     'Dust mask and gloves worn when lifting timber / disturbing plaster',
@@ -159,6 +106,17 @@ const _dampContent = _FormContent(
     ]),
   ],
 );
+
+_FormContent _contentForFormType(FormType type) {
+  switch (type) {
+    case FormType.LDForm:
+    case FormType.VentHygeineForm:
+      // Dedicated pages: [LdFormPage] / [VentHygieneFormPage].
+      return _dampContent;
+    case FormType.DampSurveyForm:
+      return _dampContent;
+  }
+}
 
 // ─────────────────────────────────────────────────────────────
 // Page
@@ -212,7 +170,7 @@ class _InspectionReportPageState extends State<InspectionReportPage> {
   @override
   void initState() {
     super.initState();
-    _c = widget.formType == FormType.eicr ? _eicrContent : _dampContent;
+    _c = _contentForFormType(widget.formType);
     _scrollController.addListener(_onScroll);
   }
 

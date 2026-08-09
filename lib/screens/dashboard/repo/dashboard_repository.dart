@@ -1,5 +1,6 @@
 import 'package:chumley_navigator/core/storage/prefs.dart';
 import 'package:chumley_navigator/models/points_model.dart';
+import 'package:chumley_navigator/models/ppm_jobs_models.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/screens/dashboard/service/dashboard_api_service.dart';
 
@@ -38,6 +39,10 @@ class DashboardRepository {
       }
       rethrow;
     }
+  }
+
+  Future<List<PpmJobTask>> fetchPpmJobs() {
+    return _apiService.fetchPpmJobs();
   }
 
   Future<UserModel> refreshDashboardData({String dateRange = 'all_time'}) {

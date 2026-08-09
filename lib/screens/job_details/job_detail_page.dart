@@ -3,8 +3,8 @@ import 'dart:io' show Platform;
 
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/app_constants.dart';
+import 'package:chumley_navigator/core/log.dart';
 import 'package:chumley_navigator/models/user_model.dart';
-import 'package:chumley_navigator/models/fixed_price_job_context.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/utils/routes.dart';
@@ -20,7 +20,10 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:chumley_navigator/screens/forms/damp_survey_form_page.dart';
 import 'package:chumley_navigator/screens/forms/form_details.dart';
+import 'package:chumley_navigator/screens/forms/ld_form_page.dart';
+import 'package:chumley_navigator/screens/forms/vent_hygiene_form_page.dart';
 
 class JobDetailPage extends StatefulWidget {
   final Appointment appointment;
@@ -54,8 +57,9 @@ class _JobDetailPageState extends State<JobDetailPage>
   int _statusIndex = 1; // 0 = Scheduled, 1 = Dispatched, 4 = Job Completed
 
   // Forms panel state (mapped directly)
-  bool _eicrCompleted = false;
+  bool _ldFormCompleted = false;
   bool _dampSurveyCompleted = false;
+  bool _ventHygieneCompleted = false;
 
   // State
   Position? _engineerPosition;
@@ -128,6 +132,7 @@ class _JobDetailPageState extends State<JobDetailPage>
   @override
   void initState() {
     super.initState();
+    Log('Job details: ${widget.appointment.toJson()}', name: 'JobDetail');
     _initializeMapAndLocation();
   }
 
@@ -1821,9 +1826,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                 Navigator.pushNamed(
                   context,
                   AppRoutes.fixedPriceScreen,
-                  arguments: FixedPriceJobContext.fromAppointment(
-                    widget.appointment,
-                  ),
+                  arguments: widget.appointment,
                 );
               },
             ),
@@ -1856,25 +1859,34 @@ class _JobDetailPageState extends State<JobDetailPage>
     final onSite = isOnSite;
     final formItems = [
       (
-        'EICR',
+        'LD Form',
         'Electrical Installation Condition Report · BS 7671:2018+A2:2022',
-        _eicrCompleted,
-        (bool v) => setState(() => _eicrCompleted = v),
-        FormType.eicr,
+        _ldFormCompleted,
+        (bool v) => setState(() => _ldFormCompleted = v),
+        FormType.LDForm,
       ),
       (
-        'Damp & Moisture Survey',
+        'Damp Survey Form',
         'Surface / depth readings · BS 5250:2021',
         _dampSurveyCompleted,
         (bool v) => setState(() => _dampSurveyCompleted = v),
-        FormType.dampSurvey,
+        FormType.DampSurveyForm,
+      ),
+      (
+        'Vent Hygiene Forms',
+        'Vent heat loss calculation · BS 8204:2011',
+        _ventHygieneCompleted,
+        (bool v) => setState(() => _ventHygieneCompleted = v),
+        FormType.VentHygeineForm,
       ),
     ];
 
     final completedCount = [
-      _eicrCompleted,
+      _ldFormCompleted,
       _dampSurveyCompleted,
+      _ventHygieneCompleted,
     ].where((e) => e).length;
+    final totalForms = formItems.length;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -1930,7 +1942,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                   )
                 else
                   Text(
-                    '$completedCount/2',
+                    '$completedCount/$totalForms',
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
@@ -1954,7 +1966,34 @@ class _JobDetailPageState extends State<JobDetailPage>
                     final result = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => InspectionReportPage(formType: item.$5),
+                        builder: (_) {
+                          final appt = widget.appointment;
+                          final workOrderId = appt.sourceWorkOrderId.isNotEmpty
+                              ? appt.sourceWorkOrderId
+                              : appt.id;
+                          final workOrderLabel =
+                              appt.appointmentNumber.isNotEmpty
+                                  ? appt.appointmentNumber
+                                  : workOrderId;
+
+                          switch (item.$5) {
+                            case FormType.LDForm:
+                              return LdFormPage(
+                                workOrderId: workOrderId,
+                                workOrderLabel: workOrderLabel,
+                              );
+                            case FormType.DampSurveyForm:
+                              return DampSurveyFormPage(
+                                workOrderId: workOrderId,
+                                workOrderLabel: workOrderLabel,
+                              );
+                            case FormType.VentHygeineForm:
+                              return VentHygieneFormPage(
+                                workOrderId: workOrderId,
+                                workOrderLabel: workOrderLabel,
+                              );
+                          }
+                        },
                       ),
                     );
                     if (result == true) {
@@ -2054,7 +2093,7 @@ class _JobDetailPageState extends State<JobDetailPage>
               );
             }),
             // Info note
-            if (completedCount < 2 && onSite)
+            if (completedCount < totalForms && onSite)
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
                 decoration: BoxDecoration(

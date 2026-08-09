@@ -23,6 +23,7 @@ class ApiEndpoints {
   static const getFixedPriceCategories = "/api/work-orders/catalog/categories";
   static const getFixedPriceWorkTypes = "/api/work-orders/catalog/work-types";
   static const submitWorkOrder = '/api/work-orders';
+  static const getPpmJobs = '/api/demo/ppm-tasks';
 
   // Chumley / Navigator chat
   static const chatToken = '/api/auth/chat-token';

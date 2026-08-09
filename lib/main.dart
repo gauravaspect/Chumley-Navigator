@@ -1,4 +1,6 @@
 import 'package:chumley_navigator/core/app_dependencies.dart';
+import 'package:chumley_navigator/core/log.dart';
+import 'package:chumley_navigator/core/storage/prefs.dart';
 import 'package:chumley_navigator/providers/theme_notifier.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/routes.dart';
@@ -14,6 +16,10 @@ Future<void> main() async {
   AppDependencies.initialize();
   final themeNotifier = ThemeNotifier();
   await themeNotifier.load();
+
+  final sessionToken = await Prefs.getSessionToken();
+  Log('sessionToken: ${maskToken(sessionToken)}', name: 'AppStart');
+
   runApp(MyApp(themeNotifier: themeNotifier));
 }
 

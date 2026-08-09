@@ -29,4 +29,7 @@ class AppConstants {
     'IS_PRODUCTION',
     defaultValue: true,
   );
+
+  /// Demo API key for `/api/demo/*` endpoints (investor demo).
+  static const String demoApiKey = 'chumley-demo-h_sgCq3o-w6fp7m0VvNo5FPY';
 }

@@ -233,7 +233,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final sections = [
       PointsCard(user: user),
       EarningCard(user: user),
-      DashboardCalendar(appointments: user.dashboard.appointmentsThisMonth),
+      DashboardCalendar(
+        appointments: user.dashboard.appointmentsThisMonth,
+        ppmTasks: state.ppmTasksOrEmpty,
+      ),
       KpiOverview(user: user),
       const EarningGraph(),
     ];

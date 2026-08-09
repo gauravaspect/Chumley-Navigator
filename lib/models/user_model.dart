@@ -60,59 +60,80 @@ class Appointment extends Equatable {
   final double operativeSharePct;
 
   factory Appointment.fromJson(Map<String, dynamic> json) {
-    final workOrder = _asMap(json['work_order'] ?? json['workOrder']);
-    final site = _asMap(json['site'] ?? workOrder?['site']);
-    final account = _asMap(json['account'] ?? workOrder?['account']);
-    final contact = _asMap(json['contact'] ?? workOrder?['contact']);
+    final root = _asMap(
+          json['service_appointment'] ?? json['serviceAppointment'],
+        ) ??
+        json;
+    final workOrder = _asMap(root['work_order'] ?? root['workOrder']);
+    final site = _asMap(
+      root['site'] ?? workOrder?['site'] ?? root['Site__r'],
+    );
+    final account = _asMap(
+      root['account'] ?? workOrder?['account'] ?? root['Account'],
+    );
+    final contact = _asMap(
+      root['contact'] ?? workOrder?['contact'] ?? root['Contact'],
+    );
+    final sources = [root, if (workOrder != null) workOrder];
 
     return Appointment(
-      id: (json['id'] ?? '').toString(),
-      appointmentNumber: (json['appointment_number'] ?? '').toString(),
-      scheduledStart: DateTime.tryParse(
-        (json['scheduled_start'] ?? '').toString(),
-      ),
-      status: (json['status'] ?? '').toString(),
-      title: (json['title'] ?? '').toString(),
-      type: (json['type'] ?? '').toString(),
-      sourceWorkOrderId: _readNestedId(json, const [
-        'source_work_order_id',
-        'work_order_id',
-        'workOrderId',
-        'parent_work_order_id',
-        'work_order',
-      ], nested: workOrder, nestedKeys: const ['id', 'source_work_order_id']),
-      siteId: _readNestedId(json, const [
-        'site_id',
-        'siteId',
-        'SiteId',
-        'site',
-      ], nested: site, nestedKeys: const ['id', 'site_id']),
-      accountId: _readNestedId(json, const [
-        'account_id',
-        'accountId',
-        'AccountId',
-        'account',
-      ], nested: account, nestedKeys: const ['id', 'account_id']),
-      contactId: _readNestedId(json, const [
-        'contact_id',
-        'contactId',
-        'ContactId',
-        'contact',
-      ], nested: contact, nestedKeys: const ['id', 'contact_id']),
-      customerEmail: (json['customer_email'] ??
-              contact?['email'] ??
-              json['email'] ??
+      id: (root['id'] ?? '').toString(),
+      appointmentNumber: (root['appointment_number'] ??
+              root['appointmentNumber'] ??
+              root['AppointmentNumber'] ??
               '')
           .toString(),
+      scheduledStart: DateTime.tryParse(
+        (root['scheduled_start'] ??
+                root['scheduledStart'] ??
+                root['SchedStartTime'] ??
+                '')
+            .toString(),
+      ),
+      status: (root['status'] ?? root['Status'] ?? '').toString(),
+      title: (root['title'] ?? root['Subject'] ?? '').toString(),
+      type: (root['type'] ?? root['Type__c'] ?? '').toString(),
+      sourceWorkOrderId: _resolveWorkOrderId(root, workOrder),
+      siteId: _readIdFromSources(
+        sources,
+        const ['site_id', 'siteId', 'SiteId', 'Site__c', 'site'],
+        nested: site,
+        nestedKeys: const ['id', 'site_id', 'Site__c'],
+      ),
+      accountId: _readIdFromSources(
+        sources,
+        const [
+          'account_id',
+          'accountId',
+          'AccountId',
+          'Account__c',
+          'account',
+        ],
+        nested: account,
+        nestedKeys: const ['id', 'account_id', 'AccountId'],
+      ),
+      contactId: _readIdFromSources(
+        sources,
+        const [
+          'contact_id',
+          'contactId',
+          'ContactId',
+          'Contact__c',
+          'contact',
+        ],
+        nested: contact,
+        nestedKeys: const ['id', 'contact_id', 'ContactId'],
+      ),
+      customerEmail: _readCustomerEmail(root, contact, account),
       resolvedServiceFeePct: _readDouble(
-        json['resolved_service_fee_pct'] ??
+        root['resolved_service_fee_pct'] ??
             workOrder?['resolved_service_fee_pct'],
       ),
       resolvedMarkupPct: _readDouble(
-        json['resolved_markup_pct'] ?? workOrder?['resolved_markup_pct'],
+        root['resolved_markup_pct'] ?? workOrder?['resolved_markup_pct'],
       ),
       operativeSharePct: _readDouble(
-        json['operative_share_pct'] ?? workOrder?['operative_share_pct'],
+        root['operative_share_pct'] ?? workOrder?['operative_share_pct'],
         40.0,
       ),
     );
@@ -224,7 +245,7 @@ class UserDashboard extends Equatable {
     if (json == null) return const UserDashboard();
     return UserDashboard(
       appointmentsThisMonth: _readList(
-        json['appointments_this_month'],
+        json['appointments_this_month'] ?? json['service_appointments'],
         Appointment.fromJson,
       ),
     );
@@ -527,4 +548,84 @@ String _readNestedId(
   }
 
   return '';
+}
+
+String _readIdFromSources(
+  List<Map<String, dynamic>> sources,
+  List<String> flatKeys, {
+  Map<String, dynamic>? nested,
+  List<String> nestedKeys = const ['id'],
+}) {
+  for (final source in sources) {
+    final id = _readNestedId(
+      source,
+      flatKeys,
+      nested: nested,
+      nestedKeys: nestedKeys,
+    );
+    if (id.isNotEmpty) return id;
+  }
+  return '';
+}
+
+String _readCustomerEmail(
+  Map<String, dynamic> json,
+  Map<String, dynamic>? contact,
+  Map<String, dynamic>? account,
+) {
+  final candidates = [
+    json['customer_email'],
+    json['customerEmail'],
+    contact?['email'],
+    contact?['Email'],
+    account?['email'],
+    account?['Email'],
+    json['email'],
+  ];
+  for (final value in candidates) {
+    final text = value?.toString().trim() ?? '';
+    if (text.isNotEmpty) return text;
+  }
+  return '';
+}
+
+bool _isSalesforceWorkOrderId(String id) {
+  final normalized = id.trim().toUpperCase();
+  return normalized.startsWith('0WO');
+}
+
+String _resolveWorkOrderId(
+  Map<String, dynamic> json,
+  Map<String, dynamic>? workOrder,
+) {
+  final candidates = <String>[];
+
+  void addCandidate(String value) {
+    final text = value.trim();
+    if (text.isNotEmpty && !candidates.contains(text)) {
+      candidates.add(text);
+    }
+  }
+
+  for (final source in [json, if (workOrder != null) workOrder]) {
+    addCandidate(_readNestedId(source, const [
+      'source_work_order_id',
+      'parent_work_order_id',
+      'parent_record_id',
+      'ParentRecordId',
+      'work_order_id',
+      'workOrderId',
+      'work_order',
+    ], nested: workOrder, nestedKeys: const ['id', 'source_work_order_id']));
+  }
+
+  if (workOrder != null) {
+    addCandidate((workOrder['id'] ?? '').toString());
+  }
+
+  for (final id in candidates) {
+    if (_isSalesforceWorkOrderId(id)) return id;
+  }
+
+  return candidates.isNotEmpty ? candidates.first : '';
 }

@@ -36,9 +36,8 @@ class FixedPriceJobContext extends Equatable {
             '${scheduled.day.toString().padLeft(2, '0')}'
         : '';
 
-    // Prefer explicit source WO id; otherwise use appointment id when it is a
-    // Salesforce WorkOrder id (0WO...). Service Appointment ids (08p...) are
-    // still used as a last resort so submit has a non-empty reference.
+    // Prefer parent Work Order id (0WO...). Fall back to Service Appointment id
+    // when the API does not expose the parent work order separately.
     final sourceId = appointment.sourceWorkOrderId.isNotEmpty
         ? appointment.sourceWorkOrderId
         : appointment.id;
@@ -74,6 +73,9 @@ class FixedPriceJobContext extends Equatable {
     final errors = <String>[];
     if (sourceWorkOrderId.trim().isEmpty) {
       errors.add('Source work order is required.');
+    }
+    if (siteId.trim().isEmpty) {
+      errors.add('Site is required for this work order.');
     }
     return errors;
   }

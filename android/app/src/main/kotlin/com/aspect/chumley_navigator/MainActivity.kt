@@ -1,4 +1,4 @@
-package com.example.chumley_navigator
+package com.aspect.chumley_navigator
 
 import io.flutter.embedding.android.FlutterActivity
 
