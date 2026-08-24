@@ -61,6 +61,7 @@ class AppColors {
   static const chartGridLine = Color(0xFFEEF2FA);
 
   // Semantic
+  static const successGreen = Color(0xFF22C55E);
   static const successBackground = Color(0xFFDCFCE7);
   static const successText = Color(0xFF166534);
   static const errorBackground = Color(0xFFFDECEC);

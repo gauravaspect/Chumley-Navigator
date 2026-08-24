@@ -1,6 +1,7 @@
 import 'package:chumley_navigator/components/calendar/calendar_bottom_sheet.dart';
 import 'package:chumley_navigator/models/ppm_jobs_models.dart';
 import 'package:chumley_navigator/models/user_model.dart';
+import 'package:chumley_navigator/pillar/home_job_filter.dart';
 import 'package:chumley_navigator/screens/job_details/job_detail_page.dart';
 import 'package:chumley_navigator/screens/job_details/ppm_job_detail_page.dart';
 import 'package:chumley_navigator/utils/colors.dart';
@@ -138,11 +139,12 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
         : "Schedule for ${_shortMonthNames[selectedDate.month - 1]} ${_getDayWithSuffix(selectedDate.day)}";
 
     final filteredAppointments = widget.appointments.where((appointment) {
-      final start = appointment.scheduledStart;
-      if (start == null) return false;
-      return start.year == selectedDate.year &&
-          start.month == selectedDate.month &&
-          start.day == selectedDate.day;
+      return HomeJobFilter.showOnHome(
+        status: appointment.status,
+        scheduledStart: appointment.scheduledStart,
+        selectedDay: selectedDate,
+        today: _today,
+      );
     }).toList();
 
     final filteredPpmTasks =

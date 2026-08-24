@@ -17,6 +17,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/fixed_price_model.dart';
 import 'cubit/fixed_price_cubit.dart';
 import 'cubit/fixed_price_state.dart';
+import 'service/pillar_client.dart';
 import '../../shimmers/shimmer_box.dart';
 
 class FixedPricePage extends StatefulWidget {
@@ -396,6 +397,30 @@ class _FixedPricePageState extends State<FixedPricePage> {
             payload: payload,
             context: salesforceContext,
           );
+
+      // Also commit to Firestore demo_fp_submissions/fp-{jobId}
+      final targetJobId = jobContext.sourceWorkOrderId.isNotEmpty
+          ? jobContext.sourceWorkOrderId
+          : payload.workOrderId;
+
+      if (targetJobId.isNotEmpty) {
+        await PillarClient.submitFpEstimate(
+          jobId: targetJobId,
+          lineItems: [
+            {
+              'title': payload.workTypeId,
+              'description': payload.scopeOfWork,
+              'service_price': _listPriceServiceCost,
+              'materials_cost': _materialsCharge,
+              'total_net': _totalCustomerCharges,
+            }
+          ],
+          totalNet: _totalCustomerCharges,
+          totalGross: _totalCustomerCharges * 1.20,
+          notes: payload.scopeOfWork,
+        );
+      }
+
       if (!mounted) return;
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -403,9 +428,9 @@ class _FixedPricePageState extends State<FixedPricePage> {
           content: Text(
             _customerConfirmationChoice == 'Reject'
                 ? 'Fixed price estimate rejected and submitted.'
-                : 'Fixed Price Agreement created successfully.',
+                : 'Fixed Price Agreement created & submitted to Firestore spine.',
           ),
-          backgroundColor: AppColors.successText,
+          backgroundColor: const Color(0xFF22C55E),
         ),
       );
     } catch (error) {

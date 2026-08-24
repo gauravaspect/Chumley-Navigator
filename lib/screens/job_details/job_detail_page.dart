@@ -21,9 +21,16 @@ import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:chumley_navigator/screens/forms/damp_survey_form_page.dart';
-import 'package:chumley_navigator/screens/forms/form_details.dart';
-import 'package:chumley_navigator/screens/forms/ld_form_page.dart';
 import 'package:chumley_navigator/screens/forms/vent_hygiene_form_page.dart';
+import 'package:chumley_navigator/pillar/form_draft_store.dart';
+import 'package:chumley_navigator/pillar/form_kind.dart';
+import 'package:chumley_navigator/pillar/visit_job.dart';
+import 'package:chumley_navigator/screens/job/job_visit_router.dart';
+import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
+import 'package:chumley_navigator/screens/job_details/widgets/pm_lead_wizard.dart';
+import 'package:chumley_navigator/screens/job_details/widgets/ppm_lead_wizard.dart';
+import 'package:chumley_navigator/screens/job_details/widgets/reactive_attendance_modal.dart';
+import 'package:chumley_navigator/screens/job_details/widgets/refer_lead_modal.dart';
 
 class JobDetailPage extends StatefulWidget {
   final Appointment appointment;
@@ -60,6 +67,22 @@ class _JobDetailPageState extends State<JobDetailPage>
   bool _ldFormCompleted = false;
   bool _dampSurveyCompleted = false;
   bool _ventHygieneCompleted = false;
+  bool _worksFormCompleted = false;
+  bool _cp12Completed = false;
+
+  String get workOrderId {
+    final appt = widget.appointment;
+    return appt.sourceWorkOrderId.isNotEmpty ? appt.sourceWorkOrderId : appt.id;
+  }
+
+  String get workOrderLabel {
+    final appt = widget.appointment;
+    return appt.appointmentNumber.isNotEmpty ? appt.appointmentNumber : workOrderId;
+  }
+
+  VisitJob get _visitJob => VisitJob.fromAppointment(widget.appointment);
+
+  final _drafts = FormDraftStore();
 
   // State
   Position? _engineerPosition;
@@ -98,9 +121,9 @@ class _JobDetailPageState extends State<JobDetailPage>
 
   static const List<String> _actionLabels = [
     'Slide to Dispatch',
-    'Slide to Start Transit',
-    'Slide to Arrive On Site',
-    'Slide to Complete Job',
+    'Slide to start journey',
+    'Slide to arrive on site',
+    'Continue form',
     '', // terminal state
   ];
 
@@ -134,6 +157,91 @@ class _JobDetailPageState extends State<JobDetailPage>
     super.initState();
     Log('Job details: ${widget.appointment.toJson()}', name: 'JobDetail');
     _initializeMapAndLocation();
+    _loadSavedStatus();
+  }
+
+  Future<void> _loadSavedStatus() async {
+    final saved = await PillarClient.getLocalStatus(workOrderId);
+    if (saved != null && mounted) {
+      setState(() {
+        if (saved == PillarClient.statusInTransit) {
+          _statusIndex = 2;
+        } else if (saved == PillarClient.statusOnSite) {
+          _statusIndex = 3;
+        } else if (saved == PillarClient.statusComplete) {
+          _statusIndex = 4;
+          _markPrimaryFormComplete();
+        }
+      });
+    }
+  }
+
+  void _markPrimaryFormComplete() {
+    switch (_visitJob.kind) {
+      case FormKind.leak:
+        _ldFormCompleted = true;
+      case FormKind.gas:
+        _cp12Completed = true;
+      case FormKind.bath:
+        _worksFormCompleted = true;
+    }
+  }
+
+  Future<void> _syncStatusFromStore() async {
+    final saved = await PillarClient.getLocalStatus(workOrderId);
+    if (!mounted || saved == null) return;
+    setState(() {
+      if (saved == PillarClient.statusInTransit) {
+        _statusIndex = 2;
+      } else if (saved == PillarClient.statusOnSite) {
+        _statusIndex = 3;
+      } else if (saved == PillarClient.statusComplete) {
+        _statusIndex = 4;
+        _markPrimaryFormComplete();
+      }
+    });
+  }
+
+  Future<void> _openVisitWizard({required int initialStep}) async {
+    await JobVisitRouter.pushVisitWizard(
+      context,
+      _visitJob,
+      initialStep: initialStep,
+      onSubmitted: () {
+        if (mounted) {
+          setState(() {
+            _statusIndex = 4;
+            _markPrimaryFormComplete();
+          });
+        }
+      },
+    );
+    await _syncStatusFromStore();
+  }
+
+  Future<void> _advanceStatus() async {
+    if (_statusIndex == 1) {
+      await PillarClient.setStatus(
+        jobId: workOrderId,
+        newStatus: PillarClient.statusInTransit,
+        engineerEmail: PillarClient.defaultEngineerEmail,
+      );
+      if (mounted) setState(() => _statusIndex = 2);
+      return;
+    }
+
+    if (_statusIndex == 2) {
+      await _openVisitWizard(initialStep: 0);
+      if (mounted && _statusIndex < 3) {
+        setState(() => _statusIndex = 3);
+      }
+      return;
+    }
+
+    if (_statusIndex == 3) {
+      final step = await _drafts.loadFurthestStep(workOrderId);
+      await _openVisitWizard(initialStep: step);
+    }
   }
 
   @override
@@ -773,9 +881,10 @@ class _JobDetailPageState extends State<JobDetailPage>
                   // Row of dots
                   Row(
                     children: List.generate(shortLabels.length, (i) {
+                      final isCompleted = i < _statusIndex || (_statusIndex == 4 && i == 4);
                       final isActive = i <= _statusIndex;
-                      final isCurrent = i == _statusIndex;
-                      final size = isCurrent ? activeDotSize : dotSize;
+                      final isCurrent = i == _statusIndex && !isCompleted;
+                      final size = (isCurrent || isCompleted) ? activeDotSize : dotSize;
 
                       return Expanded(
                         child: Center(
@@ -786,7 +895,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                             height: size,
                             decoration: BoxDecoration(
                               color: isActive
-                                  ? statusColor
+                                  ? (isCompleted ? AppColors.successGreen : statusColor)
                                   : theme.isDark
                                   ? AppColors.darkBorder
                                   : AppColors.borderDefault,
@@ -803,6 +912,15 @@ class _JobDetailPageState extends State<JobDetailPage>
                                     ]
                                   : null,
                             ),
+                            child: isCompleted
+                                ? Center(
+                                    child: Icon(
+                                      Icons.check,
+                                      size: 10.sp,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : null,
                           ),
                         ),
                       );
@@ -1613,56 +1731,6 @@ class _JobDetailPageState extends State<JobDetailPage>
     );
   }
 
-  void _handleRaiseJob(String jobType) {
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        final theme = DashboardTheme.of(context);
-        return AlertDialog(
-          backgroundColor: theme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                LucideIcons.check,
-                color: const Color(0xFF22C55E),
-                size: 20.sp,
-              ),
-              SizedBox(width: 8.w),
-              Text(
-                'Success',
-                style: TextStyle(
-                  color: theme.text,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            '$jobType has been successfully raised and linked to this work order.',
-            style: TextStyle(color: theme.text, fontSize: 13.sp),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'OK',
-                style: TextStyle(
-                  color: theme.isDark
-                      ? AppColors.accentBlue
-                      : AppColors.primaryBlue,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildRaiseJobItem({
     required DashboardTheme theme,
     required String title,
@@ -1817,11 +1885,10 @@ class _JobDetailPageState extends State<JobDetailPage>
             SizedBox(height: 12.h),
             _buildRaiseJobItem(
               theme: theme,
-              title: 'Raise FP',
+              title: 'Raise Fixed Price (FP)',
               subtitle: 'Create a new Fixed Price work order for this site',
               icon: LucideIcons.fileText,
               enabled: onSite,
-              // onTap: () => _handleRaiseJob('Fixed Price (FP)'),
               onTap: () {
                 Navigator.pushNamed(
                   context,
@@ -1833,20 +1900,56 @@ class _JobDetailPageState extends State<JobDetailPage>
             SizedBox(height: 8.h),
             _buildRaiseJobItem(
               theme: theme,
-              title: 'Raise multiple FP',
-              subtitle: 'Batch create multiple Fixed Price jobs',
-              icon: LucideIcons.clipboardList,
+              title: 'Raise PPM Contract Lead',
+              subtitle: 'Recurring maintenance for boiler/AC/cylinders',
+              icon: LucideIcons.calendarClock,
               enabled: onSite,
-              onTap: () => _handleRaiseJob('Multiple FPs'),
+              onTap: () => PpmLeadWizard.show(
+                context,
+                jobId: workOrderId,
+                customerName: widget.appointment.customerEmail,
+                postcode: siteAddress,
+              ),
             ),
             SizedBox(height: 8.h),
             _buildRaiseJobItem(
               theme: theme,
-              title: 'Raise Reactive',
-              subtitle: 'Raise an urgent reactive task or callback',
-              icon: LucideIcons.zap,
+              title: 'Raise PM Project Lead',
+              subtitle: 'Major bathroom/kitchen/boiler refurbishment',
+              icon: LucideIcons.layers,
               enabled: onSite,
-              onTap: () => _handleRaiseJob('Reactive Job'),
+              onTap: () => PmLeadWizard.show(
+                context,
+                jobId: workOrderId,
+                customerName: widget.appointment.customerEmail,
+                postcode: siteAddress,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            _buildRaiseJobItem(
+              theme: theme,
+              title: 'Raise Reactive Attendance',
+              subtitle: 'Dispatched urgent issue or office enquiry',
+              icon: LucideIcons.wrench,
+              enabled: onSite,
+              onTap: () => ReactiveAttendanceModal.show(
+                context,
+                jobId: workOrderId,
+                customerName: widget.appointment.customerEmail,
+                postcode: siteAddress,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            _buildRaiseJobItem(
+              theme: theme,
+              title: 'Refer & Earn Lead',
+              subtitle: 'Customer referral for Aspect bonus',
+              icon: LucideIcons.userPlus,
+              enabled: onSite,
+              onTap: () => ReferLeadModal.show(
+                context,
+                jobId: workOrderId,
+              ),
             ),
           ],
         ),
@@ -1854,39 +1957,130 @@ class _JobDetailPageState extends State<JobDetailPage>
     );
   }
 
+  Widget _buildPrimaryVisitForm(
+    DashboardTheme theme,
+    FormKind kind,
+    bool onSite,
+    Color pinkColor,
+  ) {
+    final (title, subtitle, completed) = switch (kind) {
+      FormKind.leak => (
+          'Leak Detection',
+          '5 steps — Safety, Context, Inspection, Findings, Sign off',
+          _ldFormCompleted,
+        ),
+      FormKind.gas => (
+          'Landlord Gas Safety (CP12)',
+          '12 steps — Risk assessment through Sign off',
+          _cp12Completed,
+        ),
+      FormKind.bath => (
+          'Bathroom / Works Visit',
+          '5 steps — Risk assessment through Review',
+          _worksFormCompleted,
+        ),
+    };
+
+    return _buildFormItemContainer(
+      theme: theme,
+      title: title,
+      subtitle: subtitle,
+      completed: completed,
+      onSite: onSite,
+      pinkColor: pinkColor,
+      onToggle: (v) => setState(() {
+        switch (kind) {
+          case FormKind.leak:
+            _ldFormCompleted = v;
+          case FormKind.gas:
+            _cp12Completed = v;
+          case FormKind.bath:
+            _worksFormCompleted = v;
+        }
+      }),
+      onTap: () async {
+        if (!onSite) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Slide to arrive on site before opening the visit form.'),
+            ),
+          );
+          return;
+        }
+        final step = await _drafts.loadFurthestStep(workOrderId);
+        await _openVisitWizard(initialStep: step);
+      },
+    );
+  }
+
   Widget _buildFormsCard(DashboardTheme theme) {
     final pinkColor = const Color(0xFFEC4899);
     final onSite = isOnSite;
-    final formItems = [
-      (
-        'LD Form',
-        'Electrical Installation Condition Report · BS 7671:2018+A2:2022',
-        _ldFormCompleted,
-        (bool v) => setState(() => _ldFormCompleted = v),
-        FormType.LDForm,
-      ),
-      (
-        'Damp Survey Form',
-        'Surface / depth readings · BS 5250:2021',
-        _dampSurveyCompleted,
-        (bool v) => setState(() => _dampSurveyCompleted = v),
-        FormType.DampSurveyForm,
-      ),
-      (
-        'Vent Hygiene Forms',
-        'Vent heat loss calculation · BS 8204:2011',
-        _ventHygieneCompleted,
-        (bool v) => setState(() => _ventHygieneCompleted = v),
-        FormType.VentHygeineForm,
-      ),
+    final kind = _visitJob.kind;
+
+    final List<Widget> formCards = [
+      _buildPrimaryVisitForm(theme, kind, onSite, pinkColor),
     ];
+    formCards.add(
+      _buildFormItemContainer(
+        theme: theme,
+        title: 'Damp Survey Form',
+        subtitle: 'Surface / depth readings · BS 5250:2021',
+        completed: _dampSurveyCompleted,
+        onSite: onSite,
+        pinkColor: pinkColor,
+        onToggle: (v) => setState(() => _dampSurveyCompleted = v),
+        onTap: () async {
+          final res = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DampSurveyFormPage(
+                workOrderId: workOrderId,
+                workOrderLabel: workOrderLabel,
+              ),
+            ),
+          );
+          if (res == true && mounted) {
+            setState(() => _dampSurveyCompleted = true);
+          }
+        },
+      ),
+    );
+
+    // Vent Hygiene Form
+    formCards.add(
+      _buildFormItemContainer(
+        theme: theme,
+        title: 'Vent Hygiene Form',
+        subtitle: 'Vent heat loss calculation · BS 8204:2011',
+        completed: _ventHygieneCompleted,
+        onSite: onSite,
+        pinkColor: pinkColor,
+        onToggle: (v) => setState(() => _ventHygieneCompleted = v),
+        onTap: () async {
+          final res = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (_) => VentHygieneFormPage(
+                workOrderId: workOrderId,
+                workOrderLabel: workOrderLabel,
+              ),
+            ),
+          );
+          if (res == true && mounted) {
+            setState(() => _ventHygieneCompleted = true);
+          }
+        },
+      ),
+    );
 
     final completedCount = [
+      _worksFormCompleted,
+      _cp12Completed,
       _ldFormCompleted,
       _dampSurveyCompleted,
       _ventHygieneCompleted,
     ].where((e) => e).length;
-    final totalForms = formItems.length;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -1942,7 +2136,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                   )
                 else
                   Text(
-                    '$completedCount/$totalForms',
+                    '$completedCount/${formCards.length}',
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
@@ -1952,149 +2146,10 @@ class _JobDetailPageState extends State<JobDetailPage>
               ],
             ),
             SizedBox(height: 14.h),
-            // Form items
-            ...formItems.map((item) {
-              return Opacity(
-                opacity: onSite ? 1.0 : 0.55,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () async {
-                    if (!onSite) {
-                      _showOnSiteRequiredSnackbar();
-                      return;
-                    }
-                    final result = await Navigator.push<bool>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) {
-                          final appt = widget.appointment;
-                          final workOrderId = appt.sourceWorkOrderId.isNotEmpty
-                              ? appt.sourceWorkOrderId
-                              : appt.id;
-                          final workOrderLabel =
-                              appt.appointmentNumber.isNotEmpty
-                                  ? appt.appointmentNumber
-                                  : workOrderId;
-
-                          switch (item.$5) {
-                            case FormType.LDForm:
-                              return LdFormPage(
-                                workOrderId: workOrderId,
-                                workOrderLabel: workOrderLabel,
-                              );
-                            case FormType.DampSurveyForm:
-                              return DampSurveyFormPage(
-                                workOrderId: workOrderId,
-                                workOrderLabel: workOrderLabel,
-                              );
-                            case FormType.VentHygeineForm:
-                              return VentHygieneFormPage(
-                                workOrderId: workOrderId,
-                                workOrderLabel: workOrderLabel,
-                              );
-                          }
-                        },
-                      ),
-                    );
-                    if (result == true) {
-                      item.$4(true);
-                    }
-                  },
-                  child: Container(
-                    margin: EdgeInsets.only(bottom: 10.h),
-                    padding: EdgeInsets.all(12.r),
-                    decoration: BoxDecoration(
-                      color: item.$3
-                          ? pinkColor.withValues(alpha: 0.06)
-                          : theme.isDark
-                          ? AppColors.darkSurfaceDeep
-                          : AppColors.backgroundGray,
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(
-                        color: item.$3
-                            ? pinkColor.withValues(alpha: 0.35)
-                            : theme.border,
-                        width: 0.75,
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Clickable checkbox
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            if (!onSite) {
-                              _showOnSiteRequiredSnackbar();
-                              return;
-                            }
-                            item.$4(!item.$3);
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeOutCubic,
-                            width: 20.w,
-                            height: 20.w,
-                            decoration: BoxDecoration(
-                              color: item.$3 ? pinkColor : Colors.transparent,
-                              borderRadius: BorderRadius.circular(5.r),
-                              border: Border.all(
-                                color: item.$3
-                                    ? pinkColor
-                                    : theme.textMuted.withValues(alpha: 0.4),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: item.$3
-                                ? Icon(
-                                    LucideIcons.check,
-                                    size: 12.sp,
-                                    color: Colors.white,
-                                  )
-                                : null,
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.$1,
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: onSite ? theme.text : theme.textMuted,
-                                  decoration: item.$3
-                                      ? TextDecoration.lineThrough
-                                      : TextDecoration.none,
-                                ),
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                item.$2,
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: theme.textMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          LucideIcons.chevronRight,
-                          size: 16.sp,
-                          color: theme.textMuted,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-            // Info note
-            if (completedCount < totalForms && onSite)
+            ...formCards,
+            if (onSite)
               Container(
+                margin: EdgeInsets.only(top: 4.h),
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
                 decoration: BoxDecoration(
                   color: pinkColor.withValues(alpha: 0.06),
@@ -2106,7 +2161,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                     SizedBox(width: 6.w),
                     Expanded(
                       child: Text(
-                        'Tap a form to complete, or check it off directly.',
+                        'Trade forms auto-route based on work order contract.',
                         style: TextStyle(fontSize: 11.sp, color: pinkColor),
                       ),
                     ),
@@ -2114,6 +2169,119 @@ class _JobDetailPageState extends State<JobDetailPage>
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormItemContainer({
+    required DashboardTheme theme,
+    required String title,
+    required String subtitle,
+    required bool completed,
+    required bool onSite,
+    required Color pinkColor,
+    required ValueChanged<bool> onToggle,
+    required VoidCallback onTap,
+  }) {
+    return Opacity(
+      opacity: onSite ? 1.0 : 0.55,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          if (!onSite) {
+            _showOnSiteRequiredSnackbar();
+            return;
+          }
+          onTap();
+        },
+        child: Container(
+          margin: EdgeInsets.only(bottom: 10.h),
+          padding: EdgeInsets.all(12.r),
+          decoration: BoxDecoration(
+            color: completed
+                ? pinkColor.withValues(alpha: 0.06)
+                : theme.isDark
+                    ? AppColors.darkSurfaceDeep
+                    : AppColors.backgroundGray,
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(
+              color: completed
+                  ? pinkColor.withValues(alpha: 0.35)
+                  : theme.border,
+              width: 0.75,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  if (!onSite) {
+                    _showOnSiteRequiredSnackbar();
+                    return;
+                  }
+                  onToggle(!completed);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                  width: 20.w,
+                  height: 20.w,
+                  decoration: BoxDecoration(
+                    color: completed ? pinkColor : Colors.transparent,
+                    borderRadius: BorderRadius.circular(5.r),
+                    border: Border.all(
+                      color: completed
+                          ? pinkColor
+                          : theme.textMuted.withValues(alpha: 0.4),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: completed
+                      ? Icon(
+                          LucideIcons.check,
+                          size: 12.sp,
+                          color: Colors.white,
+                        )
+                      : null,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: onSite ? theme.text : theme.textMuted,
+                        decoration: completed
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: theme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                LucideIcons.chevronRight,
+                size: 16.sp,
+                color: theme.textMuted,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -2150,7 +2318,7 @@ class _JobDetailPageState extends State<JobDetailPage>
             ),
             SizedBox(height: 4.h),
             Text(
-              'All forms submitted. This job is now closed.',
+              'All inspection forms & sign-off submitted to Firestore spine.',
               style: TextStyle(fontSize: 12.sp, color: theme.textMuted),
               textAlign: TextAlign.center,
             ),
@@ -2165,9 +2333,6 @@ class _JobDetailPageState extends State<JobDetailPage>
     Color statusColor,
     bool isCompleted,
   ) {
-    // final isFormsStep = _statusIndex == 6;
-    // final allFormsChecked = _form1Checked && _form2Checked && _form3Checked;
-    // final canAdvance = !isCompleted && (!isFormsStep || allFormsChecked);
     final canAdvance = !isCompleted;
 
     return Positioned(
@@ -2210,11 +2375,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                 backgroundColor: statusColor,
                 icon: _statusIcons[_statusIndex],
                 isEnabled: canAdvance,
-                onConfirm: () {
-                  setState(() {
-                    _statusIndex++;
-                  });
-                },
+                onConfirm: _advanceStatus,
               )
             else
               // Completed terminal state badge
@@ -2239,7 +2400,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                     ),
                     SizedBox(width: 8.w),
                     Text(
-                      'Job Closed',
+                      'Job Closed · Synced to Spine',
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,

@@ -11,8 +11,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:chumley_navigator/core/firebase_options.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+  } catch (e, st) {
+    Log('Firebase init skipped or error: $e\n$st', name: 'Firebase');
+  }
   AppDependencies.initialize();
   final themeNotifier = ThemeNotifier();
   await themeNotifier.load();
