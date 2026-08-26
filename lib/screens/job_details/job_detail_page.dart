@@ -9,6 +9,7 @@ import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/utils/routes.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
+import 'package:chumley_navigator/widgets/ui/call_style_action_slider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,17 +21,18 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:chumley_navigator/pillar/documents.dart';
+import 'package:chumley_navigator/pillar/mappers.dart';
+import 'package:chumley_navigator/pillar/visit_controller.dart';
+import 'package:chumley_navigator/screens/forms/cp12_form_page.dart';
 import 'package:chumley_navigator/screens/forms/damp_survey_form_page.dart';
+import 'package:chumley_navigator/screens/forms/form_details.dart';
+import 'package:chumley_navigator/screens/forms/ld_form_page.dart';
 import 'package:chumley_navigator/screens/forms/vent_hygiene_form_page.dart';
-import 'package:chumley_navigator/pillar/form_draft_store.dart';
-import 'package:chumley_navigator/pillar/form_kind.dart';
-import 'package:chumley_navigator/pillar/visit_job.dart';
-import 'package:chumley_navigator/screens/job/job_visit_router.dart';
-import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
-import 'package:chumley_navigator/screens/job_details/widgets/pm_lead_wizard.dart';
-import 'package:chumley_navigator/screens/job_details/widgets/ppm_lead_wizard.dart';
-import 'package:chumley_navigator/screens/job_details/widgets/reactive_attendance_modal.dart';
-import 'package:chumley_navigator/screens/job_details/widgets/refer_lead_modal.dart';
+import 'package:chumley_navigator/screens/job_details/on_site_wizard.dart';
+import 'package:chumley_navigator/screens/job_details/post_submit_flow.dart';
+import 'package:chumley_navigator/screens/job_details/raise_lead_page.dart';
+import 'package:chumley_navigator/screens/job_details/works_form_page.dart';
 
 class JobDetailPage extends StatefulWidget {
   final Appointment appointment;
@@ -62,27 +64,16 @@ class _JobDetailPageState extends State<JobDetailPage>
 
   // Status lifecycle index
   int _statusIndex = 1; // 0 = Scheduled, 1 = Dispatched, 4 = Job Completed
+  bool _showOnSiteForm = true;
+  VisitController? _visit;
+
+  /// After LD form submit: job completed → follow-on → visit complete.
+  PostSubmitPhase? _postSubmitPhase;
 
   // Forms panel state (mapped directly)
   bool _ldFormCompleted = false;
   bool _dampSurveyCompleted = false;
   bool _ventHygieneCompleted = false;
-  bool _worksFormCompleted = false;
-  bool _cp12Completed = false;
-
-  String get workOrderId {
-    final appt = widget.appointment;
-    return appt.sourceWorkOrderId.isNotEmpty ? appt.sourceWorkOrderId : appt.id;
-  }
-
-  String get workOrderLabel {
-    final appt = widget.appointment;
-    return appt.appointmentNumber.isNotEmpty ? appt.appointmentNumber : workOrderId;
-  }
-
-  VisitJob get _visitJob => VisitJob.fromAppointment(widget.appointment);
-
-  final _drafts = FormDraftStore();
 
   // State
   Position? _engineerPosition;
@@ -105,7 +96,7 @@ class _JobDetailPageState extends State<JobDetailPage>
 
   static const List<Color> _statusColors = [
     Color(0xFF6728C8), // Scheduled
-    Color(0xFF3B82F6), // Dispatched
+    Color(0xFF27549D), // Dispatched
     Color(0xFFF59E0B), // In Transit
     Color(0xFF8B5CF6), // In Progress
     Color(0xFF22C55E), // Job Completed
@@ -121,9 +112,9 @@ class _JobDetailPageState extends State<JobDetailPage>
 
   static const List<String> _actionLabels = [
     'Slide to Dispatch',
-    'Slide to start journey',
-    'Slide to arrive on site',
-    'Continue form',
+    'Slide to Start Transit',
+    'Slide to Arrive On Site',
+    'Slide to Complete Job',
     '', // terminal state
   ];
 
@@ -157,91 +148,59 @@ class _JobDetailPageState extends State<JobDetailPage>
     super.initState();
     Log('Job details: ${widget.appointment.toJson()}', name: 'JobDetail');
     _initializeMapAndLocation();
-    _loadSavedStatus();
+    _restoreVisit();
   }
 
-  Future<void> _loadSavedStatus() async {
-    final saved = await PillarClient.getLocalStatus(workOrderId);
-    if (saved != null && mounted) {
-      setState(() {
-        if (saved == PillarClient.statusInTransit) {
-          _statusIndex = 2;
-        } else if (saved == PillarClient.statusOnSite) {
-          _statusIndex = 3;
-        } else if (saved == PillarClient.statusComplete) {
-          _statusIndex = 4;
-          _markPrimaryFormComplete();
-        }
-      });
-    }
+  String get _jobId {
+    final id = widget.appointment.id.trim();
+    if (id.isNotEmpty) return id;
+    return widget.appointment.appointmentNumber;
   }
 
-  void _markPrimaryFormComplete() {
-    switch (_visitJob.kind) {
-      case FormKind.leak:
-        _ldFormCompleted = true;
-      case FormKind.gas:
-        _cp12Completed = true;
-      case FormKind.bath:
-        _worksFormCompleted = true;
-    }
+  VisitFormKind get _formKind {
+    final type = jobTypeOf(widget.appointment.type) ?? JobType.reactive;
+    return formKindFor(
+      jobType: type,
+      trade: widget.appointment.type,
+      description: widget.appointment.title,
+    );
   }
 
-  Future<void> _syncStatusFromStore() async {
-    final saved = await PillarClient.getLocalStatus(workOrderId);
-    if (!mounted || saved == null) return;
+  Future<void> _restoreVisit() async {
+    final services = await VisitServices.instance();
+    final identity = await identityFromAuth(
+      jobId: _jobId,
+      jobNumber: widget.appointment.appointmentNumber,
+      customerId: widget.appointment.accountId.isNotEmpty
+          ? widget.appointment.accountId
+          : null,
+      customerName: customerName,
+      customerEmail: widget.appointment.customerEmail,
+      siteId: widget.appointment.siteId,
+      siteAddress: siteAddress,
+    );
+    final controller = VisitController(services: services, identity: identity);
+    final status = await controller.loadStatus() ??
+        jobStatusOf(widget.appointment.status);
+    if (!mounted) return;
     setState(() {
-      if (saved == PillarClient.statusInTransit) {
-        _statusIndex = 2;
-      } else if (saved == PillarClient.statusOnSite) {
-        _statusIndex = 3;
-      } else if (saved == PillarClient.statusComplete) {
-        _statusIndex = 4;
-        _markPrimaryFormComplete();
+      _visit = controller;
+      _statusIndex = sliderIndexForJobStatus(status);
+      if (status == JobStatus.complete) {
+        _postSubmitPhase = PostSubmitPhase.visitComplete;
+        _showOnSiteForm = false;
       }
     });
   }
 
-  Future<void> _openVisitWizard({required int initialStep}) async {
-    await JobVisitRouter.pushVisitWizard(
-      context,
-      _visitJob,
-      initialStep: initialStep,
-      onSubmitted: () {
-        if (mounted) {
-          setState(() {
-            _statusIndex = 4;
-            _markPrimaryFormComplete();
-          });
-        }
-      },
-    );
-    await _syncStatusFromStore();
-  }
-
   Future<void> _advanceStatus() async {
-    if (_statusIndex == 1) {
-      await PillarClient.setStatus(
-        jobId: workOrderId,
-        newStatus: PillarClient.statusInTransit,
-        engineerEmail: PillarClient.defaultEngineerEmail,
-      );
-      if (mounted) setState(() => _statusIndex = 2);
-      return;
-    }
-
-    if (_statusIndex == 2) {
-      await _openVisitWizard(initialStep: 0);
-      if (mounted && _statusIndex < 3) {
-        setState(() => _statusIndex = 3);
-      }
-      return;
-    }
-
-    if (_statusIndex == 3) {
-      final step = await _drafts.loadFurthestStep(workOrderId);
-      await _openVisitWizard(initialStep: step);
-    }
+    final nextIndex = _statusIndex + 1;
+    if (nextIndex >= _statusLabels.length) return;
+    final next = jobStatusForSliderIndex(nextIndex);
+    final current = jobStatusForSliderIndex(_statusIndex);
+    await _visit?.advanceTo(next, current: current);
+    if (!mounted) return;
+    setState(() => _statusIndex = nextIndex);
   }
 
   @override
@@ -595,122 +554,131 @@ class _JobDetailPageState extends State<JobDetailPage>
     final currentStatus = _statusLabels[_statusIndex];
     final currentStatusColor = _statusColors[_statusIndex];
     final isCompleted = _statusIndex == _statusLabels.length - 1;
+    final showPostSubmit = _postSubmitPhase != null;
+    final showOnSiteWizard =
+        isOnSite && !isCompleted && !showPostSubmit && _showOnSiteForm;
+
+    VoidCallback postSubmitBack;
+    switch (_postSubmitPhase) {
+      case PostSubmitPhase.followOn:
+        postSubmitBack = () =>
+            setState(() => _postSubmitPhase = PostSubmitPhase.jobCompleted);
+      case PostSubmitPhase.visitComplete:
+        postSubmitBack = () =>
+            setState(() => _postSubmitPhase = PostSubmitPhase.followOn);
+      case PostSubmitPhase.jobCompleted:
+      case null:
+        postSubmitBack = () => Navigator.of(context).pop();
+    }
+
+    Widget brandingHeader({required VoidCallback onBack}) {
+      return Stack(
+        children: [
+          AspectBranding(
+            progress: 1.0,
+            expandedHeight: 54.h,
+            collapsedHeight: 54.h,
+            theme: theme,
+            hasBackButton: true,
+            title: Text(
+              'WORK ORDER',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.6,
+                color: theme.dashTitle,
+              ),
+            ),
+          ),
+          Positioned(
+            top: 12.h,
+            left: 16.w,
+            child: CommandCentreBackButton(onTap: onBack),
+          ),
+        ],
+      );
+    }
 
     return Scaffold(
-      backgroundColor: theme.base,
+      backgroundColor: (showOnSiteWizard || showPostSubmit)
+          ? const Color(0xFFF4F9FF)
+          : theme.base,
       body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                // ── Top bar (AspectBranding + back button) ──
-                Stack(
-                  children: [
-                    AspectBranding(
-                      progress: 1.0,
-                      expandedHeight: 54.h,
-                      collapsedHeight: 54.h,
-                      theme: theme,
-                      hasBackButton: true,
-                      title: Text(
-                        'WORK ORDER',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.6,
-                          color: theme.dashTitle,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 12.h,
-                      left: 16.w,
-                      child: CommandCentreBackButton(
-                        onTap: () => Navigator.of(context).pop(),
-                      ),
-                    ),
-                  ],
-                ),
-
-                // ── Scrollable body ──
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.only(bottom: 96.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 1. STATUS HEADER CARD
-                        _buildStatusHeader(
-                          theme,
-                          currentStatus,
-                          currentStatusColor,
-                          jobNo,
-                          jobType,
-                        ),
-
-                        if (!isOnSite) ...[
-                          // 2. SCHEDULE SECTION
-                          _buildSectionLabel(theme, 'SCHEDULE'),
-                          _buildScheduleCard(
-                            theme,
-                            formattedDate,
-                            timeStr,
-                            timeEndStr,
-                            jobNo,
-                            currentStatus,
-                          ),
-                          // 3. MAP
-                          _buildMapSection(theme),
-
-                          // 4. SITE SECTION
-                          _buildSectionLabel(theme, 'SITE'),
-                          _buildSiteCard(theme),
-
-                          // 5. ACCESS SECTION
-                          _buildSectionLabel(theme, 'ACCESS'),
-                          _buildAccessCard(theme),
-
-                          // 6. JOB DETAILS SECTION
-                          _buildSectionLabel(theme, 'JOB DETAILS'),
-                          _buildJobDetailsCard(theme, jobNo),
-                        ] else ...[
-                          // 8. FORMS SECTION (Pre-completion is now under top card)
-                          _buildSectionLabel(theme, 'COMPLETION FORMS'),
-                          _buildFormsCard(theme),
-
-                          // 8.5 RAISE JOBS SECTION (under pre completion)
-                          _buildSectionLabel(theme, 'RAISE JOBS'),
-                          _buildRaiseJobsCard(theme),
-
-                          // 5. ACCESS SECTION
-                          _buildSectionLabel(theme, 'ACCESS'),
-                          _buildAccessCard(theme),
-
-                          // 6. JOB DETAILS SECTION
-                          _buildSectionLabel(theme, 'JOB DETAILS'),
-                          _buildJobDetailsCard(theme, jobNo),
-
-                          // 7. RELATED DOCS SECTION (shown only when on site)
-                          _buildSectionLabel(theme, 'RELATED DOCS'),
-                          _buildRelatedDocs(theme),
-                        ],
-
-                        // 9. COMPLETED BANNER
-                        if (isCompleted) _buildCompletedBanner(theme),
-
-                        SizedBox(height: 16.h),
-                      ],
+        child: showPostSubmit
+            ? Column(
+                children: [
+                  brandingHeader(onBack: postSubmitBack),
+                  Expanded(
+                    child: PostSubmitFlow(
+                      phase: _postSubmitPhase!,
+                      jobNumber: jobNo,
+                      customerName: customerName,
+                      jobType: jobType,
+                      workTypeLabel: jobTitleDescription,
+                      description: jobTitleDescription,
+                      onPhaseChanged: (phase) {
+                        setState(() => _postSubmitPhase = phase);
+                      },
+                      onBackToHome: () => Navigator.of(context).pop(),
+                      onRaiseEstimate: _openFixedPrice,
+                      onRaiseReactive: () =>
+                          _openLead(RaiseLeadKind.reactive),
+                      onReferAndEarn: () => _openLead(RaiseLeadKind.refer),
                     ),
                   ),
-                ),
-              ],
-            ),
-
-            // ── Sticky bottom actions panel ──
-            _buildActionsPanel(theme, currentStatusColor, isCompleted),
-          ],
-        ),
+                ],
+              )
+            : showOnSiteWizard
+                ? _buildOnSiteForm(jobNo)
+                : Stack(
+                    children: [
+                      Column(
+                        children: [
+                          brandingHeader(
+                            onBack: () => Navigator.of(context).pop(),
+                          ),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              padding: EdgeInsets.only(bottom: 96.h),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildStatusHeader(
+                                    theme,
+                                    currentStatus,
+                                    currentStatusColor,
+                                    jobNo,
+                                    jobType,
+                                  ),
+                                  _buildSectionLabel(theme, 'JOB DETAILS'),
+                                  _buildJobDetailsCard(theme, jobNo),
+                                  _buildSectionLabel(theme, 'SCHEDULE'),
+                                  _buildScheduleCard(
+                                    theme,
+                                    formattedDate,
+                                    timeStr,
+                                    timeEndStr,
+                                    jobNo,
+                                    currentStatus,
+                                  ),
+                                  _buildSectionLabel(theme, 'SITE'),
+                                  _buildSiteCard(theme),
+                                  if (isCompleted) _buildCompletedBanner(theme),
+                                  SizedBox(height: 16.h),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      _buildActionsPanel(
+                        theme,
+                        currentStatusColor,
+                        isCompleted,
+                      ),
+                    ],
+                  ),
       ),
     );
   }
@@ -757,7 +725,7 @@ class _JobDetailPageState extends State<JobDetailPage>
         children: [
           // Status chip row
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Colour-coded status pill
               Container(
@@ -765,20 +733,24 @@ class _JobDetailPageState extends State<JobDetailPage>
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: isDark ? 0.18 : 0.10),
                   borderRadius: BorderRadius.circular(100.r),
-                  border: Border.all(
-                    color: statusColor.withValues(alpha: 0.4),
-                    width: 1.0,
-                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(statusIcon, size: 12.sp, color: statusColor),
-                    SizedBox(width: 6.w),
+                    // Icon(statusIcon, size: 12.sp, color: statusColor),
+                    Container(
+                      width: 6.w,
+                      height: 6.w,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: 4.w),
                     Text(
-                      status.toUpperCase(),
+                      status,
                       style: TextStyle(
-                        fontSize: 11.sp,
+                        fontSize: 10.sp,
                         fontWeight: FontWeight.w700,
                         color: statusColor,
                         letterSpacing: 0.8,
@@ -813,13 +785,40 @@ class _JobDetailPageState extends State<JobDetailPage>
             ),
           ),
           SizedBox(height: 4.h),
-          Text(
-            '$jobType • EML Emergency Light Test',
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: theme.textMuted,
-              fontWeight: FontWeight.w400,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
+                decoration: BoxDecoration(
+                  color: Color(0xFFE3E9F2),
+                  borderRadius: BorderRadius.circular(100.r),
+                ),
+                child: Text(
+                  jobType,
+                  style: TextStyle(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF5A6B85),
+                  ),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
+                decoration: BoxDecoration(
+                  color: Color(0xFFE3E9F2),
+                  borderRadius: BorderRadius.circular(100.r),
+                ),
+                child: Text(
+                  "Bathroom/Kitchen & Interfloor",
+                  style: TextStyle(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF5A6B85),
+                  ),
+                ),
+              ),
+            ],
           ),
           SizedBox(height: 16.h),
 
@@ -878,13 +877,20 @@ class _JobDetailPageState extends State<JobDetailPage>
                     height: 2.h,
                     child: Container(color: statusColor),
                   ),
-                  // Row of dots
+                  // Row of dots — completed steps show a check icon
                   Row(
                     children: List.generate(shortLabels.length, (i) {
-                      final isCompleted = i < _statusIndex || (_statusIndex == 4 && i == 4);
                       final isActive = i <= _statusIndex;
-                      final isCurrent = i == _statusIndex && !isCompleted;
-                      final size = (isCurrent || isCompleted) ? activeDotSize : dotSize;
+                      final isCurrent = i == _statusIndex;
+                      final isCompleted =
+                          i < _statusIndex ||
+                          (_statusIndex == shortLabels.length - 1 &&
+                              i == _statusIndex);
+                      final size = isCompleted
+                          ? 16.w
+                          : isCurrent
+                          ? activeDotSize
+                          : dotSize;
 
                       return Expanded(
                         child: Center(
@@ -893,14 +899,15 @@ class _JobDetailPageState extends State<JobDetailPage>
                             curve: Curves.easeOutCubic,
                             width: size,
                             height: size,
+                            alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: isActive
-                                  ? (isCompleted ? AppColors.successGreen : statusColor)
+                                  ? statusColor
                                   : theme.isDark
                                   ? AppColors.darkBorder
                                   : AppColors.borderDefault,
                               shape: BoxShape.circle,
-                              boxShadow: isCurrent
+                              boxShadow: isCurrent && !isCompleted
                                   ? [
                                       BoxShadow(
                                         color: statusColor.withValues(
@@ -913,12 +920,10 @@ class _JobDetailPageState extends State<JobDetailPage>
                                   : null,
                             ),
                             child: isCompleted
-                                ? Center(
-                                    child: Icon(
-                                      Icons.check,
-                                      size: 10.sp,
-                                      color: Colors.white,
-                                    ),
+                                ? Icon(
+                                    LucideIcons.check,
+                                    size: 10.sp,
+                                    color: AppColors.white,
                                   )
                                 : null,
                           ),
@@ -977,7 +982,7 @@ class _JobDetailPageState extends State<JobDetailPage>
         : null;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+      padding: EdgeInsets.zero,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16.r),
         child: SizedBox(
@@ -1261,48 +1266,6 @@ class _JobDetailPageState extends State<JobDetailPage>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left: date block
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  formattedDate,
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                    color: theme.textMuted,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  '$timeStr – $timeEndStr',
-                  style: TextStyle(
-                    fontSize: 26.sp,
-                    fontWeight: FontWeight.w800,
-                    color: theme.text,
-                    letterSpacing: -1.0,
-                  ),
-                ),
-                SizedBox(height: 6.h),
-                Row(
-                  children: [
-                    Icon(
-                      LucideIcons.clock,
-                      size: 11.sp,
-                      color: theme.textMuted,
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      '2h window',
-                      style: TextStyle(fontSize: 11.sp, color: theme.textMuted),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const Spacer(),
-            // Right: status badge (vertical)
             Container(
               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
               decoration: BoxDecoration(
@@ -1316,22 +1279,61 @@ class _JobDetailPageState extends State<JobDetailPage>
               child: Column(
                 children: [
                   Icon(
-                    _statusIcons[_statusIndex],
+                    Icons.calendar_today_outlined,
                     size: 18.sp,
                     color: _statusColors[_statusIndex],
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    currentStatus,
-                    style: TextStyle(
-                      fontSize: 9.sp,
-                      fontWeight: FontWeight.w700,
-                      color: _statusColors[_statusIndex],
-                    ),
                   ),
                 ],
               ),
             ),
+            SizedBox(width: 10.w),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  formattedDate,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w900,
+                    color: theme.text,
+                  ),
+                ),
+                Text(
+                  '$timeStr – $timeEndStr',
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                    color: theme.textMuted,
+                  ),
+                ),
+              ],
+            ),
+            Spacer(),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
+              decoration: BoxDecoration(
+                color: Color(0xFFE3E9F2),
+                borderRadius: BorderRadius.circular(100.r),
+              ),
+             child: Row(
+              children: [
+                Container(
+                  width: 6.w,
+                  height: 6.w,
+                  decoration: BoxDecoration(
+                    color: theme.textMuted,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                SizedBox(width: 4.w),
+                Text(
+                  '2h window',
+                  style: TextStyle(fontSize: 9.sp, color: theme.textMuted),
+                ),
+              ],
+            ),
+            )
           ],
         ),
       ),
@@ -1417,6 +1419,8 @@ class _JobDetailPageState extends State<JobDetailPage>
               ],
             ),
             SizedBox(height: 12.h),
+            _buildMapSection(theme),
+            SizedBox(height: 12.h),
             // Navigate button
             GestureDetector(
               onTap: () {
@@ -1433,7 +1437,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                 width: double.infinity,
                 height: 36.h,
                 decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.08),
+                  color: accentColor,
                   borderRadius: BorderRadius.circular(8.r),
                   border: Border.all(
                     color: accentColor.withValues(alpha: 0.2),
@@ -1446,7 +1450,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                     Icon(
                       LucideIcons.navigation,
                       size: 13.sp,
-                      color: accentColor,
+                      color: AppColors.white,
                     ),
                     SizedBox(width: 6.w),
                     Text(
@@ -1454,7 +1458,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: accentColor,
+                        color: AppColors.white,
                       ),
                     ),
                   ],
@@ -1541,7 +1545,7 @@ class _JobDetailPageState extends State<JobDetailPage>
 
   Widget _buildJobDetailsCard(DashboardTheme theme, String jobNo) {
     final items = [
-      ('Work Order', jobNo),
+      ('Appointment ID', jobNo),
       (
         'Type',
         widget.appointment.type.isNotEmpty
@@ -1561,37 +1565,59 @@ class _JobDetailPageState extends State<JobDetailPage>
           children: items.asMap().entries.map((entry) {
             final i = entry.key;
             final item = entry.value;
+            final isDescription = item.$1 == 'Description';
+            final labelStyle = TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w500,
+              color: theme.textMuted,
+            );
+            final valueStyle = TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: theme.text,
+              height: 1.35,
+            );
+            final valueText = item.$2.isNotEmpty ? item.$2 : '—';
+
             return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (i > 0)
                   Divider(height: 14.h, color: theme.border, thickness: 0.5),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 100.w,
-                      child: Text(
-                        item.$1,
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w500,
-                          color: theme.textMuted,
+                if (isDescription)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.$1, style: labelStyle),
+                      SizedBox(height: 6.h),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 12.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFE3E9F2),
+                          borderRadius: BorderRadius.circular(20.r),
+                        ),
+                        child: Text(
+                          "Trace a suspected water leak in the bathroom, kitchen and interfloor void. Raise a follow-on.",
+                          style: valueStyle,
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        item.$2.isNotEmpty ? item.$2 : '—',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
-                          color: theme.text,
-                          height: 1.35,
-                        ),
+                    ],
+                  )
+                else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 100.w,
+                        child: Text(item.$1, style: labelStyle),
                       ),
-                    ),
-                  ],
-                ),
+                      Spacer(),
+                      Expanded(child: Text(valueText, style: valueStyle)),
+                    ],
+                  ),
               ],
             );
           }).toList(),
@@ -1646,7 +1672,7 @@ class _JobDetailPageState extends State<JobDetailPage>
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {}, // dummy
+        onTap: null,
         borderRadius: index == 0
             ? BorderRadius.vertical(top: Radius.circular(16.r))
             : index == 2
@@ -1729,6 +1755,102 @@ class _JobDetailPageState extends State<JobDetailPage>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
       ),
     );
+  }
+
+  Future<void> _openFixedPrice() async {
+    final created = await Navigator.pushNamed(
+      context,
+      AppRoutes.fixedPriceScreen,
+      arguments: widget.appointment,
+    );
+    if (created == true) {
+      final visit = _visit;
+      if (visit != null) {
+        try {
+          await visit.raiseFp(
+            title: 'Follow-on estimate',
+            scope: jobTitleDescription,
+            totalPrice: 1,
+            totalHours: 1,
+            lines: [
+              FpLineDraft(
+                description: jobTitleDescription,
+                room: '',
+                trade: widget.appointment.type,
+                quantity: 1,
+                unit: 'units',
+                labourHours: 1,
+                labourRate: 1,
+                materialsCost: 0,
+                lineTotal: 1,
+              ),
+            ],
+          );
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$e')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _openLead(RaiseLeadKind kind) async {
+    final visit = _visit;
+    if (visit == null) return;
+    await RaiseLeadPage.open(context, kind: kind, controller: visit);
+  }
+
+  Widget _buildOnSiteForm(String jobNo) {
+    final visit = _visit;
+    switch (_formKind) {
+      case VisitFormKind.works:
+        if (visit == null) return const SizedBox.shrink();
+        return WorksFormPage(controller: visit);
+      case VisitFormKind.gas:
+        return Cp12FormPage(
+          appointmentNumber: jobNo,
+          jobId: _jobId,
+          onSubmitted: () async {
+            await visit?.signOff(
+              form: 'leak_detection',
+              answers: {'form': 'cp12'},
+              photoUrls: const [],
+              photoSkips: const {},
+            );
+            if (!mounted) return;
+            setState(() {
+              _statusIndex = _statusLabels.length - 1;
+              _postSubmitPhase = PostSubmitPhase.jobCompleted;
+              _showOnSiteForm = false;
+            });
+          },
+        );
+      case VisitFormKind.leak:
+        return OnSiteWizard(
+          jobId: _jobId,
+          jobNumber: jobNo,
+          store: visit?.store,
+          onCancelToInTransit: () {
+            setState(() => _showOnSiteForm = false);
+          },
+          onReportSubmitted: (answers, photos) async {
+            await visit?.signOff(
+              form: 'leak_detection',
+              answers: answers,
+              photoUrls: photos.values.toList(),
+              photoSkips: const {},
+            );
+            if (!mounted) return;
+            setState(() {
+              _statusIndex = _statusLabels.length - 1;
+              _postSubmitPhase = PostSubmitPhase.jobCompleted;
+              _showOnSiteForm = false;
+            });
+          },
+        );
+    }
   }
 
   Widget _buildRaiseJobItem({
@@ -1885,71 +2007,38 @@ class _JobDetailPageState extends State<JobDetailPage>
             SizedBox(height: 12.h),
             _buildRaiseJobItem(
               theme: theme,
-              title: 'Raise Fixed Price (FP)',
+              title: 'Raise FP',
               subtitle: 'Create a new Fixed Price work order for this site',
               icon: LucideIcons.fileText,
               enabled: onSite,
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  AppRoutes.fixedPriceScreen,
-                  arguments: widget.appointment,
-                );
-              },
+              onTap: _openFixedPrice,
             ),
             SizedBox(height: 8.h),
             _buildRaiseJobItem(
               theme: theme,
-              title: 'Raise PPM Contract Lead',
-              subtitle: 'Recurring maintenance for boiler/AC/cylinders',
+              title: 'Raise Reactive',
+              subtitle: 'Raise an urgent reactive task or callback',
+              icon: LucideIcons.zap,
+              enabled: onSite,
+              onTap: () => _openLead(RaiseLeadKind.reactive),
+            ),
+            SizedBox(height: 8.h),
+            _buildRaiseJobItem(
+              theme: theme,
+              title: 'PPM lead',
+              subtitle: 'Send PPM interest to the office board',
               icon: LucideIcons.calendarClock,
               enabled: onSite,
-              onTap: () => PpmLeadWizard.show(
-                context,
-                jobId: workOrderId,
-                customerName: widget.appointment.customerEmail,
-                postcode: siteAddress,
-              ),
+              onTap: () => _openLead(RaiseLeadKind.ppm),
             ),
             SizedBox(height: 8.h),
             _buildRaiseJobItem(
               theme: theme,
-              title: 'Raise PM Project Lead',
-              subtitle: 'Major bathroom/kitchen/boiler refurbishment',
-              icon: LucideIcons.layers,
+              title: 'PM project lead',
+              subtitle: 'Send PM interest. Does not create a project.',
+              icon: LucideIcons.hammer,
               enabled: onSite,
-              onTap: () => PmLeadWizard.show(
-                context,
-                jobId: workOrderId,
-                customerName: widget.appointment.customerEmail,
-                postcode: siteAddress,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            _buildRaiseJobItem(
-              theme: theme,
-              title: 'Raise Reactive Attendance',
-              subtitle: 'Dispatched urgent issue or office enquiry',
-              icon: LucideIcons.wrench,
-              enabled: onSite,
-              onTap: () => ReactiveAttendanceModal.show(
-                context,
-                jobId: workOrderId,
-                customerName: widget.appointment.customerEmail,
-                postcode: siteAddress,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            _buildRaiseJobItem(
-              theme: theme,
-              title: 'Refer & Earn Lead',
-              subtitle: 'Customer referral for Aspect bonus',
-              icon: LucideIcons.userPlus,
-              enabled: onSite,
-              onTap: () => ReferLeadModal.show(
-                context,
-                jobId: workOrderId,
-              ),
+              onTap: () => _openLead(RaiseLeadKind.pm),
             ),
           ],
         ),
@@ -1957,130 +2046,39 @@ class _JobDetailPageState extends State<JobDetailPage>
     );
   }
 
-  Widget _buildPrimaryVisitForm(
-    DashboardTheme theme,
-    FormKind kind,
-    bool onSite,
-    Color pinkColor,
-  ) {
-    final (title, subtitle, completed) = switch (kind) {
-      FormKind.leak => (
-          'Leak Detection',
-          '5 steps — Safety, Context, Inspection, Findings, Sign off',
-          _ldFormCompleted,
-        ),
-      FormKind.gas => (
-          'Landlord Gas Safety (CP12)',
-          '12 steps — Risk assessment through Sign off',
-          _cp12Completed,
-        ),
-      FormKind.bath => (
-          'Bathroom / Works Visit',
-          '5 steps — Risk assessment through Review',
-          _worksFormCompleted,
-        ),
-    };
-
-    return _buildFormItemContainer(
-      theme: theme,
-      title: title,
-      subtitle: subtitle,
-      completed: completed,
-      onSite: onSite,
-      pinkColor: pinkColor,
-      onToggle: (v) => setState(() {
-        switch (kind) {
-          case FormKind.leak:
-            _ldFormCompleted = v;
-          case FormKind.gas:
-            _cp12Completed = v;
-          case FormKind.bath:
-            _worksFormCompleted = v;
-        }
-      }),
-      onTap: () async {
-        if (!onSite) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Slide to arrive on site before opening the visit form.'),
-            ),
-          );
-          return;
-        }
-        final step = await _drafts.loadFurthestStep(workOrderId);
-        await _openVisitWizard(initialStep: step);
-      },
-    );
-  }
-
   Widget _buildFormsCard(DashboardTheme theme) {
     final pinkColor = const Color(0xFFEC4899);
     final onSite = isOnSite;
-    final kind = _visitJob.kind;
-
-    final List<Widget> formCards = [
-      _buildPrimaryVisitForm(theme, kind, onSite, pinkColor),
+    final formItems = [
+      (
+        'LD Form',
+        'Electrical Installation Condition Report · BS 7671:2018+A2:2022',
+        _ldFormCompleted,
+        (bool v) => setState(() => _ldFormCompleted = v),
+        FormType.LDForm,
+      ),
+      (
+        'Damp Survey Form',
+        'Surface / depth readings · BS 5250:2021',
+        _dampSurveyCompleted,
+        (bool v) => setState(() => _dampSurveyCompleted = v),
+        FormType.DampSurveyForm,
+      ),
+      (
+        'Vent Hygiene Forms',
+        'Vent heat loss calculation · BS 8204:2011',
+        _ventHygieneCompleted,
+        (bool v) => setState(() => _ventHygieneCompleted = v),
+        FormType.VentHygeineForm,
+      ),
     ];
-    formCards.add(
-      _buildFormItemContainer(
-        theme: theme,
-        title: 'Damp Survey Form',
-        subtitle: 'Surface / depth readings · BS 5250:2021',
-        completed: _dampSurveyCompleted,
-        onSite: onSite,
-        pinkColor: pinkColor,
-        onToggle: (v) => setState(() => _dampSurveyCompleted = v),
-        onTap: () async {
-          final res = await Navigator.push<bool>(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DampSurveyFormPage(
-                workOrderId: workOrderId,
-                workOrderLabel: workOrderLabel,
-              ),
-            ),
-          );
-          if (res == true && mounted) {
-            setState(() => _dampSurveyCompleted = true);
-          }
-        },
-      ),
-    );
-
-    // Vent Hygiene Form
-    formCards.add(
-      _buildFormItemContainer(
-        theme: theme,
-        title: 'Vent Hygiene Form',
-        subtitle: 'Vent heat loss calculation · BS 8204:2011',
-        completed: _ventHygieneCompleted,
-        onSite: onSite,
-        pinkColor: pinkColor,
-        onToggle: (v) => setState(() => _ventHygieneCompleted = v),
-        onTap: () async {
-          final res = await Navigator.push<bool>(
-            context,
-            MaterialPageRoute(
-              builder: (_) => VentHygieneFormPage(
-                workOrderId: workOrderId,
-                workOrderLabel: workOrderLabel,
-              ),
-            ),
-          );
-          if (res == true && mounted) {
-            setState(() => _ventHygieneCompleted = true);
-          }
-        },
-      ),
-    );
 
     final completedCount = [
-      _worksFormCompleted,
-      _cp12Completed,
       _ldFormCompleted,
       _dampSurveyCompleted,
       _ventHygieneCompleted,
     ].where((e) => e).length;
+    final totalForms = formItems.length;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -2136,7 +2134,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                   )
                 else
                   Text(
-                    '$completedCount/${formCards.length}',
+                    '$completedCount/$totalForms',
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
@@ -2146,10 +2144,149 @@ class _JobDetailPageState extends State<JobDetailPage>
               ],
             ),
             SizedBox(height: 14.h),
-            ...formCards,
-            if (onSite)
+            // Form items
+            ...formItems.map((item) {
+              return Opacity(
+                opacity: onSite ? 1.0 : 0.55,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () async {
+                    if (!onSite) {
+                      _showOnSiteRequiredSnackbar();
+                      return;
+                    }
+                    final result = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) {
+                          final appt = widget.appointment;
+                          final workOrderId = appt.sourceWorkOrderId.isNotEmpty
+                              ? appt.sourceWorkOrderId
+                              : appt.id;
+                          final workOrderLabel =
+                              appt.appointmentNumber.isNotEmpty
+                              ? appt.appointmentNumber
+                              : workOrderId;
+
+                          switch (item.$5) {
+                            case FormType.LDForm:
+                              return LdFormPage(
+                                workOrderId: workOrderId,
+                                workOrderLabel: workOrderLabel,
+                              );
+                            case FormType.DampSurveyForm:
+                              return DampSurveyFormPage(
+                                workOrderId: workOrderId,
+                                workOrderLabel: workOrderLabel,
+                              );
+                            case FormType.VentHygeineForm:
+                              return VentHygieneFormPage(
+                                workOrderId: workOrderId,
+                                workOrderLabel: workOrderLabel,
+                              );
+                          }
+                        },
+                      ),
+                    );
+                    if (result == true) {
+                      item.$4(true);
+                    }
+                  },
+                  child: Container(
+                    margin: EdgeInsets.only(bottom: 10.h),
+                    padding: EdgeInsets.all(12.r),
+                    decoration: BoxDecoration(
+                      color: item.$3
+                          ? pinkColor.withValues(alpha: 0.06)
+                          : theme.isDark
+                          ? AppColors.darkSurfaceDeep
+                          : AppColors.backgroundGray,
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: Border.all(
+                        color: item.$3
+                            ? pinkColor.withValues(alpha: 0.35)
+                            : theme.border,
+                        width: 0.75,
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Clickable checkbox
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            if (!onSite) {
+                              _showOnSiteRequiredSnackbar();
+                              return;
+                            }
+                            item.$4(!item.$3);
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOutCubic,
+                            width: 20.w,
+                            height: 20.w,
+                            decoration: BoxDecoration(
+                              color: item.$3 ? pinkColor : Colors.transparent,
+                              borderRadius: BorderRadius.circular(5.r),
+                              border: Border.all(
+                                color: item.$3
+                                    ? pinkColor
+                                    : theme.textMuted.withValues(alpha: 0.4),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: item.$3
+                                ? Icon(
+                                    LucideIcons.check,
+                                    size: 12.sp,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.$1,
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: onSite ? theme.text : theme.textMuted,
+                                  decoration: item.$3
+                                      ? TextDecoration.lineThrough
+                                      : TextDecoration.none,
+                                ),
+                              ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                item.$2,
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: theme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          LucideIcons.chevronRight,
+                          size: 16.sp,
+                          color: theme.textMuted,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+            // Info note
+            if (completedCount < totalForms && onSite)
               Container(
-                margin: EdgeInsets.only(top: 4.h),
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
                 decoration: BoxDecoration(
                   color: pinkColor.withValues(alpha: 0.06),
@@ -2161,7 +2298,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                     SizedBox(width: 6.w),
                     Expanded(
                       child: Text(
-                        'Trade forms auto-route based on work order contract.',
+                        'Tap a form to complete, or check it off directly.',
                         style: TextStyle(fontSize: 11.sp, color: pinkColor),
                       ),
                     ),
@@ -2169,119 +2306,6 @@ class _JobDetailPageState extends State<JobDetailPage>
                 ),
               ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFormItemContainer({
-    required DashboardTheme theme,
-    required String title,
-    required String subtitle,
-    required bool completed,
-    required bool onSite,
-    required Color pinkColor,
-    required ValueChanged<bool> onToggle,
-    required VoidCallback onTap,
-  }) {
-    return Opacity(
-      opacity: onSite ? 1.0 : 0.55,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          if (!onSite) {
-            _showOnSiteRequiredSnackbar();
-            return;
-          }
-          onTap();
-        },
-        child: Container(
-          margin: EdgeInsets.only(bottom: 10.h),
-          padding: EdgeInsets.all(12.r),
-          decoration: BoxDecoration(
-            color: completed
-                ? pinkColor.withValues(alpha: 0.06)
-                : theme.isDark
-                    ? AppColors.darkSurfaceDeep
-                    : AppColors.backgroundGray,
-            borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(
-              color: completed
-                  ? pinkColor.withValues(alpha: 0.35)
-                  : theme.border,
-              width: 0.75,
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  if (!onSite) {
-                    _showOnSiteRequiredSnackbar();
-                    return;
-                  }
-                  onToggle(!completed);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutCubic,
-                  width: 20.w,
-                  height: 20.w,
-                  decoration: BoxDecoration(
-                    color: completed ? pinkColor : Colors.transparent,
-                    borderRadius: BorderRadius.circular(5.r),
-                    border: Border.all(
-                      color: completed
-                          ? pinkColor
-                          : theme.textMuted.withValues(alpha: 0.4),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: completed
-                      ? Icon(
-                          LucideIcons.check,
-                          size: 12.sp,
-                          color: Colors.white,
-                        )
-                      : null,
-                ),
-              ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: onSite ? theme.text : theme.textMuted,
-                        decoration: completed
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: theme.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                LucideIcons.chevronRight,
-                size: 16.sp,
-                color: theme.textMuted,
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -2318,7 +2342,7 @@ class _JobDetailPageState extends State<JobDetailPage>
             ),
             SizedBox(height: 4.h),
             Text(
-              'All inspection forms & sign-off submitted to Firestore spine.',
+              'All forms submitted. This job is now closed.',
               style: TextStyle(fontSize: 12.sp, color: theme.textMuted),
               textAlign: TextAlign.center,
             ),
@@ -2333,6 +2357,9 @@ class _JobDetailPageState extends State<JobDetailPage>
     Color statusColor,
     bool isCompleted,
   ) {
+    // final isFormsStep = _statusIndex == 6;
+    // final allFormsChecked = _form1Checked && _form2Checked && _form3Checked;
+    // final canAdvance = !isCompleted && (!isFormsStep || allFormsChecked);
     final canAdvance = !isCompleted;
 
     return Positioned(
@@ -2400,7 +2427,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                     ),
                     SizedBox(width: 8.w),
                     Text(
-                      'Job Closed · Synced to Spine',
+                      'Job Closed',
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
@@ -2430,205 +2457,6 @@ class _JobDetailPageState extends State<JobDetailPage>
                 offset: Offset(0, 2.h),
               ),
             ],
-    );
-  }
-}
-
-// ── CUSTOM SLIDER WIDGET ───────────────────────────────────────
-
-class CallStyleActionSlider extends StatefulWidget {
-  final String text;
-  final Color backgroundColor;
-  final IconData icon;
-  final bool isEnabled;
-  final VoidCallback onConfirm;
-
-  const CallStyleActionSlider({
-    super.key,
-    required this.text,
-    required this.backgroundColor,
-    required this.icon,
-    required this.isEnabled,
-    required this.onConfirm,
-  });
-
-  @override
-  State<CallStyleActionSlider> createState() => _CallStyleActionSliderState();
-}
-
-class _CallStyleActionSliderState extends State<CallStyleActionSlider>
-    with SingleTickerProviderStateMixin {
-  double _dragOffset = 0.0;
-  late AnimationController _animationController;
-  late Animation<double> _springAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 350),
-    );
-    _springAnimation = Tween<double>(begin: 0, end: 0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
-    );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(CallStyleActionSlider oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.text != widget.text) {
-      setState(() {
-        _dragOffset = 0.0;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final thumbSize = 40.h;
-    final sliderHeight = 48.h;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxDragDistance = constraints.maxWidth - thumbSize - 8.w;
-
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          width: double.infinity,
-          height: sliderHeight,
-          decoration: BoxDecoration(
-            color: widget.isEnabled
-                ? widget.backgroundColor
-                : widget.backgroundColor.withValues(alpha: 0.35),
-            borderRadius: BorderRadius.circular(100.r),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Swipe Action Instruction text
-              Opacity(
-                opacity: (1.0 - (_dragOffset / maxDragDistance)).clamp(
-                  0.2,
-                  1.0,
-                ),
-                child: Text(
-                  widget.text,
-                  style: TextStyle(
-                    color: widget.isEnabled
-                        ? Colors.white
-                        : Colors.white.withValues(alpha: 0.6),
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ),
-
-              // Swipe gesture target drag thumb
-              Positioned(
-                left: 4.w + _dragOffset,
-                child: GestureDetector(
-                  onHorizontalDragUpdate: widget.isEnabled
-                      ? (details) {
-                          setState(() {
-                            _dragOffset += details.primaryDelta!;
-                            if (_dragOffset < 0) _dragOffset = 0;
-                            if (_dragOffset > maxDragDistance) {
-                              _dragOffset = maxDragDistance;
-                            }
-                          });
-                        }
-                      : null,
-                  onHorizontalDragEnd: widget.isEnabled
-                      ? (details) async {
-                          if (_dragOffset >= maxDragDistance * 0.9) {
-                            // Successful trigger
-                            HapticFeedback.mediumImpact();
-                            widget.onConfirm();
-
-                            _springAnimation =
-                                Tween<double>(
-                                  begin: _dragOffset,
-                                  end: 0.0,
-                                ).animate(
-                                  CurvedAnimation(
-                                    parent: _animationController,
-                                    curve: Curves.elasticOut,
-                                  ),
-                                );
-                            _animationController.reset();
-                            _animationController.forward().then((_) {
-                              setState(() {
-                                _dragOffset = 0.0;
-                              });
-                            });
-                          } else {
-                            // Spring back
-                            _springAnimation =
-                                Tween<double>(
-                                  begin: _dragOffset,
-                                  end: 0.0,
-                                ).animate(
-                                  CurvedAnimation(
-                                    parent: _animationController,
-                                    curve: Curves.easeOutBack,
-                                  ),
-                                );
-                            _animationController.reset();
-                            _animationController.forward().then((_) {
-                              setState(() {
-                                _dragOffset = 0.0;
-                              });
-                            });
-                          }
-                        }
-                      : null,
-                  child: AnimatedBuilder(
-                    animation: _animationController,
-                    builder: (context, child) {
-                      final offset = _animationController.isAnimating
-                          ? _springAnimation.value
-                          : _dragOffset;
-
-                      if (_animationController.isAnimating) {
-                        _dragOffset = offset;
-                      }
-
-                      return Container(
-                        width: thumbSize,
-                        height: thumbSize,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          widget.icon,
-                          color: widget.backgroundColor,
-                          size: 18.sp,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

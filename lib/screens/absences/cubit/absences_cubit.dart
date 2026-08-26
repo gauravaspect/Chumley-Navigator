@@ -34,7 +34,8 @@ class AbsencesCubit extends Cubit<AbsencesState> {
   Future<void> submitAbsence({
     required String type,
     required String description,
-    required DateTime date,
+    required DateTime startDate,
+    required DateTime endDate,
     required TimeOfDay? startTime,
     required TimeOfDay? endTime,
     required bool wholeDay,
@@ -50,8 +51,16 @@ class AbsencesCubit extends Cubit<AbsencesState> {
       isSubmitting: true,
     ));
 
-    final startStr = _formatDateTime(date, wholeDay ? null : startTime, isEnd: false);
-    final endStr = _formatDateTime(date, wholeDay ? null : endTime, isEnd: true);
+    final startStr = _formatDateTime(
+      startDate,
+      wholeDay ? null : startTime,
+      isEnd: false,
+    );
+    final endStr = _formatDateTime(
+      endDate,
+      wholeDay ? null : endTime,
+      isEnd: true,
+    );
 
     try {
       await _repository.submitAbsence(

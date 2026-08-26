@@ -1,9 +1,7 @@
 import 'package:chumley_navigator/components/calendar/calendar_bottom_sheet.dart';
+import 'package:chumley_navigator/components/dashboard/compact_schedule_job_card.dart';
 import 'package:chumley_navigator/models/ppm_jobs_models.dart';
 import 'package:chumley_navigator/models/user_model.dart';
-import 'package:chumley_navigator/pillar/home_job_filter.dart';
-import 'package:chumley_navigator/screens/job_details/job_detail_page.dart';
-import 'package:chumley_navigator/screens/job_details/ppm_job_detail_page.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
@@ -15,10 +13,14 @@ class DashboardCalendar extends StatefulWidget {
     super.key,
     this.appointments = const [],
     this.ppmTasks = const [],
+    this.showHeader = true,
   });
 
   final List<Appointment> appointments;
   final List<PpmJobTask> ppmTasks;
+
+  /// When false, hides the "My Calendar / See All" row (e.g. full-screen page).
+  final bool showHeader;
 
   @override
   State<DashboardCalendar> createState() => _DashboardCalendarState();
@@ -124,74 +126,109 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
   bool _hasPpmOn(DateTime date) =>
       widget.ppmTasks.isNotEmpty && _isSameDay(date, _today);
 
+  static const _fullWeekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  /// Jobs for the focused month, grouped by calendar day (ascending).
+  List<_DayScheduleGroup> _monthDaySchedules() {
+    final groups = <DateTime, _DayScheduleGroup>{};
+
+    for (final appointment in widget.appointments) {
+      final start = appointment.scheduledStart;
+      if (start == null) continue;
+      if (start.year != _focusedMonth.year ||
+          start.month != _focusedMonth.month) {
+        continue;
+      }
+      final key = DateTime(start.year, start.month, start.day);
+      final group = groups.putIfAbsent(
+        key,
+        () => _DayScheduleGroup(date: key),
+      );
+      group.appointments.add(appointment);
+    }
+
+    final todayInFocusedMonth =
+        _today.year == _focusedMonth.year &&
+        _today.month == _focusedMonth.month;
+    if (todayInFocusedMonth && widget.ppmTasks.isNotEmpty) {
+      final group = groups.putIfAbsent(
+        _today,
+        () => _DayScheduleGroup(date: _today),
+      );
+      group.ppmTasks.addAll(widget.ppmTasks);
+    }
+
+    final sorted = groups.values.toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+    for (final group in sorted) {
+      group.appointments.sort((a, b) {
+        final aStart = a.scheduledStart ?? DateTime(0);
+        final bStart = b.scheduledStart ?? DateTime(0);
+        return aStart.compareTo(bStart);
+      });
+    }
+    return sorted;
+  }
+
+  String _daySectionTitle(DateTime date) {
+    final weekday = _fullWeekDays[date.weekday - 1];
+    final month = _shortMonthNames[date.month - 1];
+    if (_isSameDay(date, _today)) {
+      return 'Today · $weekday $month ${_getDayWithSuffix(date.day)}';
+    }
+    return '$weekday $month ${_getDayWithSuffix(date.day)}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
     final calendarDays = _buildCalendarDays();
-
-    final selectedDate = _selectedDate ?? _today;
-    final isSelectedToday = selectedDate.year == _today.year &&
-        selectedDate.month == _today.month &&
-        selectedDate.day == _today.day;
-
-    final scheduleTitle = isSelectedToday
-        ? "Today's Schedule"
-        : "Schedule for ${_shortMonthNames[selectedDate.month - 1]} ${_getDayWithSuffix(selectedDate.day)}";
-
-    final filteredAppointments = widget.appointments.where((appointment) {
-      return HomeJobFilter.showOnHome(
-        status: appointment.status,
-        scheduledStart: appointment.scheduledStart,
-        selectedDay: selectedDate,
-        today: _today,
-      );
-    }).toList();
-
-    final filteredPpmTasks =
-        _isSameDay(selectedDate, _today) ? widget.ppmTasks : const <PpmJobTask>[];
-    final scheduleEmpty =
-        filteredAppointments.isEmpty && filteredPpmTasks.isEmpty;
+    final monthSchedules = _monthDaySchedules();
+    final scheduleEmpty = monthSchedules.isEmpty;
+    final monthLabel =
+        '${_monthNames[_focusedMonth.month - 1]} ${_focusedMonth.year}';
 
     return Padding(
       padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'My Calendar',
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.dashHeading,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.90,
-                      child: const DashboardBottomSheet(),
-                    ),
-                  );
-                },
-                child: Text(
-                  'See All',
+          if (widget.showHeader)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'My Calendar',
                   style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14.sp,
-                    color: theme.dashPrimaryCalendar,
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.bold,
+                    color: theme.dashHeading,
                   ),
                 ),
-              ),
-            ],
-          ),
+                TextButton(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.90,
+                        child: const DashboardBottomSheet(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'See All',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14.sp,
+                      color: theme.dashPrimaryCalendar,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ClipRRect(
             borderRadius: BorderRadius.circular(20.r),
             child: Container(
@@ -237,7 +274,7 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                         key: ValueKey(
                           '${_focusedMonth.year}-${_focusedMonth.month}',
                         ),
-                        '${_monthNames[_focusedMonth.month - 1]} ${_focusedMonth.year}',
+                        monthLabel,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 19.sp,
@@ -374,7 +411,7 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
           Padding(
             padding: EdgeInsets.symmetric(vertical: 8.h),
             child: Text(
-              scheduleTitle,
+              '$monthLabel schedule',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 20.sp,
@@ -402,7 +439,7 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                   ),
                   SizedBox(height: 12.h),
                   Text(
-                    'No appointments scheduled',
+                    'No appointments this month',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14.sp,
@@ -411,7 +448,7 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'Tap on another day to see its schedule.',
+                    'Jobs for $monthLabel will appear here day by day.',
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: theme.dashMuted,
@@ -421,30 +458,61 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
                 ],
               ),
             )
-          else ...[
-            ...filteredAppointments.map((appointment) {
-              return Padding(
-                padding: EdgeInsets.only(bottom: 12.h),
-                child: GestureDetector(
-                  onTap: () => JobDetailPage.open(context, appointment),
-                  child: JobScheduleCard(appointment: appointment),
-                ),
-              );
-            }),
-            ...filteredPpmTasks.map((task) {
-              return Padding(
-                padding: EdgeInsets.only(bottom: 12.h),
-                child: GestureDetector(
-                  onTap: () => PpmJobDetailPage.open(context, task),
-                  child: PpmJobScheduleCard(task: task, date: _today),
-                ),
-              );
-            }),
-          ],
+          else
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
+              decoration: theme.dashCardDecoration(radius: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var g = 0; g < monthSchedules.length; g++) ...[
+                    if (g > 0) SizedBox(height: 8.h),
+                    Padding(
+                      padding: EdgeInsets.only(top: 8.h, bottom: 4.h),
+                      child: Text(
+                        _daySectionTitle(monthSchedules[g].date),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w700,
+                          color: theme.dashPrimary,
+                        ),
+                      ),
+                    ),
+                    for (var i = 0;
+                        i < monthSchedules[g].appointments.length;
+                        i++) ...[
+                      if (i > 0)
+                        Divider(height: 1, color: theme.dashBorderLight),
+                      CompactScheduleJobCard(
+                        appointment: monthSchedules[g].appointments[i],
+                      ),
+                    ],
+                    for (var i = 0;
+                        i < monthSchedules[g].ppmTasks.length;
+                        i++) ...[
+                      if (monthSchedules[g].appointments.isNotEmpty || i > 0)
+                        Divider(height: 1, color: theme.dashBorderLight),
+                      CompactSchedulePpmCard(
+                        task: monthSchedules[g].ppmTasks[i],
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            ),
         ],
       ),
     );
   }
+}
+
+class _DayScheduleGroup {
+  _DayScheduleGroup({required this.date});
+
+  final DateTime date;
+  final List<Appointment> appointments = [];
+  final List<PpmJobTask> ppmTasks = [];
 }
 
 class _CalendarDay {

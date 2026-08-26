@@ -70,15 +70,15 @@ class VcrCaptureSlot extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.photo_camera_outlined,
-                                size: 24.sp,
+                                size: 22.sp,
                                 color: AppColors.primaryBlue,
                               ),
                               SizedBox(height: 6.h),
                               Text(
-                                'Tap to Capture',
+                                'Upload',
                                 style: TextStyle(
-                                  fontSize: 11.sp,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w700,
                                   color: AppColors.primaryBlue,
                                 ),
                               ),

@@ -1,62 +1,13 @@
 import 'dart:math';
 
 import 'package:chumley_navigator/models/user_model.dart';
-import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/utils/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-class _CardData {
-  const _CardData({
-    required this.label,
-    required this.value,
-    required this.max,
-    required this.asset,
-  });
-
-  final String label;
-  final double value;
-  final double max;
-  final String asset;
-}
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 const _kpiMax = 20.0;
-
-List<_CardData> _cardsFromUser(UserModel user) {
-  return [
-    _CardData(
-      label: 'Conversion Pool',
-      value: user.conversion.score,
-      max: _kpiMax,
-      asset: 'assets/icons/conversion_pool.png',
-    ),
-    _CardData(
-      label: 'Productivity Pool',
-      value: user.productivity.score,
-      max: _kpiMax,
-      asset: 'assets/icons/productivity_pool.png',
-    ),
-    _CardData(
-      label: 'Procedural Pool',
-      value: user.procedural.score,
-      max: _kpiMax,
-      asset: 'assets/icons/procedural_pool.png',
-    ),
-    _CardData(
-      label: 'Vehicular Pool',
-      value: user.vehicular.score,
-      max: _kpiMax,
-      asset: 'assets/icons/vehicular_pool.png',
-    ),
-    _CardData(
-      label: 'Satisfaction Pool',
-      value: user.cSat.score,
-      max: _kpiMax,
-      asset: 'assets/icons/star.png',
-    ),
-  ];
-}
 
 class KpiOverview extends StatelessWidget {
   const KpiOverview({
@@ -66,189 +17,245 @@ class KpiOverview extends StatelessWidget {
 
   final UserModel user;
 
+  double get _overallScore {
+    final pools = [
+      user.conversion.score,
+      user.productivity.score,
+      user.procedural.score,
+      user.vehicular.score,
+      user.cSat.score,
+    ];
+    if (user.overallRating > 0) return user.overallRating.clamp(0, _kpiMax);
+    final sum = pools.fold<double>(0, (a, b) => a + b);
+    return (sum / pools.length).clamp(0, _kpiMax);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
-    final cards = _cardsFromUser(user);
+    final score = _overallScore;
+    final progress = (score / _kpiMax).clamp(0.0, 1.0);
+    final scoreLabel = score % 1 == 0
+        ? score.toInt().toString()
+        : score.toStringAsFixed(1);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-          Text(
-            'Personal KPI Overview',
-            style: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.bold,
-              color: theme.dashHeading,
-            ),
+        Text(
+          'Personal KPI',
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.bold,
+            color: theme.dashHeading,
           ),
-          SizedBox(height: 4.h),
-          Text(
-            'Your real-time performance summary and safety analytics',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-              color: theme.dashSubtitle,
-            ),
-          ),
-          SizedBox(height: 20.h),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: cards.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12.w,
-              mainAxisSpacing: 12.h,
-              childAspectRatio: 0.7,
-            ),
-            itemBuilder: (_, index) {
-              return Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.goals,
-                      arguments: user,
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(18.r),
-                  child: _KpiCard(
-                    data: cards[index],
-                    theme: theme,
-                  ),
-                ),
+        ),
+        SizedBox(height: 14.h),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.goals,
+                arguments: user,
               );
             },
-          ),
-        ],
-    );
-  }
-}
-
-class _KpiCard extends StatelessWidget {
-  const _KpiCard({
-    required this.data,
-    required this.theme,
-  });
-
-  final _CardData data;
-  final DashboardTheme theme;
-
-  @override
-  Widget build(BuildContext context) {
-    final progress = (data.value / data.max).clamp(0.0, 1.0);
-
-    final valueText = data.value % 1 == 0
-        ? '${data.value.toInt()}/${data.max.toInt()}'
-        : '${data.value}/${data.max.toInt()}';
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18.r),
-      child: Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 14.w,
-        vertical: 18.h,
-      ),
-      decoration: theme.dashCardDecoration(radius: 18, softBorder: true),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          SizedBox(
-            width: 92.w,
-            height: 92.w,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: progress),
-                  duration: const Duration(milliseconds: 900),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, animatedProgress, _) {
-                    return CustomPaint(
-                      size: Size(92.w, 92.w),
-                      painter: _ArcPainter(
-                        progress: animatedProgress,
-                        trackColor: theme.dashChartTrack,
-                        progressColor: theme.dashPrimary,
+            borderRadius: BorderRadius.circular(20.r),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(18.w, 18.h, 18.w, 16.h),
+              decoration: theme.dashCardDecoration(radius: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 92.w,
+                        height: 92.w,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0, end: progress),
+                              duration: const Duration(milliseconds: 900),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, animatedProgress, _) {
+                                return CustomPaint(
+                                  size: Size(92.w, 92.w),
+                                  painter: _RingPainter(
+                                    progress: animatedProgress,
+                                    trackColor: theme.isDark
+                                        ? theme.dashSurfaceTint
+                                        : const Color(0xFFE9EDF5),
+                                    progressColor: theme.dashPrimary,
+                                    strokeWidth: 10,
+                                  ),
+                                );
+                              },
+                            ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  scoreLabel,
+                                  style: TextStyle(
+                                    fontSize: 32.sp,
+                                    fontWeight: FontWeight.w700,
+                                    height: 34 / 32,
+                                    letterSpacing: -1.4,
+                                    color: theme.dashPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'of ${_kpiMax.toInt()}',
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w400,
+                                    height: 14 / 11,
+                                    letterSpacing: 0.1,
+                                    color: theme.dashMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  },
-                ),
-                Image.asset(
-                  data.asset,
-                  height: 24.h,
-                  color: AppColors.primaryBlue,
-                ),
-              ],
+                      SizedBox(width: 16.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Overall score',
+                                    style: TextStyle(
+                                      fontSize: 20.sp,
+                                      fontWeight: FontWeight.w700,
+                                      height: 27 / 20,
+                                      letterSpacing: -0.2,
+                                      color: theme.dashTitle,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: EdgeInsets.fromLTRB(
+                                    7.w,
+                                    4.h,
+                                    9.w,
+                                    4.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme.dashSuccessBg,
+                                    borderRadius: BorderRadius.circular(500.r),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        LucideIcons.arrowUp,
+                                        size: 10.sp,
+                                        color: theme.dashSuccessFg,
+                                      ),
+                                      SizedBox(width: 3.w),
+                                      Text(
+                                        '+1',
+                                        style: TextStyle(
+                                          fontSize: 11.sp,
+                                          fontWeight: FontWeight.w700,
+                                          height: 14 / 11,
+                                          letterSpacing: 0.2,
+                                          color: theme.dashSuccessFg,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              'Across all 5 KPI pools',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w400,
+                                height: 19 / 13,
+                                color: theme.dashSubtitle,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+                  Divider(height: 1, color: theme.dashBorderLight),
+                  SizedBox(height: 14.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'View pool breakdown',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
+                            color: theme.dashPrimary,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        LucideIcons.chevronRight,
+                        size: 18.sp,
+                        color: theme.dashPrimary,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          Text(
-            valueText,
-            style: TextStyle(
-              fontSize: 28.sp,
-              fontWeight: FontWeight.w700,
-              color: theme.dashTitle,
-            ),
-          ),
-          Text(
-            data.label,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w700,
-              height: 1.3,
-              color: theme.dashTitle,
-            ),
-          ),
-        ],
-      ),
-    ),
+        ),
+      ],
     );
   }
 }
 
-class _ArcPainter extends CustomPainter {
-  const _ArcPainter({
+class _RingPainter extends CustomPainter {
+  const _RingPainter({
     required this.progress,
     required this.trackColor,
     required this.progressColor,
+    required this.strokeWidth,
   });
 
   final double progress;
   final Color trackColor;
   final Color progressColor;
-
-  static const double _startAngle = 135 * pi / 180;
-  static const double _sweepAngle = 270 * pi / 180;
+  final double strokeWidth;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final scale = size.width / 102;
-    final radius = 42 * scale;
-    final strokeWidth = 7 * scale;
     final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
     final rect = Rect.fromCircle(center: center, radius: radius);
 
-    canvas.drawArc(
-      rect,
-      _startAngle,
-      _sweepAngle,
-      false,
+    canvas.drawCircle(
+      center,
+      radius,
       Paint()
         ..color = trackColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round,
+        ..strokeWidth = strokeWidth,
     );
 
     canvas.drawArc(
       rect,
-      _startAngle,
-      _sweepAngle * progress,
+      -pi / 2,
+      2 * pi * progress,
       false,
       Paint()
         ..color = progressColor
@@ -259,7 +266,7 @@ class _ArcPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _ArcPainter oldDelegate) {
+  bool shouldRepaint(covariant _RingPainter oldDelegate) {
     return oldDelegate.progress != progress ||
         oldDelegate.trackColor != trackColor ||
         oldDelegate.progressColor != progressColor;

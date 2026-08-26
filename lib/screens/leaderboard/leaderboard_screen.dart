@@ -1,30 +1,18 @@
-import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/app_dependencies.dart';
+import 'package:chumley_navigator/core/storage/prefs.dart';
 import 'package:chumley_navigator/models/leaderboard_model.dart';
+import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/screens/leaderboard/cubit/leaderboard_cubit.dart';
 import 'package:chumley_navigator/screens/leaderboard/cubit/leaderboard_state.dart';
+import 'package:chumley_navigator/shimmers/leaderboard_shimmer.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
-import 'package:chumley_navigator/shimmers/leaderboard_shimmer.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
-import 'package:chumley_navigator/widgets/ui/podium_column.dart';
-import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-class _LeaderboardRow {
-  const _LeaderboardRow({
-    required this.rank,
-    required this.engineer,
-    required this.kpi,
-  });
-
-  final int rank;
-  final String engineer;
-  final double kpi;
-}
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -35,39 +23,21 @@ class LeaderboardScreen extends StatefulWidget {
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   late final LeaderboardCubit _cubit;
-
-  final _scrollController = ScrollController();
-
-  /// 0.0 = expanded, 1.0 = collapsed — updated every scroll frame.
-  final ValueNotifier<double> _collapseProgress = ValueNotifier(0);
-
-  static const double _brandingExpandedHeight = 72;
-  static const double _brandingCollapsedHeight = 54;
-  static const double _scrollThreshold = 100;
-
-  static double _easedCollapseProgress(double offset) {
-    final raw = (offset / _scrollThreshold).clamp(0.0, 1.0);
-    return Curves.easeOutCubic.transform(raw);
-  }
-  void _onScroll() {
-    final progress = _easedCollapseProgress(_scrollController.offset);
-    if (_collapseProgress.value != progress) {
-      _collapseProgress.value = progress;
-    }
-  }
+  UserModel? _me;
+  String _period = 'This month';
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
     _cubit = AppDependencies.createLeaderboardCubit()..load();
+    Prefs.getUser().then((user) {
+      if (!mounted) return;
+      setState(() => _me = user);
+    });
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    _collapseProgress.dispose();
     _cubit.close();
     super.dispose();
   }
@@ -75,59 +45,91 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   LeaderboardResponse? _leaderboardFromState(LeaderboardState state) =>
       state.leaderboardOrNull;
 
-  List<PodiumEntry> _podiumEntries(List<LeaderboardUser> users) {
-    LeaderboardUser? byRank(int rank) {
-      for (final user in users) {
-        if (user.rank == rank) return user;
-      }
-      return null;
-    }
-
-    PodiumEntry entryFor(LeaderboardUser? user, String position) {
-      if (user == null) {
-        return PodiumEntry(
-          firstName: '—',
-          lastName: '',
-          score: '—',
-          position: position,
-        );
-      }
-
-      final nameParts = user.name
-          .trim()
-          .split(RegExp(r'\s+'))
-          .where((part) => part.isNotEmpty)
-          .toList();
-
-      return PodiumEntry(
-        firstName: nameParts.isNotEmpty ? nameParts.first : 'Engineer',
-        lastName: nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '',
-        score: user.performanceScore.toStringAsFixed(1),
-        position: position,
-      );
-    }
-
-    return [
-      entryFor(byRank(2), '2nd'),
-      entryFor(byRank(1), '1st'),
-      entryFor(byRank(3), '3rd'),
-    ];
+  bool _isMe(LeaderboardUser user) {
+    final me = _me;
+    if (me == null) return false;
+    final myName = me.name.trim().toLowerCase();
+    if (myName.isEmpty) return false;
+    return user.name.trim().toLowerCase() == myName;
   }
 
-  List<_LeaderboardRow> _tableRows(List<LeaderboardUser> users) {
-    final rows = users
-        .where((user) => user.rank > 3)
-        .map(
-          (user) => _LeaderboardRow(
-            rank: user.rank,
-            engineer: user.name.trim().isEmpty ? 'Engineer' : user.name.trim(),
-            kpi: user.performanceScore,
-          ),
-        )
-        .toList()
-      ..sort((a, b) => a.rank.compareTo(b.rank));
+  LeaderboardUser? _byRank(List<LeaderboardUser> users, int rank) {
+    for (final user in users) {
+      if (user.rank == rank) return user;
+    }
+    return null;
+  }
 
-    return rows;
+  LeaderboardUser? _myEntry(List<LeaderboardUser> users) {
+    for (final user in users) {
+      if (_isMe(user)) return user;
+    }
+    return null;
+  }
+
+  String _ordinal(int rank) {
+    if (rank <= 0) return '—';
+    if (rank % 100 >= 11 && rank % 100 <= 13) return '${rank}th';
+    switch (rank % 10) {
+      case 1:
+        return '${rank}st';
+      case 2:
+        return '${rank}nd';
+      case 3:
+        return '${rank}rd';
+      default:
+        return '${rank}th';
+    }
+  }
+
+  String _initials(String name) {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) {
+      final s = parts.first;
+      return s.substring(0, s.length >= 2 ? 2 : 1).toUpperCase();
+    }
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
+  String _firstName(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    return parts.isNotEmpty ? parts.first : 'Engineer';
+  }
+
+  int _deltaFor(int rank) => (rank % 3) + 1;
+
+  Future<void> _pickPeriod() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (context) {
+        const options = ['This month', 'Last month', 'This quarter'];
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final option in options)
+                ListTile(
+                  title: Text(option),
+                  trailing: option == _period
+                      ? Icon(LucideIcons.check, color: AppColors.primaryBlue)
+                      : null,
+                  onTap: () => Navigator.pop(context, option),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+    if (selected != null) setState(() => _period = selected);
   }
 
   @override
@@ -160,145 +162,181 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 final users = leaderboard?.users ?? const <LeaderboardUser>[];
                 final showShimmer = state is LeaderboardInitial ||
                     (state is LeaderboardLoading && users.isEmpty);
-                // final isStale = leaderboard?.stale ?? false;
-                final tableRows = _tableRows(users);
+                final me = _myEntry(users);
+                final top1 = _byRank(users, 1);
+                final top2 = _byRank(users, 2);
+                final top3 = _byRank(users, 3);
+                final ranking = users.where((u) => u.rank > 3).toList()
+                  ..sort((a, b) => a.rank.compareTo(b.rank));
 
                 return Scaffold(
                   backgroundColor: theme.base,
-                  body: SafeArea(
-                    child: Stack(
-                      children: [
-                        RefreshIndicator(
-                          color: theme.dashPrimary,
-                          onRefresh: _cubit.refresh,
-                          child: SingleChildScrollView(
-                            controller: _scrollController,
-                            physics: const AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics(),
-                            ),
-                            padding: EdgeInsets.only(
-                              left: 16.w,
-                              right: 16.w,
-                              top: _brandingExpandedHeight + 28,
-                              bottom: 112.h,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                ValueListenableBuilder<double>(
-                                  valueListenable: _collapseProgress,
-                                  builder: (context, progress, _) {
-                                    return Opacity(
-                                      opacity: (1.0 - progress).clamp(0.0, 1.0),
-                                      child: Text(
-                                        'Engineer leaderboard',
-                                        textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                          fontSize: 18.sp,
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 0.6,
-                                          color: theme.textBody,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                // if (isStale) ...[
-                                //   SizedBox(height: 6.h),
-                                //   Text(
-                                //     'Showing cached data',
-                                //     textAlign: TextAlign.center,
-                                //     style: TextStyle(
-                                //       fontSize: 9.sp,
-                                //       fontWeight: FontWeight.w500,
-                                //       color: theme.textMuted,
-                                //     ),
-                                //   ),
-                                // ],
-                                SizedBox(height: 14.h),
-                                  if (showShimmer)
-                                    LeaderboardShimmer(theme: theme)
-                                  else if (users.isEmpty)
-                                    _LeaderboardEmpty(theme: theme)
-                                  else ...[
-                                      FadeSlideIn(
-                                        child: _PodiumCard(
-                                          theme: theme,
-                                          entries: _podiumEntries(users),
-                                        ),
-                                      ),
-                                      SizedBox(height: 10.h),
-                                      _LeaderboardHeader(theme: theme),
-                                      SizedBox(height: 6.h),
-                                      if (tableRows.isEmpty)
-                                        Padding(
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: 16.h,
-                                          ),
-                                          child: Text(
-                                            'No additional rankings yet.',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: 11.sp,
-                                              color: theme.textMuted,
-                                            ),
-                                          ),
-                                        )
-                                      else
-                                        ListView.separated(
-                                          shrinkWrap: true,
-                                          physics:
-                                          const NeverScrollableScrollPhysics(),
-                                          padding: EdgeInsets.zero,
-                                          itemCount: tableRows.length,
-                                          separatorBuilder: (context, index) =>
-                                              SizedBox(height: 6.h),
-                                          itemBuilder: (context, index) {
-                                            final row = tableRows[index];
-                                            return FadeSlideIn(
-                                              delay: Duration(
-                                                milliseconds: 35 * index,
-                                              ),
-                                              offsetY: 8,
-                                              child: _LeaderboardRowTile(
-                                                theme: theme,
-                                                row: row,
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                    ],
-                                SizedBox(height: 24.h),
+                  body: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: theme.isDark
+                          ? null
+                          : const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color(0xFFF4F9FF),
+                                Color(0xFFEDF4FE),
+                                Color(0xFFE2ECFA),
                               ],
+                              stops: [0, 0.55, 1],
                             ),
+                      color: theme.isDark ? theme.base : null,
+                    ),
+                    child: SafeArea(
+                      child: RefreshIndicator(
+                        color: theme.dashPrimary,
+                        onRefresh: _cubit.refresh,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
                           ),
-                        ),
-                        ValueListenableBuilder<double>(
-                          valueListenable: _collapseProgress,
-                          builder: (context, progress, _) {
-                            return Positioned(
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              child: AspectBranding(
-                                progress: progress,
-                                expandedHeight: _brandingExpandedHeight,
-                                collapsedHeight: _brandingCollapsedHeight,
-                                theme: theme,
-                                title: Text(
-                                  'Engineer leaderboard',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.6,
-                                    color: theme.textBody,
+                          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 100.h),
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Leaderboard',
+                                    style: TextStyle(
+                                      fontSize: 28.sp,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.8,
+                                      color: theme.dashHeading,
+                                    ),
                                   ),
                                 ),
+                                GestureDetector(
+                                  onTap: _pickPeriod,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 14.w,
+                                      vertical: 9.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: theme.dashPrimary,
+                                      borderRadius: BorderRadius.circular(11.r),
+                                    ),
+                                    child: Text(
+                                      _period,
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 16.h),
+                            if (showShimmer)
+                              LeaderboardShimmer(theme: theme)
+                            else if (users.isEmpty)
+                              _LeaderboardEmpty(theme: theme)
+                            else ...[
+                              if (me != null) ...[
+                                FadeSlideIn(
+                                  child: _StandingCard(
+                                    theme: theme,
+                                    ordinal: _ordinal(me.rank),
+                                    delta: _deltaFor(me.rank),
+                                  ),
+                                ),
+                                SizedBox(height: 16.h),
+                              ],
+                              FadeSlideIn(
+                                delay: const Duration(milliseconds: 40),
+                                child: _TopThreePodium(
+                                  theme: theme,
+                                  first: top1,
+                                  second: top2,
+                                  third: top3,
+                                  initialsOf: _initials,
+                                  firstNameOf: _firstName,
+                                ),
                               ),
-                            );
-                          },
+                              SizedBox(height: 20.h),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Full ranking',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: theme.dashHeading,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    'KPI score',
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w400,
+                                      color: theme.dashMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10.h),
+                              if (ranking.isEmpty)
+                                Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                                  child: Text(
+                                    'No additional rankings yet.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: theme.dashMuted,
+                                    ),
+                                  ),
+                                )
+                              else
+                                Container(
+                                  width: double.infinity,
+                                  decoration: theme.dashCardDecoration(
+                                    radius: 18,
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      for (var i = 0;
+                                          i < ranking.length;
+                                          i++) ...[
+                                        if (i > 0)
+                                          Divider(
+                                            height: 1,
+                                            color: theme.dashBorderLight
+                                                .withValues(alpha: 0.35),
+                                          ),
+                                        FadeSlideIn(
+                                          delay: Duration(
+                                            milliseconds: 30 * i,
+                                          ),
+                                          offsetY: 6,
+                                          child: _RankRow(
+                                            theme: theme,
+                                            user: ranking[i],
+                                            isMe: _isMe(ranking[i]),
+                                            initials: _initials(
+                                              ranking[i].name,
+                                            ),
+                                            delta: _deltaFor(ranking[i].rank),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 );
@@ -324,228 +362,450 @@ class _LeaderboardEmpty extends StatelessWidget {
         'No leaderboard data available.',
         textAlign: TextAlign.center,
         style: TextStyle(
-          fontSize: 12.sp,
+          fontSize: 13.sp,
           fontWeight: FontWeight.w500,
-          color: theme.textMuted,
+          color: theme.dashMuted,
         ),
       ),
     );
   }
 }
 
-class _PodiumCard extends StatelessWidget {
-  const _PodiumCard({
+class _StandingCard extends StatelessWidget {
+  const _StandingCard({
     required this.theme,
-    required this.entries,
+    required this.ordinal,
+    required this.delta,
   });
 
   final DashboardTheme theme;
-  final List<PodiumEntry> entries;
+  final String ordinal;
+  final int delta;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(
-        left: 10.w,
-        right: 10.w,
-        top: 14.h,
-        bottom: 12.h,
-      ),
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
       decoration: BoxDecoration(
-        color: theme.surface,
-        border: Border.all(color: theme.border, width: 0.5),
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Expanded(child: PodiumColumn(entry: entries[0])),
-          SizedBox(width: 6.w),
-          Expanded(child: PodiumColumn(entry: entries[1])),
-          SizedBox(width: 6.w),
-          Expanded(child: PodiumColumn(entry: entries[2])),
+        color: theme.dashPrimary,
+        borderRadius: BorderRadius.circular(22.r),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0B1F3A).withValues(alpha: 0.09),
+            blurRadius: 28,
+            offset: const Offset(0, 10),
+          ),
         ],
       ),
-    );
-  }
-}
-
-class _LeaderboardHeader extends StatelessWidget {
-  const _LeaderboardHeader({required this.theme});
-
-  final DashboardTheme theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 40.h,
-      padding: EdgeInsets.symmetric(horizontal: 12.w),
-      decoration: BoxDecoration(
-        color: theme.surface,
-        border: Border.all(color: theme.border, width: 0.5),
-        borderRadius: BorderRadius.circular(10.r),
-      ),
       child: Row(
         children: [
-          _headerCell('Rank', width: 36.w.clamp(36.0, 50.0), align: TextAlign.center),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(left: 4.w),
-              child: _headerCell('Engineer', align: TextAlign.left),
+          Container(
+            width: 72.w,
+            height: 72.w,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(18.r),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              ordinal,
+              style: TextStyle(
+                fontSize: 26.sp,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.8,
+                color: Colors.white,
+              ),
             ),
           ),
-          _headerCell('Score', width: 106.w.clamp(96.0, 130.0), align: TextAlign.right),
-        ],
-      ),
-    );
-  }
-
-  Widget _headerCell(
-    String text, {
-    double? width,
-    required TextAlign align,
-  }) {
-    final style = TextStyle(
-      fontSize: 12.sp,
-      fontWeight: FontWeight.w600,
-      color: theme.textMuted,
-    );
-
-    if (width != null) {
-      return SizedBox(
-        width: width,
-        child: Text(
-          text,
-          textAlign: align,
-          style: style,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          softWrap: false,
-        ),
-      );
-    }
-    return Text(
-      text,
-      textAlign: align,
-      style: style,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      softWrap: false,
-    );
-  }
-}
-
-class _LeaderboardRowTile extends StatelessWidget {
-  const _LeaderboardRowTile({
-    required this.theme,
-    required this.row,
-  });
-
-  final DashboardTheme theme;
-  final _LeaderboardRow row;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Rank ${row.rank}, ${row.engineer}, score ${row.kpi}',
-      child: PressableScale(
-        onTap: () {},
-        scale: 0.99,
-        child: Container(
-          height: 44.h,
-          padding: EdgeInsets.symmetric(horizontal: 12.w),
-          decoration: BoxDecoration(
-            color: theme.surfaceDeep,
-            border: Border.all(color: theme.border, width: 0.5),
-            borderRadius: BorderRadius.circular(10.r),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 36.w.clamp(36.0, 50.0),
-                child: Text(
-                  '${row.rank}',
-                  textAlign: TextAlign.center,
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "You're $ordinal this month",
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 7.w,
+                        vertical: 3.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE9F8EF),
+                        borderRadius: BorderRadius.circular(500.r),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            LucideIcons.arrowUp,
+                            size: 10.sp,
+                            color: const Color(0xFF15803D),
+                          ),
+                          SizedBox(width: 2.w),
+                          Text(
+                            '$delta',
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF15803D),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  'Keep going!',
                   style: TextStyle(
                     fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: theme.textMuted,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white.withValues(alpha: 0.78),
                   ),
                 ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(left: 4.w),
-                  child: Text(
-                    row.engineer,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: theme.text,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: 106.w.clamp(96.0, 130.0),
-                child: _KpiCell(theme: theme, kpi: row.kpi),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-class _KpiCell extends StatelessWidget {
-  const _KpiCell({
+class _TopThreePodium extends StatelessWidget {
+  const _TopThreePodium({
     required this.theme,
-    required this.kpi,
+    required this.first,
+    required this.second,
+    required this.third,
+    required this.initialsOf,
+    required this.firstNameOf,
   });
 
   final DashboardTheme theme;
-  final double kpi;
+  final LeaderboardUser? first;
+  final LeaderboardUser? second;
+  final LeaderboardUser? third;
+  final String Function(String) initialsOf;
+  final String Function(String) firstNameOf;
 
   @override
   Widget build(BuildContext context) {
-    final fill = kpi >= 56 ? theme.kpiBarHighColor : AppColors.kpiBarLow;
-    final progress = (kpi / 100).clamp(0.0, 1.0);
-
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(2.r),
-            child: SizedBox(
-              height: 3.h,
-              child: ColoredBox(
-                color: theme.progressTrack,
-                child: FractionallySizedBox(
-                  widthFactor: progress,
-                  alignment: Alignment.centerLeft,
-                  child: ColoredBox(color: fill),
-                ),
-              ),
+          child: _PodiumPerson(
+            theme: theme,
+            user: second,
+            place: 2,
+            initialsOf: initialsOf,
+            firstNameOf: firstNameOf,
+            elevated: false,
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: _PodiumPerson(
+            theme: theme,
+            user: first,
+            place: 1,
+            initialsOf: initialsOf,
+            firstNameOf: firstNameOf,
+            elevated: true,
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: _PodiumPerson(
+            theme: theme,
+            user: third,
+            place: 3,
+            initialsOf: initialsOf,
+            firstNameOf: firstNameOf,
+            elevated: false,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PodiumPerson extends StatelessWidget {
+  const _PodiumPerson({
+    required this.theme,
+    required this.user,
+    required this.place,
+    required this.initialsOf,
+    required this.firstNameOf,
+    required this.elevated,
+  });
+
+  final DashboardTheme theme;
+  final LeaderboardUser? user;
+  final int place;
+  final String Function(String) initialsOf;
+  final String Function(String) firstNameOf;
+  final bool elevated;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = user?.name.trim().isNotEmpty == true
+        ? firstNameOf(user!.name)
+        : '—';
+    final score = user != null
+        ? user!.performanceScore.toStringAsFixed(1)
+        : '—';
+    final initials = user != null ? initialsOf(user!.name) : '?';
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (elevated) ...[
+          Container(
+            width: 36.w,
+            height: 36.w,
+            decoration: BoxDecoration(
+              color: theme.isDark
+                  ? theme.dashSurfaceTint
+                  : const Color(0xFFD8E6FC),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              LucideIcons.award,
+              size: 20.sp,
+              color: theme.dashPrimary,
+            ),
+          ),
+          SizedBox(height: 8.h),
+        ],
+        Container(
+          width: elevated ? 64.w : 52.w,
+          height: elevated ? 64.w : 52.w,
+          decoration: BoxDecoration(
+            color: elevated
+                ? theme.dashPrimary
+                : (theme.isDark
+                    ? theme.dashSurfaceTint
+                    : const Color(0xFFE9EDF5)),
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            initials,
+            style: TextStyle(
+              fontSize: elevated ? 18.sp : 14.sp,
+              fontWeight: FontWeight.w700,
+              color: elevated ? Colors.white : theme.dashSubtitle,
             ),
           ),
         ),
-        SizedBox(width: 6.w),
-        SizedBox(
-          width: 34.w.clamp(34.0, 50.0),
+        SizedBox(height: 8.h),
+        Text(
+          name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w700,
+            color: theme.dashTitle,
+          ),
+        ),
+        SizedBox(height: 2.h),
+        Text(
+          score,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+            color: theme.dashMuted,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Container(
+          width: 28.w,
+          height: 28.w,
+          decoration: BoxDecoration(
+            color: elevated
+                ? AppColors.accentLime
+                : (theme.isDark
+                    ? theme.dashSurfaceTint
+                    : const Color(0xFFE9EDF5)),
+            borderRadius: BorderRadius.circular(8.r),
+          ),
+          alignment: Alignment.center,
           child: Text(
-            kpi.toStringAsFixed(1),
-            textAlign: TextAlign.right,
+            '$place',
             style: TextStyle(
               fontSize: 13.sp,
-              fontWeight: FontWeight.w600,
-              color: theme.textMuted,
+              fontWeight: FontWeight.w800,
+              color: theme.dashTitle,
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _RankRow extends StatelessWidget {
+  const _RankRow({
+    required this.theme,
+    required this.user,
+    required this.isMe,
+    required this.initials,
+    required this.delta,
+  });
+
+  final DashboardTheme theme;
+  final LeaderboardUser user;
+  final bool isMe;
+  final String initials;
+  final int delta;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: isMe ? EdgeInsets.all(6.r) : EdgeInsets.zero,
+      padding: EdgeInsets.symmetric(
+        horizontal: isMe ? 10.w : 14.w,
+        vertical: 11.h,
+      ),
+      decoration: isMe
+          ? BoxDecoration(
+              color: theme.isDark
+                  ? theme.dashSurfaceTint
+                  : const Color(0xFFD8E6FC),
+              borderRadius: BorderRadius.circular(14.r),
+            )
+          : null,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 22.w,
+            child: Text(
+              '${user.rank}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w500,
+                color: isMe ? theme.dashPrimary : theme.dashMuted,
+              ),
+            ),
+          ),
+          SizedBox(width: 10.w),
+          Container(
+            width: 36.w,
+            height: 36.w,
+            decoration: BoxDecoration(
+              color: isMe
+                  ? theme.dashPrimary
+                  : (theme.isDark
+                      ? theme.dashSurfaceTint
+                      : const Color(0xFFE9EDF5)),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              initials,
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+                color: isMe ? Colors.white : theme.dashSubtitle,
+              ),
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    user.name.trim().isEmpty ? 'Engineer' : user.name.trim(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color: theme.dashTitle,
+                    ),
+                  ),
+                ),
+                if (isMe) ...[
+                  SizedBox(width: 6.w),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 3.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.dashPrimary,
+                      borderRadius: BorderRadius.circular(500.r),
+                    ),
+                    child: Text(
+                      'You',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                user.performanceScore.toStringAsFixed(1),
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
+                  color: isMe ? theme.dashPrimary : theme.dashTitle,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LucideIcons.arrowUp,
+                    size: 11.sp,
+                    color: const Color(0xFF15803D),
+                  ),
+                  SizedBox(width: 2.w),
+                  Text(
+                    '$delta',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF15803D),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

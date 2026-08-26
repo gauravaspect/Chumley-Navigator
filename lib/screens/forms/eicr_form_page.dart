@@ -1,6 +1,7 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/widgets/job/job_photo_slot.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
@@ -370,7 +371,7 @@ class _EicrFormPageState extends State<EicrFormPage>
   bool _declReg = false;
   bool _declBs7671 = false;
   bool _declPartP = false;
-  final Set<String> _photos = {};
+  final Map<String, String> _photos = {};
 
   @override
   void initState() {
@@ -1082,44 +1083,18 @@ class _EicrFormPageState extends State<EicrFormPage>
   }
 
   Widget _photoRow(DashboardTheme theme, String title, String subtitle) {
-    final captured = _photos.contains(title);
-    return Container(
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: theme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: theme.border),
-      ),
-      child: Row(
-        children: [
-          Icon(captured ? LucideIcons.circleCheck : LucideIcons.camera, size: 18.sp, color: captured ? _accent : theme.textMuted),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: theme.text)),
-                Text(subtitle, style: TextStyle(fontSize: 11.sp, color: theme.textMuted)),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                if (captured) {
-                  _photos.remove(title);
-                } else {
-                  _photos.add(title);
-                }
-              });
-            },
-            child: Text(
-              captured ? 'Captured' : '+ Capture / upload',
-              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: _accent),
-            ),
-          ),
-        ],
-      ),
+    return JobPhotoSlot(
+      label: '$title · $subtitle',
+      filePath: _photos[title],
+      onChanged: (path) {
+        setState(() {
+          if (path == null) {
+            _photos.remove(title);
+          } else {
+            _photos[title] = path;
+          }
+        });
+      },
     );
   }
 

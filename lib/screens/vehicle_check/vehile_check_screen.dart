@@ -1,22 +1,22 @@
-import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/app_dependencies.dart';
 import 'package:chumley_navigator/models/vehicle_model.dart';
 import 'package:chumley_navigator/screens/vehicle_check/cubit/vehicle_check_cubit.dart';
 import 'package:chumley_navigator/screens/vehicle_check/cubit/vehicle_check_state.dart';
+import 'package:chumley_navigator/screens/vehicle_check/vcr_step_data.dart';
+import 'package:chumley_navigator/shimmers/shimmer_box.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/utils/routes.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
-import 'package:chumley_navigator/shimmers/shimmer_box.dart';
 import 'package:chumley_navigator/widgets/vehicle/vcr_form_card.dart';
-import 'package:chumley_navigator/widgets/vehicle/vcr_page_header.dart';
 import 'package:chumley_navigator/widgets/vehicle/vcr_warning_banner.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class VehileCheckScreen extends StatefulWidget {
   const VehileCheckScreen({super.key});
@@ -24,67 +24,44 @@ class VehileCheckScreen extends StatefulWidget {
   static const _noVehiclesMessage =
       'No vehicles allocated to you. Please contact your manager.';
 
-  static const _instructions = [
-    'Please ensure that all 21 required photographs are uploaded in full. Failure to provide any of the required images will prevent progression to the next stage.',
-    'Each photograph must strictly adhere to the provided reference examples. Images that are captured from incorrect angles and do not comply with the specified guidelines may be flagged as invalid by the system.',
-    'Kindly verify that all photographs are clear, properly aligned, and meet the outlined requirements prior to submission.',
-    'Please make sure you have selected the current vehicle from the drop down menu before continuing.',
-  ];
-
   @override
   State<VehileCheckScreen> createState() => _VehileCheckScreenState();
 }
 
 class _VehileCheckScreenState extends State<VehileCheckScreen> {
   late final VehicleCheckCubit _cubit;
-  final _scrollController = ScrollController();
-  final ValueNotifier<double> _collapseProgress = ValueNotifier(0);
-
-  static const double _brandingExpandedHeight = 72;
-  static const double _brandingCollapsedHeight = 54;
-  static const double _scrollThreshold = 100;
-
-  static double _easedCollapseProgress(double offset) {
-    final raw = (offset / _scrollThreshold).clamp(0.0, 1.0);
-    return Curves.easeOutCubic.transform(raw);
-  }
-
-  void _onScroll() {
-    final progress = _easedCollapseProgress(_scrollController.offset);
-    if (_collapseProgress.value != progress) {
-      _collapseProgress.value = progress;
-    }
-  }
+  final _notesController = TextEditingController();
+  bool _notesFocused = false;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
     _cubit = AppDependencies.createVehicleCheckCubit()..load();
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    _collapseProgress.dispose();
+    _notesController.dispose();
     _cubit.close();
     super.dispose();
   }
 
   String _vehicleLabel(VehicleModel vehicle) {
-    if (vehicle.regNo.trim().isNotEmpty) return vehicle.regNo.trim();
-    if (vehicle.vehicleName.trim().isNotEmpty) return vehicle.vehicleName.trim();
     if (vehicle.vanNumber.trim().isNotEmpty) return vehicle.vanNumber.trim();
+    if (vehicle.regNo.trim().isNotEmpty) return vehicle.regNo.trim();
+    if (vehicle.vehicleName.trim().isNotEmpty) {
+      return vehicle.vehicleName.trim();
+    }
     return 'Vehicle';
   }
 
-  OutlineInputBorder _inputBorder(DashboardTheme theme, {bool focused = false}) {
-    return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10.r),
-      borderSide: BorderSide(
-        color: focused ? theme.accent : theme.border,
-        width: focused ? 1 : 0.5,
+  void _startInspection(VehicleModel vehicle) {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.vehicleForm,
+      arguments: VehicleFormArgs(
+        vehicle: vehicle,
+        dashboardNotes: _notesController.text.trim(),
       ),
     );
   }
@@ -97,6 +74,12 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
         listenable: ThemeScope.of(context),
         builder: (context, _) {
           final theme = DashboardTheme.of(context);
+          final fieldFill = theme.isDark
+              ? theme.dashSurfaceTint
+              : const Color(0xFFE9EDF5);
+          final hairline = theme.isDark
+              ? theme.dashBorderLight
+              : const Color(0xFFE2E7F0);
 
           return BlocConsumer<VehicleCheckCubit, VehicleCheckState>(
             listener: (context, state) {
@@ -113,297 +96,462 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
                   (state is VehicleCheckLoading && vehicles.isEmpty);
               final showNoVehiclesBanner =
                   !showVehicleShimmer && vehicles.isEmpty;
-              final canContinue = selectedVehicle != null;
 
               return Scaffold(
                 backgroundColor: theme.base,
-                body: SafeArea(
-                  child: Stack(
-                    children: [
-                      RefreshIndicator(
-                        color: theme.dashPrimary,
-                        onRefresh: _cubit.refresh,
-                        child: SingleChildScrollView(
-                          controller: _scrollController,
-                          physics: const AlwaysScrollableScrollPhysics(
-                            parent: BouncingScrollPhysics(),
+                body: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: theme.isDark
+                        ? null
+                        : const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color(0xFFF4F9FF),
+                              Color(0xFFEDF4FE),
+                              Color(0xFFE2ECFA),
+                            ],
+                            stops: [0, 0.55, 1],
                           ),
-                          padding: EdgeInsets.only(
-                            left: 16.w,
-                            right: 16.w,
-                            top: _brandingExpandedHeight + 28,
-                            bottom: 112.h,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                    color: theme.isDark ? theme.base : null,
+                  ),
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(12.w, 8.h, 20.w, 4.h),
+                          child: Row(
                             children: [
-                              // SizedBox(height: 14.h),
-                              const FadeSlideIn(child: VcrPageHeader()),
-                              SizedBox(height: 12.h),
-                              if (showVehicleShimmer)
-                                FadeSlideIn(
-                                  delay: const Duration(milliseconds: 40),
-                                  child: VcrFormCard(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        ThemedShimmerBox(
-                                          theme: theme,
-                                          height: 10.h,
-                                          width: 120.w,
-                                          radius: 4,
-                                        ),
-                                        SizedBox(height: 10.h),
-                                        ThemedShimmerBox(
-                                          theme: theme,
-                                          height: 40.h,
-                                          radius: 10,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              else
-                                FadeSlideIn(
-                                  delay: const Duration(milliseconds: 40),
-                                  child: VcrFormCard(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'YOUR ALLOCATED VEHICLE',
-                                          style: TextStyle(
-                                            fontSize: 15.sp,
-                                            fontWeight: FontWeight.w700,
-                                            letterSpacing: 0.4,
-                                            color: theme.textBody,
-                                          ),
-                                        ),
-                                        SizedBox(height: 6.h),
-                                        Text(
-                                          'Select the vehicle for this inspection',
-                                          style: TextStyle(
-                                            fontSize: 13.sp,
-                                            fontWeight: FontWeight.w400,
-                                            color: theme.textMuted,
-                                          ),
-                                        ),
-                                        SizedBox(height: 12.h),
-                                        Text(
-                                          'Vehicle',
-                                          style: TextStyle(
-                                            fontSize: 13.sp,
-                                            fontWeight: FontWeight.w500,
-                                            color: theme.textMuted,
-                                          ),
-                                        ),
-                                        SizedBox(height: 6.h),
-                                        DropdownButtonFormField2<String>(
-                                          value: selectedVehicle?.id,
-                                          isExpanded: true,
-                                          decoration: InputDecoration(
-                                            contentPadding:
-                                                EdgeInsets.symmetric(
-                                              horizontal: 12.w,
-                                              vertical: 10.h,
-                                            ),
-                                            filled: true,
-                                            fillColor: theme.surfaceDeep,
-                                            border: _inputBorder(theme),
-                                            enabledBorder: _inputBorder(theme),
-                                            focusedBorder: _inputBorder(
-                                              theme,
-                                              focused: true,
-                                            ),
-                                          ),
-                                          hint: Text(
-                                            vehicles.isEmpty
-                                                ? 'No vehicles available'
-                                                : 'Select vehicle',
-                                            style: TextStyle(
-                                              fontSize: 13.sp,
-                                              color: theme.textMuted,
-                                            ),
-                                          ),
-                                          iconStyleData: IconStyleData(
-                                            icon: Icon(
-                                              Icons.keyboard_arrow_down_rounded,
-                                              color: theme.textMuted,
-                                              size: 20.sp,
-                                            ),
-                                          ),
-                                          dropdownStyleData: DropdownStyleData(
-                                            decoration: BoxDecoration(
-                                              color: theme.surface,
-                                              borderRadius:
-                                                  BorderRadius.circular(10.r),
-                                              border: Border.all(
-                                                color: theme.border,
-                                                width: 0.5,
-                                              ),
-                                            ),
-                                          ),
-                                          style: TextStyle(
-                                            fontSize: 13.sp,
-                                            color: theme.text,
-                                          ),
-                                          items: vehicles
-                                              .map(
-                                                (vehicle) =>
-                                                    DropdownMenuItem(
-                                                  value: vehicle.id,
-                                                  child: Text(
-                                                    _vehicleLabel(vehicle),
-                                                  ),
-                                                ),
-                                              )
-                                              .toList(),
-                                          onChanged: vehicles.isEmpty
-                                              ? null
-                                              : (vehicleId) {
-                                                  for (final vehicle
-                                                      in vehicles) {
-                                                    if (vehicle.id ==
-                                                        vehicleId) {
-                                                      _cubit.selectVehicle(
-                                                        vehicle,
-                                                      );
-                                                      break;
-                                                    }
-                                                  }
-                                                },
-                                        ),
-                                        if (selectedVehicle != null) ...[
-                                          SizedBox(height: 12.h),
-                                          _VehicleDetailRow(
-                                            theme: theme,
-                                            label: 'Registration',
-                                            value: selectedVehicle.regNo,
-                                          ),
-                                          if (selectedVehicle.vanNumber
-                                              .trim()
-                                              .isNotEmpty)
-                                            _VehicleDetailRow(
-                                              theme: theme,
-                                              label: 'Van number',
-                                              value: selectedVehicle.vanNumber,
-                                            ),
-                                          if (selectedVehicle.vehicleName
-                                              .trim()
-                                              .isNotEmpty)
-                                            _VehicleDetailRow(
-                                              theme: theme,
-                                              label: 'Vehicle name',
-                                              value: selectedVehicle.vehicleName,
-                                            ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              if (showNoVehiclesBanner) ...[
-                                SizedBox(height: 12.h),
-                                const FadeSlideIn(
-                                  delay: Duration(milliseconds: 50),
-                                  child: VcrWarningBanner(
-                                    message: VehileCheckScreen._noVehiclesMessage,
-                                  ),
-                                ),
-                              ],
-                              SizedBox(height: 12.h),
-                              FadeSlideIn(
-                                delay: const Duration(milliseconds: 100),
-                                child: VcrFormCard(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'STEP 1 INSTRUCTIONS',
-                                        style: TextStyle(
-                                          fontSize: 15.sp,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.4,
-                                          color: theme.textBody,
-                                        ),
-                                      ),
-                                      SizedBox(height: 6.h),
-                                      Text(
-                                        'Read before starting the vehicle check',
-                                        style: TextStyle(
-                                          fontSize: 13.sp,
-                                          fontWeight: FontWeight.w400,
-                                          color: theme.textMuted,
-                                        ),
-                                      ),
-                                      SizedBox(height: 12.h),
-                                      for (var i = 0;
-                                          i <
-                                              VehileCheckScreen
-                                                  ._instructions.length;
-                                          i++) ...[
-                                        Text(
-                                          VehileCheckScreen._instructions[i],
-                                          style: TextStyle(
-                                            fontSize: 13.sp,
-                                            fontWeight: FontWeight.w400,
-                                            height: 1.45,
-                                            color: theme.textMuted,
-                                          ),
-                                        ),
-                                        if (i <
-                                            VehileCheckScreen
-                                                    ._instructions.length -
-                                                1)
-                                          SizedBox(height: 10.h),
-                                      ],
-                                      SizedBox(height: 14.h),
-                                      _ContinueButton(
-                                        enabled: canContinue,
-                                        onTap: canContinue
-                                            ? () => Navigator.pushNamed(
-                                                  context,
-                                                  AppRoutes.vehicleForm,
-                                                  arguments: selectedVehicle,
-                                                )
-                                            : null,
-                                      ),
-                                    ],
-                                  ),
+                              SizedBox(width: 8.w),
+                              Text(
+                                'Vehicle report',
+                                style: TextStyle(
+                                  fontSize: 17.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.dashHeading,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                      ValueListenableBuilder<double>(
-                        valueListenable: _collapseProgress,
-                        builder: (context, progress, _) {
-                          return Positioned(
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            child: AspectBranding(
-                              progress: progress,
-                              expandedHeight: _brandingExpandedHeight,
-                              collapsedHeight: _brandingCollapsedHeight,
-                              theme: theme,
-                              title: Text(
-                                'Vehicle check Report',
+                        Expanded(
+                          child: RefreshIndicator(
+                            color: theme.dashPrimary,
+                            onRefresh: _cubit.refresh,
+                            child: ListView(
+                              physics: const AlwaysScrollableScrollPhysics(
+                                parent: BouncingScrollPhysics(),
+                              ),
+                              padding: EdgeInsets.fromLTRB(
+                                20.w,
+                                8.h,
+                                20.w,
+                                24.h,
+                              ),
+                              children: [
+                                FadeSlideIn(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Vehicle details',
+                                        style: TextStyle(
+                                          fontSize: 26.sp,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: -0.7,
+                                          color: theme.dashHeading,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4.h),
+                                      Text(
+                                        'Select your allocated vehicle and record inspection details before you start.',
+                                        style: TextStyle(
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w400,
+                                          height: 1.4,
+                                          color: theme.dashMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 16.h),
+                                if (showVehicleShimmer)
+                                  FadeSlideIn(
+                                    delay: const Duration(milliseconds: 40),
+                                    child: VcrFormCard(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          ThemedShimmerBox(
+                                            theme: theme,
+                                            height: 14.h,
+                                            width: 100.w,
+                                            radius: 6,
+                                          ),
+                                          SizedBox(height: 10.h),
+                                          ThemedShimmerBox(
+                                            theme: theme,
+                                            height: 48.h,
+                                            radius: 12,
+                                          ),
+                                          SizedBox(height: 16.h),
+                                          ThemedShimmerBox(
+                                            theme: theme,
+                                            height: 14.h,
+                                            width: 120.w,
+                                            radius: 6,
+                                          ),
+                                          SizedBox(height: 10.h),
+                                          ThemedShimmerBox(
+                                            theme: theme,
+                                            height: 88.h,
+                                            radius: 12,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  FadeSlideIn(
+                                    delay: const Duration(milliseconds: 40),
+                                    child: VcrFormCard(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Van number',
+                                            style: TextStyle(
+                                              fontSize: 12.sp,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 0.3,
+                                              color: theme.dashSubtitle,
+                                            ),
+                                          ),
+                                          SizedBox(height: 7.h),
+                                          DropdownButtonFormField2<String>(
+                                            value: selectedVehicle?.id,
+                                            isExpanded: true,
+                                            decoration: InputDecoration(
+                                              contentPadding:
+                                                  EdgeInsets.symmetric(
+                                                horizontal: 14.w,
+                                                vertical: 4.h,
+                                              ),
+                                              filled: true,
+                                              fillColor: fieldFill,
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  12.r,
+                                                ),
+                                                borderSide: BorderSide(
+                                                  color: hairline,
+                                                ),
+                                              ),
+                                              enabledBorder:
+                                                  OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  12.r,
+                                                ),
+                                                borderSide: BorderSide(
+                                                  color: hairline,
+                                                ),
+                                              ),
+                                              focusedBorder:
+                                                  OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  12.r,
+                                                ),
+                                                borderSide: BorderSide(
+                                                  color: theme.dashPrimary,
+                                                  width: 1.25,
+                                                ),
+                                              ),
+                                            ),
+                                            hint: Text(
+                                              vehicles.isEmpty
+                                                  ? 'No vans available'
+                                                  : 'Select van',
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                color: theme.dashHeading,
+                                              ),
+                                            ),
+                                            iconStyleData: IconStyleData(
+                                              icon: Icon(
+                                                LucideIcons.chevronDown,
+                                                color:
+                                                    const Color(0xFF8A99B0),
+                                                size: 18.sp,
+                                              ),
+                                            ),
+                                            dropdownStyleData:
+                                                DropdownStyleData(
+                                              decoration: BoxDecoration(
+                                                color: theme.dashCardBg,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  12.r,
+                                                ),
+                                                border: Border.all(
+                                                  color: hairline,
+                                                ),
+                                              ),
+                                            ),
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              color: theme.dashHeading,
+                                            ),
+                                            items: vehicles
+                                                .map(
+                                                  (vehicle) =>
+                                                      DropdownMenuItem(
+                                                    value: vehicle.id,
+                                                    child: Text(
+                                                      _vehicleLabel(
+                                                        vehicle,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                                .toList(),
+                                            onChanged: vehicles.isEmpty
+                                                ? null
+                                                : (vehicleId) {
+                                                    for (final vehicle
+                                                        in vehicles) {
+                                                      if (vehicle.id ==
+                                                          vehicleId) {
+                                                        _cubit
+                                                            .selectVehicle(
+                                                          vehicle,
+                                                        );
+                                                        break;
+                                                      }
+                                                    }
+                                                  },
+                                          ),
+                                          if (selectedVehicle != null &&
+                                              selectedVehicle.regNo
+                                                  .trim()
+                                                  .isNotEmpty) ...[
+                                            SizedBox(height: 10.h),
+                                            Text(
+                                              'Reg: ${selectedVehicle.regNo.trim()}',
+                                              style: TextStyle(
+                                                fontSize: 12.sp,
+                                                color: theme.dashMuted,
+                                              ),
+                                            ),
+                                          ],
+                                          SizedBox(height: 16.h),
+                                          Text(
+                                            'Dashboard notes',
+                                            style: TextStyle(
+                                              fontSize: 12.sp,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 0.3,
+                                              color: theme.dashSubtitle,
+                                            ),
+                                          ),
+                                          SizedBox(height: 7.h),
+                                          AnimatedContainer(
+                                            duration: const Duration(
+                                              milliseconds: 220,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: fieldFill,
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                12.r,
+                                              ),
+                                              border: Border.all(
+                                                color: _notesFocused
+                                                    ? theme.dashPrimary
+                                                    : hairline,
+                                                width: _notesFocused
+                                                    ? 1.25
+                                                    : 1,
+                                              ),
+                                            ),
+                                            child: TextField(
+                                              controller: _notesController,
+                                              maxLines: 3,
+                                              onTap: () => setState(
+                                                () =>
+                                                    _notesFocused = true,
+                                              ),
+                                              onTapOutside: (_) =>
+                                                  setState(
+                                                () =>
+                                                    _notesFocused = false,
+                                              ),
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                height: 1.45,
+                                                color: theme.dashHeading,
+                                              ),
+                                              decoration: InputDecoration(
+                                                hintText: 'Quick notes…',
+                                                hintStyle: TextStyle(
+                                                  fontSize: 14.sp,
+                                                  color: const Color(
+                                                    0xFF8A99B0,
+                                                  ),
+                                                ),
+                                                border: InputBorder.none,
+                                                contentPadding:
+                                                    EdgeInsets.fromLTRB(
+                                                  14.w,
+                                                  13.h,
+                                                  14.w,
+                                                  40.h,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                if (showNoVehiclesBanner) ...[
+                                  SizedBox(height: 12.h),
+                                  const FadeSlideIn(
+                                    delay: Duration(milliseconds: 50),
+                                    child: VcrWarningBanner(
+                                      message: VehileCheckScreen
+                                          ._noVehiclesMessage,
+                                    ),
+                                  ),
+                                ],
+                                SizedBox(height: 12.h),
+                                FadeSlideIn(
+                                  delay: const Duration(milliseconds: 80),
+                                  child: VcrFormCard(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 6.h,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsets.fromLTRB(
+                                            18.w,
+                                            12.h,
+                                            18.w,
+                                            12.h,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  "What you'll capture",
+                                                  style: TextStyle(
+                                                    fontSize: 17.sp,
+                                                    fontWeight:
+                                                        FontWeight.w700,
+                                                    letterSpacing: -0.2,
+                                                    color:
+                                                        theme.dashHeading,
+                                                  ),
+                                                ),
+                                              ),
+                                              Text(
+                                                '${vcrSteps.length} areas',
+                                                style: TextStyle(
+                                                  fontSize: 13.sp,
+                                                  color: theme.dashMuted,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Divider(
+                                          height: 1,
+                                          color: hairline,
+                                        ),
+                                        for (var i = 0;
+                                            i < vcrSteps.length;
+                                            i++) ...[
+                                          if (i > 0)
+                                            Padding(
+                                              padding:
+                                                  EdgeInsets.symmetric(
+                                                horizontal: 18.w,
+                                              ),
+                                              child: Divider(
+                                                height: 1,
+                                                color: hairline,
+                                              ),
+                                            ),
+                                          _CaptureAreaRow(
+                                            theme: theme,
+                                            index: i + 1,
+                                            title: vcrSteps[i].title,
+                                            photoLabel:
+                                                vcrSteps[i].photoCountLabel,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.fromLTRB(
+                            20.w,
+                            12.h,
+                            20.w,
+                            12.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.isDark
+                                ? theme.base.withValues(alpha: 0.92)
+                                : Colors.white.withValues(alpha: 0.92),
+                            border: Border(
+                              top: BorderSide(color: hairline),
+                            ),
+                          ),
+                          child: PressableScale(
+                            onTap: selectedVehicle == null
+                                ? null
+                                : () =>
+                                    _startInspection(selectedVehicle),
+                            scale: 0.98,
+                            child: Container(
+                              width: double.infinity,
+                              height: 44.h,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: selectedVehicle != null
+                                    ? AppColors.accentLime
+                                    : AppColors.accentLime
+                                        .withValues(alpha: 0.45),
+                                borderRadius: BorderRadius.circular(14.r),
+                              ),
+                              child: Text(
+                                'Start inspection',
                                 style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.6,
-                                  color: theme.textBody,
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.dashHeading,
                                 ),
                               ),
                             ),
-                          );
-                        },
-                      ),
-                    ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -415,91 +563,63 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
   }
 }
 
-class _VehicleDetailRow extends StatelessWidget {
-  const _VehicleDetailRow({
+class _CaptureAreaRow extends StatelessWidget {
+  const _CaptureAreaRow({
     required this.theme,
-    required this.label,
-    required this.value,
+    required this.index,
+    required this.title,
+    required this.photoLabel,
   });
 
   final DashboardTheme theme;
-  final String label;
-  final String value;
+  final int index;
+  final String title;
+  final String photoLabel;
 
   @override
   Widget build(BuildContext context) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) return const SizedBox.shrink();
-
     return Padding(
-      padding: EdgeInsets.only(bottom: 6.h),
+      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 110.w,
+          Container(
+            width: 28.w,
+            height: 28.w,
+            decoration: BoxDecoration(
+              color: theme.isDark
+                  ? theme.dashSurfaceTint
+                  : const Color(0xFFD8E6FC),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            alignment: Alignment.center,
             child: Text(
-              label,
+              '$index',
               style: TextStyle(
                 fontSize: 13.sp,
-                fontWeight: FontWeight.w500,
-                color: theme.textMuted,
+                fontWeight: FontWeight.w700,
+                color: theme.dashPrimary,
               ),
             ),
           ),
+          SizedBox(width: 12.w),
           Expanded(
             child: Text(
-              trimmed,
+              title,
               style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: theme.text,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+                color: theme.dashHeading,
               ),
+            ),
+          ),
+          Text(
+            photoLabel,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: theme.dashMuted,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ContinueButton extends StatelessWidget {
-  const _ContinueButton({
-    required this.onTap,
-    this.enabled = true,
-  });
-
-  final VoidCallback? onTap;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Continue to vehicle details',
-      button: true,
-      enabled: enabled,
-      child: PressableScale(
-        onTap: enabled ? onTap : null,
-        scale: 0.98,
-        child: Container(
-          width: double.infinity,
-          height: 46.h,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: enabled
-                ? AppColors.primaryBlue
-                : AppColors.primaryBlue.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(10.r),
-          ),
-          child: Text(
-            'Continue to vehicle details',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.white,
-            ),
-          ),
-        ),
       ),
     );
   }

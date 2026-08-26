@@ -1,4 +1,3 @@
-import 'package:chumley_navigator/components/dashboard/earnings_card.dart';
 import 'package:chumley_navigator/components/dashboard/kpi_overview.dart';
 import 'package:chumley_navigator/components/dashboard/points_card.dart';
 import 'package:chumley_navigator/core/app_dependencies.dart';
@@ -16,9 +15,10 @@ import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../components/dashboard/dashboard_calendar.dart';
-import '../../components/dashboard/earning_graph.dart';
+import '../../components/dashboard/earnings_card.dart';
+import '../../components/dashboard/todays_schedule_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -73,9 +73,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: BlocConsumer<DashboardCubit, DashboardState>(
               listener: (context, state) {
                 if (state is DashboardError && state.cachedUser == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(state.message)),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(state.message)));
                 }
               },
               builder: (context, state) {
@@ -92,9 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: showShimmer
                           ? ListView(
                               physics: const AlwaysScrollableScrollPhysics(),
-                              children: [
-                                DashboardShimmer(theme: theme),
-                              ],
+                              children: [DashboardShimmer(theme: theme)],
                             )
                           : _buildBody(context, theme, state),
                     ),
@@ -113,110 +111,145 @@ class _DashboardScreenState extends State<DashboardScreen> {
     DashboardTheme theme,
     UserModel? user,
   ) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      title: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: theme.dashHeaderBorder, width: 0.8),
+    final toolbarHeight = 118.h;
+
+    return PreferredSize(
+      preferredSize: Size.fromHeight(toolbarHeight),
+      child: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        toolbarHeight: toolbarHeight,
+        titleSpacing: 0,
+        automaticallyImplyLeading: false,
+        title: Container(
+          width: double.infinity,
+          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 10.h),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: theme.dashHeaderBorder, width: 0.8),
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            GestureDetector(
-              onTap: () => ProfileScreen.open(context, _cubit),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36.w,
-                    height: 36.w,
-                    decoration: BoxDecoration(
-                      color: theme.dashPrimary,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: theme.dashCardBg, width: 1),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      user != null ? userInitials(user) : '?',
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Good Morning !',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
-                        fontSize: 12.sp,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w400,
+                        color: theme.dashTitle,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 22.sp,
+                          height: 1.2,
+                          color: theme.dashTitle,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: user != null ? userFirstName(user) : 'there',
+                            style: TextStyle(color: theme.dashPrimaryCalendar),
+                          ),
+                          const TextSpan(text: '👋🏻'),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: theme.dashPrimary,
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 6.h,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            LucideIcons.shieldCheck,
+                            size: 16.sp,
+                            color: AppColors.accentLime,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            'Tier 10 (Platinum)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12.sp,
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pushReplacementNamed(
+                      context,
+                      AppRoutes.notifications,
+                    ),
+                    child: Container(
+                      padding: EdgeInsets.all(6.r),
+                      decoration: BoxDecoration(
+                        color: theme.headerBellBg,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Icon(
+                            Icons.notifications_none_outlined,
+                            color: theme.dashPrimary,
+                            size: 20.sp,
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  SizedBox(width: 10.w),
-                  RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14.sp,
-                        color: theme.dashTitle,
+                  SizedBox(width: 8.w),
+                  GestureDetector(
+                    onTap: () => ProfileScreen.open(context, _cubit),
+                    child: Container(
+                      width: 36.w,
+                      height: 36.w,
+                      decoration: BoxDecoration(
+                        color: theme.dashPrimary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: theme.dashCardBg, width: 1),
                       ),
-                      children: [
-                        const TextSpan(text: 'Hi, '),
-                        TextSpan(
-                          text: user != null ? userFirstName(user) : 'there',
-                          style: TextStyle(color: theme.dashPrimaryCalendar),
+                      alignment: Alignment.center,
+                      child: Text(
+                        user != null ? userInitials(user) : '?',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.white,
+                          fontSize: 12.sp,
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pushReplacementNamed(
-                    context,
-                    AppRoutes.notifications,
-                  ),
-                  child: Container(
-                    padding: EdgeInsets.all(6.r),
-                    decoration: BoxDecoration(
-                      color: theme.headerBellBg,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Icon(
-                          Icons.notifications_none_outlined,
-                          color: theme.dashPrimary,
-                          size: 20.sp,
-                        ),
-                        Positioned(
-                          top: -1,
-                          right: -1,
-                          child: Container(
-                            width: 8.w,
-                            height: 8.w,
-                            decoration: BoxDecoration(
-                              color: AppColors.streakOrange,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: theme.dashCardBg,
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Image.asset(
-                  'assets/images/navigator-mascot.png',
-                  height: 18.h,
-                  width: 18.w,
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -232,13 +265,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final sections = [
       PointsCard(user: user),
-      EarningCard(user: user),
-      DashboardCalendar(
+      // EarningCard(user: user),
+      TodaysScheduleCard(
         appointments: user.dashboard.appointmentsThisMonth,
         ppmTasks: state.ppmTasksOrEmpty,
       ),
       KpiOverview(user: user),
-      const EarningGraph(),
+      EarningCard(user: user),
     ];
 
     return Padding(

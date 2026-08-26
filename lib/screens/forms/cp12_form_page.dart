@@ -1,14 +1,12 @@
-import 'dart:io';
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
-import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/widgets/job/job_photo_slot.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Landlord Gas Safety Record (CP12) — fields aligned with the HTML preview.
@@ -19,12 +17,16 @@ class Cp12FormPage extends StatefulWidget {
     this.engineerName = '',
     this.postcode = '',
     this.subject = '',
+    this.jobId = '',
+    this.onSubmitted,
   });
 
   final String appointmentNumber;
   final String engineerName;
   final String postcode;
   final String subject;
+  final String jobId;
+  final VoidCallback? onSubmitted;
 
   @override
   State<Cp12FormPage> createState() => _Cp12FormPageState();
@@ -256,8 +258,6 @@ class _Cp12FormPageState extends State<Cp12FormPage>
   bool _declWarningNotice = false;
 
   final Map<String, String> _capturedPhotos = {};
-  final ImagePicker _imagePicker = ImagePicker();
-  bool _isSaving = false;
 
   @override
   void initState() {
@@ -329,7 +329,7 @@ class _Cp12FormPageState extends State<Cp12FormPage>
 
   void _onCancel() => Navigator.of(context).maybePop(false);
 
-  Future<void> _onSave() async {
+  void _onSave() {
     if (_gasSafeRegController.text.trim().isEmpty || !_gasSafeConfirm) {
       setState(() => _tabController.index = 1);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -362,86 +362,8 @@ class _Cp12FormPageState extends State<Cp12FormPage>
       return;
     }
 
-    if (_isSaving) return;
-    setState(() => _isSaving = true);
-
-    final answers = {
-      'risk_hse': {
-        'risk_assessment': _riskAssessment,
-        'work_at_height': _workAtHeight,
-        'gas_smell': _gasSmell,
-        'occupant_briefed': _occupantBriefed,
-        'smoke_alarm': _smokeAlarm,
-        'co_alarm': _coAlarm,
-        'last_inspection_cycle': _lastInspectionCycle,
-        'risk_note': _riskNoteController.text.trim(),
-      },
-      'gas_safe': {
-        'reg_number': _gasSafeRegController.text.trim(),
-        'confirmed': _gasSafeConfirm,
-      },
-      'tightness': {
-        'let_by': _letBy,
-        'fuel_type': _fuelType,
-        'test_pressure': _testPressureController.text.trim(),
-        'stabilisation': _stabilisation,
-        'measured_drop': _measuredDropController.text.trim(),
-        'meter_type': _meterType,
-        'installation_volume': _installationVolumeController.text.trim(),
-        'permissible_drop': _permissibleDropController.text.trim(),
-        'result': _tightnessResult,
-        'ldf': _ldf,
-        'iv_meter_type': _ivMeterType,
-      },
-      'pipework': {
-        'ecv_present': _ecvPresent,
-        'ecv_operates': _ecvOperates,
-        'regulator_pressure': _regulatorPressureController.text.trim(),
-        'pipe_material': _pipeMaterial,
-        'bonding': _bonding,
-        'labelling': _labelling,
-        'last_inspection': _lastInspectionOnRecord,
-      },
-      'appliances': _appliances.map((a) => {
-        'location': a.location ?? '',
-        'type': a.type ?? '',
-        'notes': a.notes.text.trim(),
-      }).toList(),
-      'sign_off': {
-        'parts_used': _partsUsed,
-        'office_notes': _officeNotesController.text.trim(),
-        'signature': _signatureController.text.trim(),
-        'customer_present': _customerPresent,
-        'decl_reg_valid': _declRegValid,
-        'decl_work_compliant': _declWorkCompliant,
-        'decl_warning_notice': _declWarningNotice,
-        'submitted_at': DateTime.now().toIso8601String(),
-      },
-    };
-
-    if (widget.appointmentNumber.isNotEmpty) {
-      await PillarClient.saveFormAnswers(widget.appointmentNumber, answers);
-      await PillarClient.submitSignOff(
-        jobId: widget.appointmentNumber,
-        reportSuffix: 'cp12',
-        reportType: 'CP12_GAS',
-        answers: answers,
-        photoSlots: _capturedPhotos,
-      );
-    }
-
-    if (mounted) {
-      setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'CP12 Gas Safety Record submitted to Firestore spine.',
-            style: TextStyle(fontSize: 14.sp),
-          ),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF22C55E),
-        ),
-      );
+    widget.onSubmitted?.call();
+    if (widget.onSubmitted == null) {
       Navigator.of(context).pop(true);
     }
   }
@@ -1318,105 +1240,18 @@ class _Cp12FormPageState extends State<Cp12FormPage>
   }
 
   Widget _photoRow(DashboardTheme theme, String title, String subtitle) {
-    final photoPath = _capturedPhotos[title] ?? '';
-    final hasPhoto = photoPath.isNotEmpty;
-    return Container(
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: theme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: theme.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44.w,
-            height: 44.w,
-            decoration: BoxDecoration(
-              color: theme.isDark ? AppColors.darkSurfaceDeep : AppColors.backgroundGray,
-              borderRadius: BorderRadius.circular(8.r),
-              border: Border.all(color: theme.border),
-            ),
-            child: hasPhoto
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8.r),
-                    child: Image.file(File(photoPath), fit: BoxFit.cover),
-                  )
-                : Icon(
-                    LucideIcons.camera,
-                    size: 18.sp,
-                    color: theme.textMuted,
-                  ),
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: theme.text,
-                  ),
-                ),
-                Text(
-                  hasPhoto ? 'Photo attached' : subtitle,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: hasPhoto ? const Color(0xFF22C55E) : theme.textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          PopupMenuButton<ImageSource>(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    hasPhoto ? LucideIcons.checkCheck : LucideIcons.plus,
-                    size: 14.sp,
-                    color: hasPhoto ? const Color(0xFF22C55E) : AppColors.ppmAccent,
-                  ),
-                  SizedBox(width: 4.w),
-                  Text(
-                    hasPhoto ? 'Retake' : '+ Capture',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: hasPhoto ? const Color(0xFF22C55E) : AppColors.ppmAccent,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onSelected: (source) async {
-              try {
-                final xfile = await _imagePicker.pickImage(source: source, imageQuality: 80);
-                if (xfile != null && mounted) {
-                  setState(() {
-                    _capturedPhotos[title] = xfile.path;
-                  });
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Could not access image: $e')),
-                  );
-                }
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: ImageSource.camera, child: Text('Take Camera Photo')),
-              const PopupMenuItem(value: ImageSource.gallery, child: Text('Choose from Gallery')),
-            ],
-          ),
-        ],
-      ),
+    return JobPhotoSlot(
+      label: '$title · $subtitle',
+      filePath: _capturedPhotos[title],
+      onChanged: (path) {
+        setState(() {
+          if (path == null) {
+            _capturedPhotos.remove(title);
+          } else {
+            _capturedPhotos[title] = path;
+          }
+        });
+      },
     );
   }
 

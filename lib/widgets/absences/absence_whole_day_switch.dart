@@ -18,14 +18,29 @@ class AbsenceWholeDaySwitch extends StatelessWidget {
     final theme = DashboardTheme.of(context);
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'Whole day',
-          style: TextStyle(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w600,
-            color: theme.dashTitle,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Whole day',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
+                  color: theme.dashHeading,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                'Use standard shift hours',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                  color: theme.dashMuted,
+                ),
+              ),
+            ],
           ),
         ),
         GestureDetector(
@@ -33,33 +48,32 @@ class AbsenceWholeDaySwitch extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
-            width: 38.w,
-            height: 20.h,
-            decoration: value
-                ? BoxDecoration(
-                    color: theme.dashPrimary,
-                    borderRadius: BorderRadius.circular(999.r),
-                  )
-                : BoxDecoration(
-                    color: theme.dashChipBg,
-                    borderRadius: BorderRadius.circular(999.r),
-                  ),
+            width: 46.w,
+            height: 28.h,
+            decoration: BoxDecoration(
+              color: value
+                  ? theme.dashPrimary
+                  : (theme.isDark
+                      ? theme.dashSurfaceTint
+                      : const Color(0xFFD3DBE8)),
+              borderRadius: BorderRadius.circular(500.r),
+            ),
             child: AnimatedAlign(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOutCubic,
               alignment:
                   value ? Alignment.centerRight : Alignment.centerLeft,
               child: Container(
-                width: 16.w,
-                height: 16.w,
-                margin: EdgeInsets.symmetric(horizontal: 2.w),
+                width: 22.w,
+                height: 22.w,
+                margin: EdgeInsets.symmetric(horizontal: 3.w),
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 2.r,
+                      color: Colors.black.withValues(alpha: 0.14),
+                      blurRadius: 3.r,
                       offset: Offset(0, 1.h),
                     ),
                   ],

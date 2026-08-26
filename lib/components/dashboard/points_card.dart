@@ -9,14 +9,12 @@ import 'package:chumley_navigator/utils/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../redeem_points/redeem_points_bottom_model.dart';
 
 class PointsCard extends StatelessWidget {
-  const PointsCard({
-    super.key,
-    required this.user,
-  });
+  const PointsCard({super.key, required this.user});
 
   final UserModel user;
 
@@ -40,8 +38,7 @@ class PointsCard extends StatelessWidget {
           theme: theme,
           iconColor: iconColor,
           user: user,
-          performanceHistory:
-              history ?? const EngineerPerformanceHistory(),
+          performanceHistory: history ?? const EngineerPerformanceHistory(),
           cumulativeLabel: cumulativeLabel,
           thisMonthLabel: thisMonthLabel,
         );
@@ -72,7 +69,8 @@ class _PointsCardBody extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
-        decoration: theme.dashCardDecoration(),
+        color: AppColors.primaryBlue,
+        // decoration: theme.dashCardDecoration(),
         padding: EdgeInsets.only(
           left: 11.w,
           right: 12.w,
@@ -90,77 +88,21 @@ class _PointsCardBody extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 38.w,
-                      height: 38.w,
-                      decoration: BoxDecoration(
-                        color: theme.dashStarBg,
-                        border: Border.all(
-                          color: theme.dashStarBorder,
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(Icons.star, color: theme.dashTitle),
-                    ),
-                    SizedBox(width: 10.w),
+                    Icon(Icons.timer, color: AppColors.white, size: 24.sp),
                     Text(
-                      'Available\nPoints Earned',
+                      'Available Points',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15.sp,
-                        color: theme.dashPrimary,
+                        color: AppColors.white,
                         height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    _IconButton(
-                      backgroundColor: theme.dashIconButtonBg,
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.90,
-                            child: RedeemPointsBottomModal(
-                              performanceHistory: performanceHistory,
-                            ),
-                          ),
-                        );
-                      },
-                      child: CustomPaint(
-                        size: Size(14.w, 14.w),
-                        painter: _ClipboardPainter(color: iconColor),
-                      ),
-                    ),
-                    SizedBox(width: 6.w),
-                    _IconButton(
-                      backgroundColor: theme.dashIconButtonBg,
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRoutes.redeemPoints,
-                          arguments: {
-                            'user': user,
-                            'performanceHistory': performanceHistory,
-                          },
-                        );
-                      },
-                      child: CustomPaint(
-                        size: Size(14.w, 14.w),
-                        painter: _ArrowUpRightPainter(color: iconColor),
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            SizedBox(height: 21.h),
+            SizedBox(height: 10.h),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -172,7 +114,7 @@ class _PointsCardBody extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 28.sp,
-                          color: theme.dashTitle,
+                          color: AppColors.white,
                           height: 1,
                         ),
                       ),
@@ -181,18 +123,21 @@ class _PointsCardBody extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14.sp,
-                          color: theme.dashMuted,
+                          color: AppColors.white,
                           height: 1,
                         ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(width: 12.w),
+                Spacer(),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
                   decoration: BoxDecoration(
-                    color: theme.dashChipBg,
+                    color: AppColors.accentLime,
                     borderRadius: BorderRadius.circular(999.r),
                   ),
                   child: Text(
@@ -207,46 +152,97 @@ class _PointsCardBody extends StatelessWidget {
                 ),
               ],
             ),
+
             SizedBox(height: 22.h),
-            Material(
-              color: theme.dashPrimary,
-              borderRadius: BorderRadius.circular(8.r),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.redeemPoints,
-                      arguments: {
-                        'user': user,
-                        'performanceHistory': performanceHistory,
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Material(
+                    borderRadius: BorderRadius.circular(18.r),
+                    color: AppColors.accentLime,
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.redeemPoints,
+                          arguments: {
+                            'user': user,
+                            'performanceHistory': performanceHistory,
+                          },
+                        );
                       },
-                    );
-                  },
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 44.h,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Redeem Points',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16.sp,
-                            color: AppColors.highlightYellow,
-                          ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 38.h,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Redeem Points',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14.sp,
+                                color: AppColors.primaryBlue,
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Icon(
+                              LucideIcons.gift,
+                                size: 18.sp,
+                              color: AppColors.primaryBlue,
+                            ),
+                          ],
                         ),
-                        SizedBox(width: 8.w),
-                        Icon(
-                          Icons.arrow_forward,
-                          size: 20.sp,
-                          color: AppColors.highlightYellow,
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-              ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Material(
+                    borderRadius: BorderRadius.circular(18.r),
+                    color: AppColors.white,
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.redeemPoints,
+                          arguments: {
+                            'user': user,
+                            'performanceHistory': performanceHistory,
+                          },
+                        );
+                      },
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 38.h,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              LucideIcons.history,
+                              size: 18.sp,
+                              color: AppColors.primaryBlue,
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              'History',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14.sp,
+                                color: AppColors.primaryBlue,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

@@ -18,12 +18,8 @@ class VcrFormCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: padding ?? EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-      decoration: BoxDecoration(
-        color: theme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: theme.border, width: 0.5),
-      ),
+      padding: padding ?? EdgeInsets.all(18.r),
+      decoration: theme.dashCardDecoration(radius: 20),
       child: child,
     );
   }
