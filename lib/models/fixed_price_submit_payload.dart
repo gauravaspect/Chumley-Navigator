@@ -156,9 +156,9 @@ class FixedPriceSubmitPayload extends Equatable {
     final drainage = chargeDrainagePatches ? drainagePatchesFee : 0.0;
     final subtotal =
         listPrice + materialsCharge + attendance + ulez + collection + drainage;
-    final vat = subtotal * 0.2;
-    final totalInclVat = subtotal + vat;
-    final deposit = totalInclVat * 0.5;
+    final vat = double.parse((subtotal * 0.2).toStringAsFixed(2));
+    final totalInclVat = double.parse((subtotal + vat).toStringAsFixed(2));
+    final deposit = double.parse((totalInclVat * 0.5).toStringAsFixed(2));
 
     return FixedPriceSubmitPayload(
       workOrderId: workOrderId,
@@ -309,9 +309,9 @@ class FixedPriceSubmitPayload extends Equatable {
     final baseSubtotal = labour + materials + listPrice + collectionFee + ulez;
     final serviceFee = baseSubtotal * (context.resolvedServiceFeePct / 100);
     final subtotal = baseSubtotal + serviceFee;
-    final vat = subtotal * 0.2;
-    final total = subtotal + vat;
-    final deposit = total * 0.5;
+    final vat = double.parse((subtotal * 0.2).toStringAsFixed(2));
+    final total = double.parse((subtotal + vat).toStringAsFixed(2));
+    final deposit = double.parse((total * 0.5).toStringAsFixed(2));
 
     return FixedPriceEstimateBreakdown(
       labour: labour,

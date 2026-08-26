@@ -8,11 +8,12 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 enum PostSubmitPhase {
   jobCompleted,
   followOn,
+  jobClosed,
   visitComplete,
 }
 
-/// Post-submit flow after LD form "Submit report":
-/// Job completed → Follow-on → Visit complete.
+/// Post-submit flow after form "Submit report":
+/// Job completed → Follow-on → Job closed → Visit complete.
 class PostSubmitFlow extends StatelessWidget {
   const PostSubmitFlow({
     super.key,
@@ -76,10 +77,18 @@ class PostSubmitFlow extends StatelessWidget {
             jobNumber: jobNumber,
             customerName: customerName,
             workTypeLabel: workTypeLabel,
-            onNoEnquiry: () => onPhaseChanged(PostSubmitPhase.visitComplete),
+            onNoEnquiry: () => onPhaseChanged(PostSubmitPhase.jobClosed),
             onRaiseEstimate: onRaiseEstimate,
             onRaiseReactive: onRaiseReactive,
             onReferAndEarn: onReferAndEarn,
+          ),
+        PostSubmitPhase.jobClosed => _JobClosedScreen(
+            jobNumber: jobNumber,
+            jobType: jobType,
+            workTypeLabel: workTypeLabel,
+            customerName: customerName,
+            description: description,
+            onVisitComplete: () => onPhaseChanged(PostSubmitPhase.visitComplete),
           ),
         PostSubmitPhase.visitComplete => _VisitCompleteScreen(
             jobNumber: jobNumber,
@@ -349,15 +358,18 @@ class _JobCompletedScreen extends StatelessWidget {
         ),
         SizedBox(height: 8.h),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: labels
               .map(
-                (l) => Text(
-                  l,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: PostSubmitFlow._textSecondary,
+                (l) => Expanded(
+                  child: Center(
+                    child: Text(
+                      l,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: PostSubmitFlow._textSecondary,
+                      ),
+                    ),
                   ),
                 ),
               )
@@ -508,7 +520,7 @@ class _FollowOnScreen extends StatelessWidget {
                   children: [
                     _raiseTile(
                       icon: LucideIcons.plus,
-                      title: 'Raise estimate',
+                      title: 'Create a fixed price quote',
                       subtitle:
                           'Create a new Fixed Price work order for this site',
                       onTap: onRaiseEstimate,
@@ -648,7 +660,327 @@ class _FollowOnScreen extends StatelessWidget {
   }
 }
 
-// ── 3. Visit complete ──────────────────────────────────────────
+// ── 3. Job closed ──────────────────────────────────────────────
+
+class _JobClosedScreen extends StatelessWidget {
+  const _JobClosedScreen({
+    required this.jobNumber,
+    required this.jobType,
+    required this.workTypeLabel,
+    required this.customerName,
+    required this.description,
+    required this.onVisitComplete,
+  });
+
+  final String jobNumber;
+  final String jobType;
+  final String workTypeLabel;
+  final String customerName;
+  final String description;
+  final VoidCallback onVisitComplete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 24.h),
+            physics: const BouncingScrollPhysics(),
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(500.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6.w,
+                          height: 6.w,
+                          decoration: const BoxDecoration(
+                            color: PostSubmitFlow._successGreen,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        SizedBox(width: 6.w),
+                        Text(
+                          'Closed',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.3,
+                            color: PostSubmitFlow._successGreen,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Text(
+                    jobNumber,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: PostSubmitFlow._textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                'Job closed',
+                style: TextStyle(
+                  fontSize: 26.sp,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
+                  color: PostSubmitFlow._textPrimary,
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
+                    decoration: BoxDecoration(
+                      color: PostSubmitFlow._badgeFill,
+                      borderRadius: BorderRadius.circular(500.r),
+                    ),
+                    child: Text(
+                      jobType,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: PostSubmitFlow._textSecondary,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
+                    decoration: BoxDecoration(
+                      color: PostSubmitFlow._badgeFill,
+                      borderRadius: BorderRadius.circular(500.r),
+                    ),
+                    child: Text(
+                      workTypeLabel,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: PostSubmitFlow._textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 18.h),
+              _completedProgress(),
+              SizedBox(height: 16.h),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(14.r),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36.w,
+                      height: 36.w,
+                      decoration: const BoxDecoration(
+                        color: PostSubmitFlow._successGreen,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        LucideIcons.check,
+                        size: 18.sp,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Job closed',
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w700,
+                              color: PostSubmitFlow._textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'All forms submitted and follow-on work handled. Nothing further outstanding on this visit.',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: PostSubmitFlow._textCaption,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'Job details',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: PostSubmitFlow._textSecondary,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16.r),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                child: Column(
+                  children: [
+                    _detailRow('Appointment ID', jobNumber),
+                    Divider(height: 20.h, color: PostSubmitFlow._fieldBorder),
+                    _detailRow('Type', jobType),
+                    Divider(height: 20.h, color: PostSubmitFlow._fieldBorder),
+                    _detailRow('Customer', customerName),
+                    Divider(height: 20.h, color: PostSubmitFlow._fieldBorder),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Description',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: PostSubmitFlow._textCaption,
+                          ),
+                        ),
+                        SizedBox(height: 6.h),
+                        Text(
+                          description,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: PostSubmitFlow._textPrimary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          color: Colors.white,
+          padding: EdgeInsets.fromLTRB(20.w, 14.h, 20.w, 24.h),
+          child: CallStyleActionSlider(
+            text: 'Slide to visit complete',
+            backgroundColor: AppColors.primaryBlue,
+            icon: LucideIcons.chevronRight,
+            isEnabled: true,
+            onConfirm: onVisitComplete,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _completedProgress() {
+    const labels = ['Sched.', 'Dispatch', 'Transit', 'On Site', 'Done'];
+    return Column(
+      children: [
+        Row(
+          children: List.generate(labels.length * 2 - 1, (index) {
+            if (index.isOdd) {
+              return Expanded(
+                child: Container(
+                  height: 2.h,
+                  color: AppColors.primaryBlue,
+                ),
+              );
+            }
+            return Container(
+              width: 16.w,
+              height: 16.w,
+              decoration: const BoxDecoration(
+                color: AppColors.primaryBlue,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(LucideIcons.check, size: 10.sp, color: Colors.white),
+            );
+          }),
+        ),
+        SizedBox(height: 8.h),
+        Row(
+          children: labels
+              .map(
+                (l) => Expanded(
+                  child: Center(
+                    child: Text(
+                      l,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: PostSubmitFlow._textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 110.w,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: PostSubmitFlow._textCaption,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w700,
+              color: PostSubmitFlow._textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── 4. Visit complete ──────────────────────────────────────────
 
 class _VisitCompleteScreen extends StatelessWidget {
   const _VisitCompleteScreen({

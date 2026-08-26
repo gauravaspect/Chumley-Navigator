@@ -1,4 +1,4 @@
-import 'package:chumley_navigator/pillar/visit_local_store.dart';
+import 'package:chumley_navigator/pillar/form_draft_store.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/widgets/job/job_photo_slot.dart';
 import 'package:chumley_navigator/widgets/vehicle/vcr_dashed_border.dart';
@@ -24,7 +24,7 @@ class OnSiteWizard extends StatefulWidget {
   ) onReportSubmitted;
   final String jobId;
   final String jobNumber;
-  final VisitLocalStore? store;
+  final FormDraftStore? store;
 
   static const stepCount = 12;
 
@@ -346,9 +346,9 @@ class _OnSiteWizardState extends State<OnSiteWizard> {
   }
 
   Future<void> _restoreDraft() async {
-    final store = widget.store;
-    if (store == null || widget.jobId.isEmpty) return;
-    final step = await store.loadStep(widget.jobId);
+    final store = widget.store ?? FormDraftStore();
+    if (widget.jobId.isEmpty) return;
+    final step = await store.loadFurthestStep(widget.jobId);
     final photos = await store.loadPhotos(widget.jobId);
     final answers = await store.loadAnswers(widget.jobId);
     if (!mounted) return;
@@ -377,13 +377,13 @@ class _OnSiteWizardState extends State<OnSiteWizard> {
       };
 
   Future<void> _persistDraft() async {
-    final store = widget.store;
-    if (store == null || widget.jobId.isEmpty) return;
-    await store.saveStep(widget.jobId, _currentStep);
-    await store.saveAnswers(widget.jobId, _answersMap());
-    await store.savePhotos(
-      widget.jobId,
-      Map<String, String>.from(_capturedPhotos),
+    final store = widget.store ?? FormDraftStore();
+    if (widget.jobId.isEmpty) return;
+    await store.saveDraft(
+      jobId: widget.jobId,
+      step: _currentStep,
+      answers: _answersMap(),
+      photos: Map<String, String>.from(_capturedPhotos),
     );
   }
 

@@ -1,4 +1,5 @@
-import 'package:chumley_navigator/pillar/visit_controller.dart';
+import 'package:chumley_navigator/pillar/form_draft_store.dart';
+import 'package:chumley_navigator/pillar/jobs_repository.dart';
 import 'package:chumley_navigator/widgets/job/job_photo_slot.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
 import 'package:flutter/material.dart';
@@ -8,10 +9,24 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class WorksFormPage extends StatefulWidget {
   const WorksFormPage({
     super.key,
-    required this.controller,
+    required this.jobId,
+    this.jobNumber = '',
   });
 
-  final VisitController controller;
+  final String jobId;
+  final String jobNumber;
+
+  static Future<bool?> open(
+    BuildContext context, {
+    required String jobId,
+    String jobNumber = '',
+  }) {
+    return Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => WorksFormPage(jobId: jobId, jobNumber: jobNumber),
+      ),
+    );
+  }
 
   @override
   State<WorksFormPage> createState() => _WorksFormPageState();
@@ -24,6 +39,8 @@ class _WorksFormPageState extends State<WorksFormPage> {
   final _parts = TextEditingController();
   String? _beforePath;
   String? _afterPath;
+  final _store = FormDraftStore();
+  final _jobs = JobsRepository();
 
   static const _titles = [
     'Risk assessment',
@@ -47,11 +64,9 @@ class _WorksFormPageState extends State<WorksFormPage> {
   }
 
   Future<void> _restore() async {
-    final store = widget.controller.store;
-    final jobId = widget.controller.jobId;
-    final step = await store.loadStep(jobId);
-    final answers = await store.loadAnswers(jobId);
-    final photos = await store.loadPhotos(jobId);
+    final step = await _store.loadFurthestStep(widget.jobId);
+    final answers = await _store.loadAnswers(widget.jobId);
+    final photos = await _store.loadPhotos(widget.jobId);
     if (!mounted) return;
     setState(() {
       _step = step.clamp(0, 4);
@@ -71,26 +86,28 @@ class _WorksFormPageState extends State<WorksFormPage> {
       };
 
   Future<void> _persist() async {
-    final store = widget.controller.store;
-    final jobId = widget.controller.jobId;
-    await store.saveStep(jobId, _step);
-    await store.saveAnswers(jobId, _answers());
-    await store.savePhotos(jobId, {
-      if (_beforePath != null) 'before': _beforePath!,
-      if (_afterPath != null) 'after': _afterPath!,
-    });
+    await _store.saveDraft(
+      jobId: widget.jobId,
+      step: _step,
+      answers: _answers(),
+      photos: {
+        if (_beforePath != null) 'before': _beforePath!,
+        if (_afterPath != null) 'after': _afterPath!,
+      },
+    );
   }
 
   Future<void> _submit() async {
     await _persist();
-    await widget.controller.signOff(
-      form: 'pm_stage',
+    await _jobs.signOff(
+      jobId: widget.jobId,
+      reportType: 'WORKS',
+      reportSuffix: 'bathroom_pm_stage',
       answers: _answers(),
-      photoUrls: [
-        if (_beforePath != null) _beforePath!,
-        if (_afterPath != null) _afterPath!,
-      ],
-      photoSkips: const {},
+      photoSlots: {
+        if (_beforePath != null) 'before': _beforePath!,
+        if (_afterPath != null) 'after': _afterPath!,
+      },
     );
     if (!mounted) return;
     Navigator.of(context).pop(true);
@@ -108,7 +125,13 @@ class _WorksFormPageState extends State<WorksFormPage> {
               child: Row(
                 children: [
                   CommandCentreBackButton(
-                    onTap: () => Navigator.of(context).maybePop(false),
+                    onTap: () {
+                      if (_step > 0) {
+                        setState(() => _step--);
+                      } else {
+                        Navigator.of(context).maybePop(false);
+                      }
+                    },
                   ),
                   SizedBox(width: 12.w),
                   Text(
@@ -139,23 +162,23 @@ class _WorksFormPageState extends State<WorksFormPage> {
                           child: Text('Standard controls'),
                         ),
                         DropdownMenuItem(
-                          value: 'Additional controls',
-                          child: Text('Additional controls'),
+                          value: 'Enhanced controls',
+                          child: Text('Enhanced controls'),
                         ),
                       ],
                       onChanged: (v) => setState(() => _risk = v),
                     ),
                   if (_step == 1) ...[
                     JobPhotoSlot(
-                      label: 'Before *',
-                      filePath: _beforePath,
-                      onChanged: (p) => setState(() => _beforePath = p),
+                      label: 'Before photo',
+                      path: _beforePath,
+                      onPicked: (p) => setState(() => _beforePath = p),
                     ),
                     SizedBox(height: 12.h),
                     JobPhotoSlot(
-                      label: 'After *',
-                      filePath: _afterPath,
-                      onChanged: (p) => setState(() => _afterPath = p),
+                      label: 'After photo',
+                      path: _afterPath,
+                      onPicked: (p) => setState(() => _afterPath = p),
                     ),
                   ],
                   if (_step == 2)
@@ -163,7 +186,7 @@ class _WorksFormPageState extends State<WorksFormPage> {
                       controller: _parts,
                       maxLines: 4,
                       decoration: const InputDecoration(
-                        labelText: 'Parts used',
+                        labelText: 'Parts consumed',
                         filled: true,
                         fillColor: Colors.white,
                       ),
@@ -178,11 +201,13 @@ class _WorksFormPageState extends State<WorksFormPage> {
                         fillColor: Colors.white,
                       ),
                     ),
-                  if (_step == 4)
-                    Text(
-                      'Submit writes COMPLETE, a pm_stage report, and recounts the project.',
-                      style: TextStyle(fontSize: 14.sp, height: 1.4),
-                    ),
+                  if (_step == 4) ...[
+                    Text('Ready to submit works sign-off for ${widget.jobNumber.isNotEmpty ? widget.jobNumber : widget.jobId}.'),
+                    SizedBox(height: 12.h),
+                    Text('Risk: ${_risk ?? 'Not recorded'}'),
+                    Text('Parts: ${_parts.text.isEmpty ? 'None' : _parts.text}'),
+                    Text('Notes: ${_notes.text.isEmpty ? 'None' : _notes.text}'),
+                  ],
                 ],
               ),
             ),
@@ -190,25 +215,31 @@ class _WorksFormPageState extends State<WorksFormPage> {
               padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
               child: Row(
                 children: [
-                  if (_step > 0)
-                    TextButton(
-                      onPressed: () async {
-                        setState(() => _step--);
-                        await _persist();
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        if (_step > 0) {
+                          setState(() => _step--);
+                        } else {
+                          Navigator.of(context).maybePop(false);
+                        }
                       },
-                      child: const Text('Back'),
+                      child: Text(_step == 0 ? 'Cancel' : 'Back'),
                     ),
-                  const Spacer(),
-                  FilledButton(
-                    onPressed: () async {
-                      if (_step < 4) {
-                        setState(() => _step++);
-                        await _persist();
-                      } else {
-                        await _submit();
-                      }
-                    },
-                    child: Text(_step < 4 ? 'Next' : 'Submit report'),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () async {
+                        if (_step < 4) {
+                          await _persist();
+                          setState(() => _step++);
+                        } else {
+                          await _submit();
+                        }
+                      },
+                      child: Text(_step < 4 ? 'Next' : 'Submit report'),
+                    ),
                   ),
                 ],
               ),

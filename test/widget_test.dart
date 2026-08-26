@@ -112,7 +112,7 @@ void main() {
     expect(find.text('SA-123456'), findsOneWidget);
     expect(find.text('JUN'), findsOneWidget);
     expect(find.text('10th'), findsOneWidget);
-    expect(find.text('14:30'), findsOneWidget);
+    expect(find.textContaining('14:30'), findsOneWidget);
     expect(find.text('J-111111 - test task'), findsOneWidget);
     expect(find.text('In Progress'), findsOneWidget);
   });

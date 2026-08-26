@@ -21,9 +21,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:chumley_navigator/pillar/documents.dart';
-import 'package:chumley_navigator/pillar/mappers.dart';
-import 'package:chumley_navigator/pillar/visit_controller.dart';
+import 'package:chumley_navigator/pillar/form_draft_store.dart';
+import 'package:chumley_navigator/pillar/form_kind.dart';
+import 'package:chumley_navigator/pillar/jobs_repository.dart';
 import 'package:chumley_navigator/screens/forms/cp12_form_page.dart';
 import 'package:chumley_navigator/screens/forms/damp_survey_form_page.dart';
 import 'package:chumley_navigator/screens/forms/form_details.dart';
@@ -63,11 +63,12 @@ class _JobDetailPageState extends State<JobDetailPage>
   bool _isUsingFallbackLocation = false;
 
   // Status lifecycle index
-  int _statusIndex = 1; // 0 = Scheduled, 1 = Dispatched, 4 = Job Completed
+  int _statusIndex = 1; // 0 = Scheduled, 1 = Dispatched, 2 = In Transit, 3 = On Site, 4 = Job Completed
   bool _showOnSiteForm = true;
-  VisitController? _visit;
+  final _jobs = JobsRepository();
+  final _draftStore = FormDraftStore();
 
-  /// After LD form submit: job completed → follow-on → visit complete.
+  /// After form submit: job completed → follow-on → visit complete.
   PostSubmitPhase? _postSubmitPhase;
 
   // Forms panel state (mapped directly)
@@ -157,36 +158,48 @@ class _JobDetailPageState extends State<JobDetailPage>
     return widget.appointment.appointmentNumber;
   }
 
-  VisitFormKind get _formKind {
-    final type = jobTypeOf(widget.appointment.type) ?? JobType.reactive;
-    return formKindFor(
-      jobType: type,
+  FormKind get _formKind {
+    return FormKindResolver.kindOf(
+      jobType: widget.appointment.type,
       trade: widget.appointment.type,
+      workType: widget.appointment.type,
       description: widget.appointment.title,
     );
   }
 
+  static int _statusIndexFor(String? status) {
+    final s = (status ?? '').toUpperCase();
+    if (s == 'COMPLETE' || s == 'JOB COMPLETED') return 4;
+    if (s == 'ON_SITE' || s == 'ON SITE' || s == 'IN_PROGRESS' || s == 'IN PROGRESS') return 3;
+    if (s == 'IN_TRANSIT' || s == 'IN TRANSIT') return 2;
+    if (s == 'DISPATCHED') return 1;
+    return 0; // Scheduled
+  }
+
+  static String _statusForIndex(int index) {
+    switch (index) {
+      case 0:
+        return 'SCHEDULED';
+      case 1:
+        return 'DISPATCHED';
+      case 2:
+        return 'IN_TRANSIT';
+      case 3:
+        return 'ON_SITE';
+      case 4:
+        return 'COMPLETE';
+      default:
+        return 'DISPATCHED';
+    }
+  }
+
   Future<void> _restoreVisit() async {
-    final services = await VisitServices.instance();
-    final identity = await identityFromAuth(
-      jobId: _jobId,
-      jobNumber: widget.appointment.appointmentNumber,
-      customerId: widget.appointment.accountId.isNotEmpty
-          ? widget.appointment.accountId
-          : null,
-      customerName: customerName,
-      customerEmail: widget.appointment.customerEmail,
-      siteId: widget.appointment.siteId,
-      siteAddress: siteAddress,
-    );
-    final controller = VisitController(services: services, identity: identity);
-    final status = await controller.loadStatus() ??
-        jobStatusOf(widget.appointment.status);
+    final status = await _draftStore.loadStatus(_jobId) ?? widget.appointment.status;
+    final idx = _statusIndexFor(status);
     if (!mounted) return;
     setState(() {
-      _visit = controller;
-      _statusIndex = sliderIndexForJobStatus(status);
-      if (status == JobStatus.complete) {
+      _statusIndex = idx;
+      if (idx == 4) {
         _postSubmitPhase = PostSubmitPhase.visitComplete;
         _showOnSiteForm = false;
       }
@@ -196,11 +209,18 @@ class _JobDetailPageState extends State<JobDetailPage>
   Future<void> _advanceStatus() async {
     final nextIndex = _statusIndex + 1;
     if (nextIndex >= _statusLabels.length) return;
-    final next = jobStatusForSliderIndex(nextIndex);
-    final current = jobStatusForSliderIndex(_statusIndex);
-    await _visit?.advanceTo(next, current: current);
+    final nextStatus = _statusForIndex(nextIndex);
+    await _jobs.setStatus(jobId: _jobId, status: nextStatus);
     if (!mounted) return;
-    setState(() => _statusIndex = nextIndex);
+    setState(() {
+      _statusIndex = nextIndex;
+      if (nextIndex == 3) {
+        _showOnSiteForm = true;
+      } else if (nextIndex == 4) {
+        _postSubmitPhase = PostSubmitPhase.jobCompleted;
+        _showOnSiteForm = false;
+      }
+    });
   }
 
   @override
@@ -560,12 +580,15 @@ class _JobDetailPageState extends State<JobDetailPage>
 
     VoidCallback postSubmitBack;
     switch (_postSubmitPhase) {
+      case PostSubmitPhase.jobClosed:
+        postSubmitBack = () =>
+            setState(() => _postSubmitPhase = PostSubmitPhase.followOn);
       case PostSubmitPhase.followOn:
         postSubmitBack = () =>
             setState(() => _postSubmitPhase = PostSubmitPhase.jobCompleted);
       case PostSubmitPhase.visitComplete:
         postSubmitBack = () =>
-            setState(() => _postSubmitPhase = PostSubmitPhase.followOn);
+            setState(() => _postSubmitPhase = PostSubmitPhase.jobClosed);
       case PostSubmitPhase.jobCompleted:
       case null:
         postSubmitBack = () => Navigator.of(context).pop();
@@ -1758,66 +1781,40 @@ class _JobDetailPageState extends State<JobDetailPage>
   }
 
   Future<void> _openFixedPrice() async {
-    final created = await Navigator.pushNamed(
+    await Navigator.pushNamed(
       context,
       AppRoutes.fixedPriceScreen,
       arguments: widget.appointment,
     );
-    if (created == true) {
-      final visit = _visit;
-      if (visit != null) {
-        try {
-          await visit.raiseFp(
-            title: 'Follow-on estimate',
-            scope: jobTitleDescription,
-            totalPrice: 1,
-            totalHours: 1,
-            lines: [
-              FpLineDraft(
-                description: jobTitleDescription,
-                room: '',
-                trade: widget.appointment.type,
-                quantity: 1,
-                unit: 'units',
-                labourHours: 1,
-                labourRate: 1,
-                materialsCost: 0,
-                lineTotal: 1,
-              ),
-            ],
-          );
-        } catch (e) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$e')),
-          );
-        }
-      }
-    }
   }
 
   Future<void> _openLead(RaiseLeadKind kind) async {
-    final visit = _visit;
-    if (visit == null) return;
-    await RaiseLeadPage.open(context, kind: kind, controller: visit);
+    await RaiseLeadPage.open(
+      context,
+      kind: kind,
+      jobId: _jobId,
+      jobNumber: widget.appointment.appointmentNumber,
+    );
   }
 
   Widget _buildOnSiteForm(String jobNo) {
-    final visit = _visit;
     switch (_formKind) {
-      case VisitFormKind.works:
-        if (visit == null) return const SizedBox.shrink();
-        return WorksFormPage(controller: visit);
-      case VisitFormKind.gas:
+      case FormKind.bath:
+        return WorksFormPage(
+          jobId: _jobId,
+          jobNumber: jobNo,
+        );
+      case FormKind.gas:
         return Cp12FormPage(
           appointmentNumber: jobNo,
           jobId: _jobId,
           onSubmitted: () async {
-            await visit?.signOff(
-              form: 'leak_detection',
+            await _jobs.signOff(
+              jobId: _jobId,
+              reportType: 'CP12',
+              reportSuffix: 'gas_safety_record',
               answers: {'form': 'cp12'},
-              photoUrls: const [],
-              photoSkips: const {},
+              photoSlots: const {},
             );
             if (!mounted) return;
             setState(() {
@@ -1827,20 +1824,20 @@ class _JobDetailPageState extends State<JobDetailPage>
             });
           },
         );
-      case VisitFormKind.leak:
+      case FormKind.leak:
         return OnSiteWizard(
           jobId: _jobId,
           jobNumber: jobNo,
-          store: visit?.store,
           onCancelToInTransit: () {
             setState(() => _showOnSiteForm = false);
           },
           onReportSubmitted: (answers, photos) async {
-            await visit?.signOff(
-              form: 'leak_detection',
+            await _jobs.signOff(
+              jobId: _jobId,
+              reportType: 'LD',
+              reportSuffix: 'leak_detection_report',
               answers: answers,
-              photoUrls: photos.values.toList(),
-              photoSkips: const {},
+              photoSlots: photos,
             );
             if (!mounted) return;
             setState(() {

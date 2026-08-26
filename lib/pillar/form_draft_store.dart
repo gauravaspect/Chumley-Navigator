@@ -62,4 +62,15 @@ class FormDraftStore {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('$_photosPrefix$jobId', jsonEncode(photos));
   }
+
+  Future<void> saveDraft({
+    required String jobId,
+    required int step,
+    required Map<String, dynamic> answers,
+    required Map<String, String> photos,
+  }) async {
+    await saveFurthestStep(jobId, step);
+    await saveAnswers(jobId, answers);
+    await savePhotos(jobId, photos);
+  }
 }

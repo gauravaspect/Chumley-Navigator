@@ -329,7 +329,7 @@ class _RaiseFollowOnView extends StatelessWidget {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          '${job.jobNumber} · ${job.trade ?? job.description ?? 'Visit'}',
+                          '${job.jobNumber} · ${job.trade ?? job.description}',
                           style: TextStyle(
                             fontSize: 12.sp,
                             color: NavigatorTokens.textSecondary,
@@ -689,8 +689,10 @@ class _JobClosedView extends StatelessWidget {
                   _detailRow('Type', WorkOrderPage.jobTypeChip(job)),
                   const Divider(height: 18, color: NavigatorTokens.borderHairline),
                   _detailRow('Customer', job.customerName ?? 'Customer'),
-                  const Divider(height: 18, color: NavigatorTokens.borderHairline),
-                  _detailRow('Description', job.description ?? job.siteAddress),
+                  _detailRow(
+                    'Description',
+                    (job.description?.isNotEmpty == true) ? job.description! : job.siteAddress,
+                  ),
                 ],
               ),
             ),

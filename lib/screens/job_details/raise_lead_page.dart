@@ -1,4 +1,4 @@
-import 'package:chumley_navigator/pillar/visit_controller.dart';
+import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
 import 'package:flutter/material.dart';
@@ -10,20 +10,27 @@ class RaiseLeadPage extends StatefulWidget {
   const RaiseLeadPage({
     super.key,
     required this.kind,
-    required this.controller,
+    required this.jobId,
+    this.jobNumber = '',
   });
 
   final RaiseLeadKind kind;
-  final VisitController controller;
+  final String jobId;
+  final String jobNumber;
 
   static Future<bool?> open(
     BuildContext context, {
     required RaiseLeadKind kind,
-    required VisitController controller,
+    required String jobId,
+    String jobNumber = '',
   }) {
     return Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => RaiseLeadPage(kind: kind, controller: controller),
+        builder: (_) => RaiseLeadPage(
+          kind: kind,
+          jobId: jobId,
+          jobNumber: jobNumber,
+        ),
       ),
     );
   }
@@ -69,33 +76,23 @@ class _RaiseLeadPageState extends State<RaiseLeadPage> {
       _error = null;
     });
     try {
-      switch (widget.kind) {
-        case RaiseLeadKind.ppm:
-          await widget.controller.raiseEnquiry(
-            category: 'PPM_INTEREST',
-            subject: 'PPM interest',
-            message: message,
-          );
-        case RaiseLeadKind.pm:
-          await widget.controller.raiseEnquiry(
-            category: 'PM_INTEREST',
-            subject: 'PM project interest',
-            message: message,
-          );
-        case RaiseLeadKind.reactive:
-          await widget.controller.raiseEnquiry(
-            category: 'EMERGENCY',
-            subject: 'Reactive attendance',
-            message: message,
-          );
-        case RaiseLeadKind.refer:
-          await widget.controller.raiseReferral(
-            buddyName: _buddy.text.trim().isEmpty ? 'Referral' : _buddy.text.trim(),
-            description: message,
-            scope: message,
-            totalPrice: 0,
-          );
-      }
+      final category = switch (widget.kind) {
+        RaiseLeadKind.ppm => 'PPM_INTEREST',
+        RaiseLeadKind.pm => 'PM_INTEREST',
+        RaiseLeadKind.reactive => 'HOURLY_ATTENDANCE',
+        RaiseLeadKind.refer => 'REFERRAL',
+      };
+      await PillarClient.raiseEnquiry(
+        category: category,
+        description: widget.kind == RaiseLeadKind.refer
+            ? 'Referral for ${_buddy.text.trim()}: $message'
+            : message,
+        details: {
+          'job_id': widget.jobId,
+          'job_number': widget.jobNumber,
+          if (widget.kind == RaiseLeadKind.refer) 'buddy': _buddy.text.trim(),
+        },
+      );
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
