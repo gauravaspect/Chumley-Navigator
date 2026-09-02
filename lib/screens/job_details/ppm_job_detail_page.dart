@@ -1,11 +1,12 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/models/ppm_jobs_models.dart';
+import 'package:chumley_navigator/models/sa_status.dart';
 import 'package:chumley_navigator/pillar/form_draft_store.dart';
 import 'package:chumley_navigator/pillar/form_kind.dart';
+import 'package:chumley_navigator/pillar/jobs_repository.dart';
 import 'package:chumley_navigator/pillar/visit_job.dart';
 import 'package:chumley_navigator/screens/forms/eicr_form_page.dart';
 import 'package:chumley_navigator/screens/job/job_visit_router.dart';
-import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
 import 'package:chumley_navigator/screens/job_details/widgets/pm_lead_wizard.dart';
 import 'package:chumley_navigator/screens/job_details/widgets/ppm_lead_wizard.dart';
 import 'package:chumley_navigator/screens/job_details/widgets/reactive_attendance_modal.dart';
@@ -35,70 +36,101 @@ class PpmJobDetailPage extends StatefulWidget {
 }
 
 class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
-  // Status lifecycle: 1 = Dispatched, 2 = In Transit, 3 = On Site / In Progress, 4 = Completed
-  int _statusIndex = 1;
+  String _currentStatus = '';
+  List<String> _allowedNextStatuses = const [];
+  bool _loadingDetail = true;
+  bool _statusUpdating = false;
   bool _cp12Completed = false;
   bool _eicrCompleted = false;
   bool _worksFormCompleted = false;
 
   PpmJobTask get task => widget.task;
 
-  static const List<String> _statusLabels = [
-    'Scheduled',
-    'Dispatched',
-    'In Transit',
-    'On Site (In Progress)',
-    'Visit Completed',
-  ];
-
   static const List<Color> _statusColors = [
-    Color(0xFF6728C8),
     Color(0xFF3B82F6),
     Color(0xFFF59E0B),
     Color(0xFF8B5CF6),
+    Color(0xFF2563EB),
     Color(0xFF22C55E),
   ];
 
-  static const List<String> _actionLabels = [
-    'Slide to Dispatch',
-    'Slide to start journey',
-    'Slide to arrive on site',
-    'Continue form',
-    '',
-  ];
-
   final _drafts = FormDraftStore();
+  final _jobs = JobsRepository();
 
-  String get workOrderId =>
+  String get _saId =>
       task.id.isNotEmpty ? task.id : task.appointmentNumber;
 
+  String get workOrderId => _saId;
+
   VisitJob get _visitJob => VisitJob.fromPpmTask(task);
+
+  int get _statusColorIndex {
+    final idx = SaStatus.ladderIndex(_currentStatus);
+    if (idx >= 0) return (idx + 1).clamp(0, _statusColors.length - 1);
+    return 0;
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadSavedStatus();
+    _currentStatus = task.status;
+    _loadAppointment();
   }
 
-  Future<void> _loadSavedStatus() async {
-    final saved = await PillarClient.getLocalStatus(workOrderId);
-    if (saved != null && mounted) {
+  Future<void> _loadAppointment() async {
+    try {
+      final detail = await _jobs.fetchAppointment(_saId);
+      if (!mounted) return;
       setState(() {
-        if (saved == PillarClient.statusInTransit) {
-          _statusIndex = 2;
-        } else if (saved == PillarClient.statusOnSite) {
-          _statusIndex = 3;
-        } else if (saved == PillarClient.statusComplete) {
-          _statusIndex = 4;
+        _loadingDetail = false;
+        if (detail.status.isNotEmpty) _currentStatus = detail.status;
+        _allowedNextStatuses = detail.allowedNextStatuses;
+        if (SaStatus.isVisitComplete(_currentStatus)) {
           _cp12Completed = _visitJob.kind == FormKind.gas;
           _worksFormCompleted = _visitJob.kind == FormKind.bath;
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      final cached = await _drafts.loadStatus(_saId);
+      setState(() {
+        _loadingDetail = false;
+        if (cached != null && cached.isNotEmpty) {
+          _currentStatus = cached;
         }
       });
     }
   }
 
-  bool get isOnSite => _statusIndex >= 3;
-  bool get isCompleted => _statusIndex == 4;
+  bool get isOnSite => SaStatus.isOnSiteOrLater(_currentStatus);
+  bool get isCompleted => SaStatus.isVisitComplete(_currentStatus);
+
+  bool get _primaryFormDone {
+    switch (_visitJob.kind) {
+      case FormKind.gas:
+        return _cp12Completed;
+      case FormKind.bath:
+        return _worksFormCompleted;
+      case FormKind.leak:
+        return false;
+    }
+  }
+
+  String? get _primaryNextStatus =>
+      _allowedNextStatuses.isNotEmpty ? _allowedNextStatuses.first : null;
+
+  String get _primaryActionLabel {
+    if (SaStatus.isOnSite(_currentStatus) && !_primaryFormDone) {
+      return 'Continue form';
+    }
+    final next = _primaryNextStatus;
+    if (next == null) return '';
+    return SaStatus.actionLabel(next);
+  }
+
+  List<String> get _skipAheadStatuses => _allowedNextStatuses.length > 1
+      ? _allowedNextStatuses.sublist(1)
+      : const [];
 
   String _formatHour(int hour) =>
       '${hour.toString().padLeft(2, '0')}:00';
@@ -129,26 +161,25 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
     );
   }
 
-  Future<void> _syncStatusFromStore() async {
-    final saved = await PillarClient.getLocalStatus(workOrderId);
-    if (!mounted || saved == null) return;
-    setState(() {
-      if (saved == PillarClient.statusInTransit) {
-        _statusIndex = 2;
-      } else if (saved == PillarClient.statusOnSite) {
-        _statusIndex = 3;
-      } else if (saved == PillarClient.statusComplete) {
-        _statusIndex = 4;
-        switch (_visitJob.kind) {
-          case FormKind.gas:
-            _cp12Completed = true;
-          case FormKind.bath:
-            _worksFormCompleted = true;
-          case FormKind.leak:
-            break;
+  Future<void> _syncStatusFromApi() async {
+    try {
+      final detail = await _jobs.fetchAppointment(_saId);
+      if (!mounted) return;
+      setState(() {
+        _currentStatus = detail.status;
+        _allowedNextStatuses = detail.allowedNextStatuses;
+        if (SaStatus.isVisitComplete(_currentStatus)) {
+          switch (_visitJob.kind) {
+            case FormKind.gas:
+              _cp12Completed = true;
+            case FormKind.bath:
+              _worksFormCompleted = true;
+            case FormKind.leak:
+              break;
+          }
         }
-      }
-    });
+      });
+    } catch (_) {}
   }
 
   Future<void> _openVisitWizard({required int initialStep}) async {
@@ -159,7 +190,8 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
       onSubmitted: () {
         if (mounted) {
           setState(() {
-            _statusIndex = 4;
+            _currentStatus = SaStatus.visitComplete;
+            _allowedNextStatuses = const [];
             switch (_visitJob.kind) {
               case FormKind.gas:
                 _cp12Completed = true;
@@ -172,7 +204,7 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
         }
       },
     );
-    await _syncStatusFromStore();
+    await _syncStatusFromApi();
   }
 
   Future<void> _openPrimaryVisitForm() async {
@@ -206,28 +238,56 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
     }
   }
 
-  Future<void> _advanceStatus() async {
-    if (_statusIndex == 1) {
-      await PillarClient.setStatus(
-        jobId: workOrderId,
-        newStatus: PillarClient.statusInTransit,
-        engineerEmail: task.engineerEmail,
-      );
-      if (mounted) setState(() => _statusIndex = 2);
+  Future<void> _advanceStatus([String? targetStatus]) async {
+    if (SaStatus.isOnSite(_currentStatus) && !_primaryFormDone) {
+      final step = await _drafts.loadFurthestStep(workOrderId);
+      await _openVisitWizard(initialStep: step);
       return;
     }
 
-    if (_statusIndex == 2) {
-      await _openVisitWizard(initialStep: 0);
-      if (mounted && _statusIndex < 3) {
-        setState(() => _statusIndex = 3);
+    final next = targetStatus ?? _primaryNextStatus;
+    if (next == null) return;
+
+    if (SaStatus.matches(next, SaStatus.onSite)) {
+      setState(() => _statusUpdating = true);
+      try {
+        final result = await _jobs.setStatus(saId: _saId, status: next);
+        if (mounted) {
+          setState(() {
+            _statusUpdating = false;
+            _currentStatus = result.status;
+            _allowedNextStatuses = result.allowedNextStatuses;
+          });
+        }
+        await _openVisitWizard(initialStep: 0);
+      } catch (e) {
+        if (mounted) {
+          setState(() => _statusUpdating = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString())),
+          );
+        }
       }
       return;
     }
 
-    if (_statusIndex == 3) {
-      final step = await _drafts.loadFurthestStep(workOrderId);
-      await _openVisitWizard(initialStep: step);
+    setState(() => _statusUpdating = true);
+    try {
+      final result = await _jobs.setStatus(saId: _saId, status: next);
+      if (mounted) {
+        setState(() {
+          _statusUpdating = false;
+          _currentStatus = result.status;
+          _allowedNextStatuses = result.allowedNextStatuses;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _statusUpdating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
     }
   }
 
@@ -282,24 +342,24 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
                       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                       margin: EdgeInsets.only(bottom: 12.h),
                       decoration: BoxDecoration(
-                        color: _statusColors[_statusIndex].withValues(alpha: 0.12),
+                        color: _statusColors[_statusColorIndex].withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: _statusColors[_statusIndex].withValues(alpha: 0.35)),
+                        border: Border.all(color: _statusColors[_statusColorIndex].withValues(alpha: 0.35)),
                       ),
                       child: Row(
                         children: [
                           Icon(
                             isCompleted ? LucideIcons.badgeCheck : LucideIcons.clock,
                             size: 18.sp,
-                            color: _statusColors[_statusIndex],
+                            color: _statusColors[_statusColorIndex],
                           ),
                           SizedBox(width: 10.w),
                           Text(
-                            'Status: ${_statusLabels[_statusIndex]}',
+                            'Status: ${SaStatus.displayLabel(_currentStatus)}',
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w700,
-                              color: _statusColors[_statusIndex],
+                              color: _statusColors[_statusColorIndex],
                             ),
                           ),
                         ],
@@ -536,8 +596,16 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
             ),
           ],
         ),
-        child: isCompleted
-            ? Container(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_loadingDetail)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                child: const CircularProgressIndicator(strokeWidth: 2),
+              )
+            else if (isCompleted)
+              Container(
                 width: double.infinity,
                 height: 48.h,
                 alignment: Alignment.center,
@@ -552,7 +620,7 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
                     Icon(LucideIcons.badgeCheck, color: const Color(0xFF22C55E), size: 20.sp),
                     SizedBox(width: 8.w),
                     Text(
-                      'PPM Visit Completed & Synced to Spine',
+                      'Visit Complete',
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
@@ -562,17 +630,36 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
                   ],
                 ),
               )
-            : CallStyleActionSlider(
-                text: _actionLabels[_statusIndex],
-                backgroundColor: _statusColors[_statusIndex],
-                icon: _statusIndex == 1
-                    ? LucideIcons.navigation
-                    : _statusIndex == 2
-                        ? LucideIcons.wrench
-                        : LucideIcons.badgeCheck,
-                isEnabled: _statusIndex < 3 || (_statusIndex == 3 && (_cp12Completed || _eicrCompleted)),
-                onConfirm: _advanceStatus,
+            else
+              CallStyleActionSlider(
+                text: _primaryActionLabel,
+                backgroundColor: _statusColors[_statusColorIndex],
+                icon: SaStatus.isOnSiteOrLater(_currentStatus)
+                    ? LucideIcons.wrench
+                    : LucideIcons.navigation,
+                isEnabled: !_statusUpdating &&
+                    (_primaryNextStatus != null ||
+                        (SaStatus.isOnSite(_currentStatus) && !_primaryFormDone)),
+                onConfirm: () => _advanceStatus(),
               ),
+            if (_skipAheadStatuses.isNotEmpty && !isCompleted && !_loadingDetail) ...[
+              SizedBox(height: 10.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                alignment: WrapAlignment.center,
+                children: _skipAheadStatuses.map((status) {
+                  return OutlinedButton(
+                    onPressed: _statusUpdating
+                        ? null
+                        : () => _advanceStatus(status),
+                    child: Text(status),
+                  );
+                }).toList(growable: false),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

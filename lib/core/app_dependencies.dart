@@ -22,7 +22,9 @@ import 'package:chumley_navigator/screens/milestones/cubit/milestones_cubit.dart
 import 'package:chumley_navigator/screens/milestones/repo/milestones_repository.dart';
 import 'package:chumley_navigator/screens/milestones/service/milestones_api_service.dart';
 import 'package:chumley_navigator/screens/job_details/cubit/fixed_price_cubit.dart';
+import 'package:chumley_navigator/screens/job_details/repo/appointments_repository.dart';
 import 'package:chumley_navigator/screens/job_details/repo/fixed_price_repository.dart';
+import 'package:chumley_navigator/screens/job_details/service/appointments_api_service.dart';
 import 'package:chumley_navigator/screens/job_details/service/fixed_price_api_service.dart';
 import 'package:chumley_navigator/screens/chumley_ai/auth/chumley_auth_provider.dart';
 import 'package:chumley_navigator/screens/chumley_ai/cubit/chumley_chat_cubit.dart';
@@ -54,6 +56,7 @@ class AppDependencies {
       DashboardApiService(apiClient);
   static final DashboardRepository dashboardRepository = DashboardRepository(
     dashboardApiService,
+    appointmentsRepository: appointmentsRepository,
   );
 
   static final LeaderboardApiService leaderboardApiService =
@@ -85,6 +88,11 @@ class AppDependencies {
       FixedPriceApiService(apiClient);
   static final FixedPriceRepository fixedPriceRepository =
       FixedPriceRepository(fixedPriceApiService);
+
+  static final AppointmentsApiService appointmentsApiService =
+      AppointmentsApiService(apiClient);
+  static final AppointmentsRepository appointmentsRepository =
+      AppointmentsRepository(appointmentsApiService);
 
   static final ChumleyAuthProvider chumleyAuthProvider =
       ChumleyAuthProvider(apiClient);

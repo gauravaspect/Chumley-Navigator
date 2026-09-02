@@ -2,6 +2,7 @@ import 'package:chumley_navigator/components/dashboard/compact_schedule_job_card
 import 'package:chumley_navigator/models/ppm_jobs_models.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/screens/dashboard/calendar_full_screen.dart';
+import 'package:chumley_navigator/shimmers/schedule_shimmer.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
@@ -14,10 +15,12 @@ class TodaysScheduleCard extends StatefulWidget {
     super.key,
     this.appointments = const [],
     this.ppmTasks = const [],
+    this.isLoading = false,
   });
 
   final List<Appointment> appointments;
   final List<PpmJobTask> ppmTasks;
+  final bool isLoading;
 
   @override
   State<TodaysScheduleCard> createState() => _TodaysScheduleCardState();
@@ -61,8 +64,7 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
     return false;
   }
 
-  bool _hasPpm(DateTime date) =>
-      widget.ppmTasks.isNotEmpty && _isSameDay(date, _today);
+  bool _hasPpm(DateTime date) => false;
 
   List<Appointment> get _dayAppointments {
     return widget.appointments.where((a) {
@@ -77,11 +79,7 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
     }).toList();
   }
 
-  List<PpmJobTask> get _dayPpmTasks {
-    if (!_isSameDay(_selectedDate, _today)) return const [];
-    if (_filter != 'All' && _filter != 'PPM') return const [];
-    return widget.ppmTasks;
-  }
+  List<PpmJobTask> get _dayPpmTasks => const [];
 
   List<String> get _filterOptions {
     final types = <String>{'All'};
@@ -89,7 +87,6 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
       final type = a.type.isNotEmpty ? a.type : null;
       if (type != null && type.isNotEmpty) types.add(type);
     }
-    if (widget.ppmTasks.isNotEmpty) types.add('PPM');
     return types.toList();
   }
 
@@ -121,6 +118,7 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
                 context,
                 appointments: widget.appointments,
                 ppmTasks: widget.ppmTasks,
+                isLoading: widget.isLoading,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -162,7 +160,9 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
               SizedBox(height: 14.h),
               _filterBar(theme),
               SizedBox(height: 8.h),
-              if (empty)
+              if (widget.isLoading)
+                ScheduleCardShimmer(theme: theme)
+              else if (empty)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 20.h),
                   child: Center(

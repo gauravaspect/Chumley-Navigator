@@ -5,6 +5,7 @@ import 'package:chumley_navigator/pillar/form_kind.dart';
 class VisitJob {
   const VisitJob({
     required this.id,
+    required this.saId,
     required this.jobNumber,
     required this.status,
     this.customerName = '',
@@ -23,6 +24,7 @@ class VisitJob {
   });
 
   final String id;
+  final String saId;
   final String jobNumber;
   final String status;
   final String customerName;
@@ -49,23 +51,37 @@ class VisitJob {
   String get coercedJobType => JobTypeCoerce.coerce(jobType);
 
   factory VisitJob.fromAppointment(Appointment a) {
+    final custName = a.customerName.isNotEmpty
+        ? a.customerName
+        : (a.customerContactName.isNotEmpty
+            ? a.customerContactName
+            : a.customerEmail);
+    final siteAddr = a.siteAddress.isNotEmpty
+        ? (a.sitePostcode.isNotEmpty && !a.siteAddress.contains(a.sitePostcode)
+            ? '${a.siteAddress}, ${a.sitePostcode}'
+            : a.siteAddress)
+        : (a.siteName.isNotEmpty ? a.siteName : a.title);
+
     return VisitJob(
       id: a.sourceWorkOrderId.isNotEmpty ? a.sourceWorkOrderId : a.id,
+      saId: a.id,
       jobNumber: a.appointmentNumber.isNotEmpty ? a.appointmentNumber : a.id,
       status: a.status,
-      customerName: a.customerEmail,
-      siteAddress: a.title,
+      customerName: custName,
+      siteAddress: siteAddr,
       jobType: a.type,
-      trade: a.title,
-      workType: a.type,
-      description: a.title,
+      trade: a.workType.isNotEmpty ? a.workType : a.title,
+      workType: a.workType.isNotEmpty ? a.workType : a.type,
+      description: a.workType.isNotEmpty ? a.workType : a.title,
       scheduledStart: a.scheduledStart,
+      scheduledEnd: a.scheduledEnd,
     );
   }
 
   factory VisitJob.fromPpmTask(PpmJobTask t) {
     return VisitJob(
       id: t.id,
+      saId: t.id,
       jobNumber: t.appointmentNumber.isNotEmpty ? t.appointmentNumber : t.id,
       status: t.status,
       customerName: t.allocatedEngineerName,
@@ -86,6 +102,7 @@ class VisitJob {
   VisitJob copyWith({String? status}) {
     return VisitJob(
       id: id,
+      saId: saId,
       jobNumber: jobNumber,
       status: status ?? this.status,
       customerName: customerName,

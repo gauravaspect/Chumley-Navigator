@@ -4,23 +4,9 @@ import 'dart:io' show Platform;
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/app_constants.dart';
 import 'package:chumley_navigator/core/log.dart';
+import 'package:chumley_navigator/models/engineer_form_model.dart';
+import 'package:chumley_navigator/models/sa_status.dart';
 import 'package:chumley_navigator/models/user_model.dart';
-import 'package:chumley_navigator/utils/colors.dart';
-import 'package:chumley_navigator/utils/dashboard_theme.dart';
-import 'package:chumley_navigator/utils/routes.dart';
-import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
-import 'package:chumley_navigator/widgets/ui/call_style_action_slider.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'dart:math' as math;
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:chumley_navigator/pillar/form_draft_store.dart';
 import 'package:chumley_navigator/pillar/form_kind.dart';
 import 'package:chumley_navigator/pillar/jobs_repository.dart';
@@ -32,7 +18,24 @@ import 'package:chumley_navigator/screens/forms/vent_hygiene_form_page.dart';
 import 'package:chumley_navigator/screens/job_details/on_site_wizard.dart';
 import 'package:chumley_navigator/screens/job_details/post_submit_flow.dart';
 import 'package:chumley_navigator/screens/job_details/raise_lead_page.dart';
+import 'package:chumley_navigator/screens/job_details/service/appointments_api_service.dart';
 import 'package:chumley_navigator/screens/job_details/works_form_page.dart';
+import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/utils/routes.dart';
+import 'package:chumley_navigator/widgets/ui/call_style_action_slider.dart';
+import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'dart:math' as math;
 
 class JobDetailPage extends StatefulWidget {
   final Appointment appointment;
@@ -62,16 +65,22 @@ class _JobDetailPageState extends State<JobDetailPage>
   StreamSubscription<Position>? _locationSubscription;
   bool _isUsingFallbackLocation = false;
 
-  // Status lifecycle index
-  int _statusIndex = 1; // 0 = Scheduled, 1 = Dispatched, 2 = In Transit, 3 = On Site, 4 = Job Completed
   bool _showOnSiteForm = true;
   final _jobs = JobsRepository();
   final _draftStore = FormDraftStore();
+  late Appointment _appointment;
+  String _currentStatus = '';
+  List<String> _allowedNextStatuses = const [];
+  bool _statusUpdating = false;
+  bool _loadingDetail = true;
 
   /// After form submit: job completed → follow-on → visit complete.
   PostSubmitPhase? _postSubmitPhase;
 
-  // Forms panel state (mapped directly)
+  // Forms panel state
+  List<EngineerFormSummary> _formsList = const [];
+  bool _formsLoading = false;
+  final Map<String, bool> _localFormCompletedOverrides = {};
   bool _ldFormCompleted = false;
   bool _dampSurveyCompleted = false;
   bool _ventHygieneCompleted = false;
@@ -87,36 +96,20 @@ class _JobDetailPageState extends State<JobDetailPage>
   // Map Controller
   final MapController _mapController = MapController();
 
-  static const List<String> _statusLabels = [
-    'Scheduled',
-    'Dispatched',
-    'In Transit',
-    'In Progress',
-    'Job Completed',
-  ];
-
   static const List<Color> _statusColors = [
-    Color(0xFF6728C8), // Scheduled
     Color(0xFF27549D), // Dispatched
     Color(0xFFF59E0B), // In Transit
-    Color(0xFF8B5CF6), // In Progress
-    Color(0xFF22C55E), // Job Completed
+    Color(0xFF8B5CF6), // On site
+    Color(0xFF3B82F6), // Job Closure
+    Color(0xFF22C55E), // Visit Complete
   ];
 
   static const List<IconData> _statusIcons = [
-    LucideIcons.calendarClock, // Scheduled
-    LucideIcons.bell, // Dispatched
-    LucideIcons.navigation, // In Transit
-    LucideIcons.wrench, // In Progress
-    LucideIcons.badgeCheck, // Job Completed
-  ];
-
-  static const List<String> _actionLabels = [
-    'Slide to Dispatch',
-    'Slide to Start Transit',
-    'Slide to Arrive On Site',
-    'Slide to Complete Job',
-    '', // terminal state
+    LucideIcons.bell,
+    LucideIcons.navigation,
+    LucideIcons.wrench,
+    LucideIcons.clipboardCheck,
+    LucideIcons.badgeCheck,
   ];
 
   static const List<String> _shortMonthNames = [
@@ -147,80 +140,169 @@ class _JobDetailPageState extends State<JobDetailPage>
   @override
   void initState() {
     super.initState();
+    _appointment = widget.appointment;
+    _currentStatus = widget.appointment.status;
+    _allowedNextStatuses = widget.appointment.allowedNextStatuses;
     Log('Job details: ${widget.appointment.toJson()}', name: 'JobDetail');
     _initializeMapAndLocation();
     _restoreVisit();
   }
 
   String get _jobId {
-    final id = widget.appointment.id.trim();
+    final id = _appointment.id.trim();
     if (id.isNotEmpty) return id;
-    return widget.appointment.appointmentNumber;
+    return _appointment.appointmentNumber;
   }
 
   FormKind get _formKind {
     return FormKindResolver.kindOf(
-      jobType: widget.appointment.type,
-      trade: widget.appointment.type,
-      workType: widget.appointment.type,
-      description: widget.appointment.title,
+      jobType: _appointment.type,
+      trade: _appointment.type,
+      workType: _appointment.type,
+      description: _appointment.title,
     );
   }
 
-  static int _statusIndexFor(String? status) {
-    final s = (status ?? '').toUpperCase();
-    if (s == 'COMPLETE' || s == 'JOB COMPLETED') return 4;
-    if (s == 'ON_SITE' || s == 'ON SITE' || s == 'IN_PROGRESS' || s == 'IN PROGRESS') return 3;
-    if (s == 'IN_TRANSIT' || s == 'IN TRANSIT') return 2;
-    if (s == 'DISPATCHED') return 1;
-    return 0; // Scheduled
+  int get _progressIndex =>
+      SaStatus.progressIndex(_currentStatus).clamp(0, _statusColors.length - 1);
+
+  Color get _currentStatusColor => _statusColors[_progressIndex];
+
+  IconData get _currentStatusIcon => _statusIcons[_progressIndex];
+
+  String? get _primaryNextStatus =>
+      _allowedNextStatuses.isNotEmpty ? _allowedNextStatuses.first : null;
+
+  List<String> get _skipAheadStatuses => _allowedNextStatuses.length > 1
+      ? _allowedNextStatuses.sublist(1)
+      : const [];
+
+  void _applyStatusResponse({
+    required String status,
+    required List<String> allowedNext,
+  }) {
+    _currentStatus = status;
+    _allowedNextStatuses = allowedNext;
+
+    if (SaStatus.isOnSite(status)) {
+      _showOnSiteForm = true;
+      _postSubmitPhase = null;
+    } else if (SaStatus.isJobClosure(status)) {
+      _showOnSiteForm = false;
+      _postSubmitPhase ??= PostSubmitPhase.jobCompleted;
+    } else if (SaStatus.isVisitComplete(status)) {
+      _showOnSiteForm = false;
+      _postSubmitPhase = PostSubmitPhase.visitComplete;
+    }
   }
 
-  static String _statusForIndex(int index) {
-    switch (index) {
-      case 0:
-        return 'SCHEDULED';
-      case 1:
-        return 'DISPATCHED';
-      case 2:
-        return 'IN_TRANSIT';
-      case 3:
-        return 'ON_SITE';
-      case 4:
-        return 'COMPLETE';
-      default:
-        return 'DISPATCHED';
+  Future<void> _advanceStatus(String targetStatus) async {
+    if (targetStatus.trim().isEmpty || _statusUpdating) return;
+
+    setState(() => _statusUpdating = true);
+    try {
+      final result = await _jobs.setStatus(saId: _jobId, status: targetStatus);
+      if (!mounted) return;
+      setState(() {
+        _statusUpdating = false;
+        if (result.appointment != null) {
+          _appointment = result.appointment!;
+        }
+        _applyStatusResponse(
+          status: result.status,
+          allowedNext: result.allowedNextStatuses,
+        );
+      });
+    } catch (e) {
+      Log('API status update failed: $e', name: 'JobDetail');
+      if (!mounted) return;
+      setState(() => _statusUpdating = false);
+      final errorMsg = e is AppointmentApiException
+          ? e.message
+          : e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            errorMsg,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.r),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _advanceAfterSignOff() async {
+    final result = await _jobs.advanceAfterSignOff(_jobId);
+    if (!mounted || result == null) return;
+    setState(() {
+      if (result.appointment != null) {
+        _appointment = result.appointment!;
+      }
+      _applyStatusResponse(
+        status: result.status,
+        allowedNext: result.allowedNextStatuses,
+      );
+    });
+  }
+
+  Future<void> _fetchForms() async {
+    final id = _jobId.trim();
+    if (id.isEmpty) return;
+    setState(() => _formsLoading = true);
+    try {
+      final forms = await _jobs.fetchForms(id);
+      if (!mounted) return;
+      setState(() {
+        _formsList = forms;
+        _formsLoading = false;
+      });
+    } catch (e) {
+      Log('Failed to fetch appointment forms for $id: $e', name: 'JobDetail');
+      if (!mounted) return;
+      setState(() => _formsLoading = false);
     }
   }
 
   Future<void> _restoreVisit() async {
-    final status = await _draftStore.loadStatus(_jobId) ?? widget.appointment.status;
-    final idx = _statusIndexFor(status);
-    if (!mounted) return;
-    setState(() {
-      _statusIndex = idx;
-      if (idx == 4) {
-        _postSubmitPhase = PostSubmitPhase.visitComplete;
-        _showOnSiteForm = false;
-      }
-    });
-  }
-
-  Future<void> _advanceStatus() async {
-    final nextIndex = _statusIndex + 1;
-    if (nextIndex >= _statusLabels.length) return;
-    final nextStatus = _statusForIndex(nextIndex);
-    await _jobs.setStatus(jobId: _jobId, status: nextStatus);
-    if (!mounted) return;
-    setState(() {
-      _statusIndex = nextIndex;
-      if (nextIndex == 3) {
-        _showOnSiteForm = true;
-      } else if (nextIndex == 4) {
-        _postSubmitPhase = PostSubmitPhase.jobCompleted;
-        _showOnSiteForm = false;
-      }
-    });
+    _fetchForms();
+    setState(() => _loadingDetail = true);
+    try {
+      final detail = await _jobs.fetchAppointment(_jobId);
+      if (!mounted) return;
+      setState(() {
+        _loadingDetail = false;
+        if (detail.appointment != null) {
+          _appointment = detail.appointment!;
+        }
+        _applyStatusResponse(
+          status: detail.status.isNotEmpty
+              ? detail.status
+              : _currentStatus,
+          allowedNext: detail.allowedNextStatuses.isNotEmpty
+              ? detail.allowedNextStatuses
+              : _appointment.allowedNextStatuses,
+        );
+      });
+      _resolveSitePosition();
+    } catch (e) {
+      Log('Failed to fetch appointment $_jobId: $e', name: 'JobDetail');
+      final status =
+          await _draftStore.loadStatus(_jobId) ?? widget.appointment.status;
+      if (!mounted) return;
+      setState(() {
+        _loadingDetail = false;
+        _applyStatusResponse(
+          status: status,
+          allowedNext: _appointment.allowedNextStatuses,
+        );
+      });
+    }
   }
 
   @override
@@ -245,7 +327,7 @@ class _JobDetailPageState extends State<JobDetailPage>
     double? apptLat;
     double? apptLng;
     try {
-      final dynamic appt = widget.appointment;
+      final dynamic appt = _appointment;
       apptLat = appt.latitude as double?;
       apptLng = appt.longitude as double?;
     } catch (_) {}
@@ -522,61 +604,90 @@ class _JobDetailPageState extends State<JobDetailPage>
   }
 
   String get customerName {
-    final parts = widget.appointment.title.split(' - ');
+    if (_appointment.customerName.isNotEmpty) {
+      return _appointment.customerName;
+    }
+    if (_appointment.customerContactName.isNotEmpty) {
+      return _appointment.customerContactName;
+    }
+    final parts = _appointment.title.split(' - ');
     if (parts.length > 1) {
       return parts[1];
     }
-    return 'Phil Harris';
+    return _appointment.customerEmail.isNotEmpty
+        ? _appointment.customerEmail
+        : 'Phil Harris';
   }
 
   String get siteAddress {
-    final parts = widget.appointment.title.split(' - ');
+    if (_appointment.siteAddress.isNotEmpty) {
+      final addr = _appointment.siteAddress;
+      final pc = _appointment.sitePostcode;
+      if (pc.isNotEmpty && !addr.contains(pc)) {
+        return '$addr, $pc';
+      }
+      return addr;
+    }
+    if (_appointment.siteName.isNotEmpty) {
+      return _appointment.siteName;
+    }
+    final parts = _appointment.title.split(' - ');
     if (parts.length > 2) {
       return parts.sublist(2).join(', ');
     }
-    return '5 Brighton Queens Road, Brighton and Hove BN1 3XP, United Kingdom';
+    return _appointment.title.isNotEmpty
+        ? _appointment.title
+        : '5 Brighton Queens Road, Brighton and Hove BN1 3XP, United Kingdom';
   }
 
   String get jobTitleDescription {
-    final parts = widget.appointment.title.split(' - ');
+    if (_appointment.workType.isNotEmpty) {
+      return _appointment.workType;
+    }
+    final parts = _appointment.title.split(' - ');
     if (parts.isNotEmpty) {
       final possibleDesc = parts[0];
       if (possibleDesc.startsWith('J-')) {
-        return widget.appointment.type.isNotEmpty
-            ? widget.appointment.type
-            : 'EML Emergency Light Test';
+        return _appointment.type.isNotEmpty ? _appointment.type : 'Work Order';
       }
       return possibleDesc;
     }
-    return 'EML Emergency Light Test';
+    return _appointment.type.isNotEmpty ? _appointment.type : 'Work Order';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
 
-    final start = widget.appointment.scheduledStart;
+    final start = _appointment.scheduledStart;
+    final end = _appointment.scheduledEnd;
     final timeStr = start != null ? _formatTime(start) : '10:00';
-    final timeEndStr = start != null
-        ? _formatTime(start.add(const Duration(hours: 2)))
-        : '12:00';
+    final timeEndStr = end != null
+        ? _formatTime(end)
+        : (start != null
+              ? _formatTime(start.add(const Duration(hours: 1)))
+              : '12:00');
     final formattedDate = start != null
         ? _formatDateString(start)
         : 'TUESDAY, JUN 9';
 
-    final jobType = widget.appointment.type.isNotEmpty
-        ? widget.appointment.type
+    final jobType = _appointment.type.isNotEmpty
+        ? _appointment.type
         : 'Reactive';
-    final jobNo = widget.appointment.appointmentNumber.isNotEmpty
-        ? widget.appointment.appointmentNumber
+    final jobNo = _appointment.appointmentNumber.isNotEmpty
+        ? _appointment.appointmentNumber
         : 'SA-290627';
 
-    final currentStatus = _statusLabels[_statusIndex];
-    final currentStatusColor = _statusColors[_statusIndex];
-    final isCompleted = _statusIndex == _statusLabels.length - 1;
-    final showPostSubmit = _postSubmitPhase != null;
+    final currentStatus = SaStatus.displayLabel(_currentStatus);
+    final currentStatusColor = _currentStatusColor;
+    final isCompleted = SaStatus.isVisitComplete(_currentStatus);
+    final isJobClosure = SaStatus.isJobClosure(_currentStatus);
+    final showPostSubmit = _postSubmitPhase != null || isJobClosure;
     final showOnSiteWizard =
-        isOnSite && !isCompleted && !showPostSubmit && _showOnSiteForm;
+        SaStatus.isOnSite(_currentStatus) &&
+        !isCompleted &&
+        !showPostSubmit &&
+        _showOnSiteForm;
 
     VoidCallback postSubmitBack;
     switch (_postSubmitPhase) {
@@ -644,64 +755,57 @@ class _JobDetailPageState extends State<JobDetailPage>
                       },
                       onBackToHome: () => Navigator.of(context).pop(),
                       onRaiseEstimate: _openFixedPrice,
-                      onRaiseReactive: () =>
-                          _openLead(RaiseLeadKind.reactive),
+                      onRaiseReactive: () => _openLead(RaiseLeadKind.reactive),
                       onReferAndEarn: () => _openLead(RaiseLeadKind.refer),
                     ),
                   ),
                 ],
               )
             : showOnSiteWizard
-                ? _buildOnSiteForm(jobNo)
-                : Stack(
+            ? _buildOnSiteForm(jobNo)
+            : Stack(
+                children: [
+                  Column(
                     children: [
-                      Column(
-                        children: [
-                          brandingHeader(
-                            onBack: () => Navigator.of(context).pop(),
-                          ),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              physics: const BouncingScrollPhysics(),
-                              padding: EdgeInsets.only(bottom: 96.h),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildStatusHeader(
-                                    theme,
-                                    currentStatus,
-                                    currentStatusColor,
-                                    jobNo,
-                                    jobType,
-                                  ),
-                                  _buildSectionLabel(theme, 'JOB DETAILS'),
-                                  _buildJobDetailsCard(theme, jobNo),
-                                  _buildSectionLabel(theme, 'SCHEDULE'),
-                                  _buildScheduleCard(
-                                    theme,
-                                    formattedDate,
-                                    timeStr,
-                                    timeEndStr,
-                                    jobNo,
-                                    currentStatus,
-                                  ),
-                                  _buildSectionLabel(theme, 'SITE'),
-                                  _buildSiteCard(theme),
-                                  if (isCompleted) _buildCompletedBanner(theme),
-                                  SizedBox(height: 16.h),
-                                ],
+                      brandingHeader(onBack: () => Navigator.of(context).pop()),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: EdgeInsets.only(bottom: 96.h),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildStatusHeader(
+                                theme,
+                                currentStatus,
+                                currentStatusColor,
+                                jobNo,
+                                jobType,
                               ),
-                            ),
+                              _buildSectionLabel(theme, 'JOB DETAILS'),
+                              _buildJobDetailsCard(theme, jobNo),
+                              _buildSectionLabel(theme, 'SCHEDULE'),
+                              _buildScheduleCard(
+                                theme,
+                                formattedDate,
+                                timeStr,
+                                timeEndStr,
+                                jobNo,
+                                currentStatus,
+                              ),
+                              _buildSectionLabel(theme, 'SITE'),
+                              _buildSiteCard(theme),
+                              if (isCompleted) _buildCompletedBanner(theme),
+                              SizedBox(height: 16.h),
+                            ],
                           ),
-                        ],
-                      ),
-                      _buildActionsPanel(
-                        theme,
-                        currentStatusColor,
-                        isCompleted,
+                        ),
                       ),
                     ],
                   ),
+                  _buildActionsPanel(theme, currentStatusColor, isCompleted),
+                ],
+              ),
       ),
     );
   }
@@ -714,7 +818,7 @@ class _JobDetailPageState extends State<JobDetailPage>
     String jobType,
   ) {
     final isDark = theme.isDark;
-    final statusIcon = _statusIcons[_statusIndex];
+    final statusIcon = _currentStatusIcon;
 
     return Container(
       margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
@@ -829,7 +933,7 @@ class _JobDetailPageState extends State<JobDetailPage>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
                 decoration: BoxDecoration(
-                  color: Color(0xFFE3E9F2),
+                  color: const Color(0xFFE3E9F2),
                   borderRadius: BorderRadius.circular(100.r),
                 ),
                 child: Text(
@@ -837,7 +941,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                   style: TextStyle(
                     fontSize: 9.sp,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF5A6B85),
+                    color: const Color(0xFF5A6B85),
                   ),
                 ),
               ),
@@ -853,22 +957,23 @@ class _JobDetailPageState extends State<JobDetailPage>
   }
 
   Widget _buildStatusProgressTrack(DashboardTheme theme, Color statusColor) {
-    final shortLabels = ['Sched.', 'Dispatched', 'Transit', 'On Site', 'Done'];
+    const shortLabels = ['Disp.', 'Transit', 'On Site', 'Closure', 'Done'];
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final totalWidth = constraints.maxWidth;
         final dotSize = 8.w;
         final activeDotSize = 12.w;
-        final colWidth = totalWidth / 5;
+        final colWidth = totalWidth / shortLabels.length;
 
-        // Line starts at center of the first column and ends at center of the last column
         final lineStart = colWidth / 2;
         final lineEnd = totalWidth - colWidth / 2;
         final lineLength = lineEnd - lineStart;
 
-        // Active fraction: clamp between 0 and 4.
-        final activeFraction = (_statusIndex.clamp(0, 4)) / 4.0;
+        final progressIdx = _progressIndex;
+        final activeFraction =
+            (progressIdx.clamp(0, shortLabels.length - 1)) /
+            (shortLabels.length - 1);
         final activeLength = lineLength * activeFraction;
 
         return Column(
@@ -903,12 +1008,9 @@ class _JobDetailPageState extends State<JobDetailPage>
                   // Row of dots — completed steps show a check icon
                   Row(
                     children: List.generate(shortLabels.length, (i) {
-                      final isActive = i <= _statusIndex;
-                      final isCurrent = i == _statusIndex;
-                      final isCompleted =
-                          i < _statusIndex ||
-                          (_statusIndex == shortLabels.length - 1 &&
-                              i == _statusIndex);
+                      final isActive = i <= progressIdx;
+                      final isCurrent = i == progressIdx;
+                      final isCompleted = i < progressIdx;
                       final size = isCompleted
                           ? 16.w
                           : isCurrent
@@ -958,11 +1060,10 @@ class _JobDetailPageState extends State<JobDetailPage>
               ),
             ),
             SizedBox(height: 6.h),
-            // Label row (display all labels, aligned centered under their respective dots)
             Row(
               children: List.generate(shortLabels.length, (i) {
-                final isActive = i <= _statusIndex;
-                final isCurrent = i == _statusIndex;
+                final isActive = i <= progressIdx;
+                final isCurrent = i == progressIdx;
 
                 return Expanded(
                   child: Text(
@@ -1292,10 +1393,10 @@ class _JobDetailPageState extends State<JobDetailPage>
             Container(
               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
               decoration: BoxDecoration(
-                color: _statusColors[_statusIndex].withValues(alpha: 0.10),
+                color: _currentStatusColor.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(8.r),
                 border: Border.all(
-                  color: _statusColors[_statusIndex].withValues(alpha: 0.25),
+                  color: _currentStatusColor.withValues(alpha: 0.25),
                   width: 1.0,
                 ),
               ),
@@ -1304,7 +1405,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                   Icon(
                     Icons.calendar_today_outlined,
                     size: 18.sp,
-                    color: _statusColors[_statusIndex],
+                    color: _currentStatusColor,
                   ),
                 ],
               ),
@@ -1339,24 +1440,24 @@ class _JobDetailPageState extends State<JobDetailPage>
                 color: Color(0xFFE3E9F2),
                 borderRadius: BorderRadius.circular(100.r),
               ),
-             child: Row(
-              children: [
-                Container(
-                  width: 6.w,
-                  height: 6.w,
-                  decoration: BoxDecoration(
-                    color: theme.textMuted,
-                    shape: BoxShape.circle,
+              child: Row(
+                children: [
+                  Container(
+                    width: 6.w,
+                    height: 6.w,
+                    decoration: BoxDecoration(
+                      color: theme.textMuted,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                SizedBox(width: 4.w),
-                Text(
-                  '2h window',
-                  style: TextStyle(fontSize: 9.sp, color: theme.textMuted),
-                ),
-              ],
+                  SizedBox(width: 4.w),
+                  Text(
+                    '2h window',
+                    style: TextStyle(fontSize: 9.sp, color: theme.textMuted),
+                  ),
+                ],
+              ),
             ),
-            )
           ],
         ),
       ),
@@ -1569,12 +1670,7 @@ class _JobDetailPageState extends State<JobDetailPage>
   Widget _buildJobDetailsCard(DashboardTheme theme, String jobNo) {
     final items = [
       ('Appointment ID', jobNo),
-      (
-        'Type',
-        widget.appointment.type.isNotEmpty
-            ? widget.appointment.type
-            : 'Reactive',
-      ),
+      ('Type', _appointment.type.isNotEmpty ? _appointment.type : 'Reactive'),
       ('Customer', customerName),
       ('Description', jobTitleDescription),
     ];
@@ -1623,7 +1719,11 @@ class _JobDetailPageState extends State<JobDetailPage>
                           borderRadius: BorderRadius.circular(20.r),
                         ),
                         child: Text(
-                          "Trace a suspected water leak in the bathroom, kitchen and interfloor void. Raise a follow-on.",
+                          _appointment.workType.isNotEmpty
+                              ? _appointment.workType
+                              : (_appointment.title.isNotEmpty
+                                    ? _appointment.title
+                                    : jobTitleDescription),
                           style: valueStyle,
                         ),
                       ),
@@ -1755,7 +1855,7 @@ class _JobDetailPageState extends State<JobDetailPage>
     );
   }
 
-  bool get isOnSite => _statusIndex >= 3;
+  bool get isOnSite => SaStatus.isOnSiteOrLater(_currentStatus);
 
   void _showOnSiteRequiredSnackbar() {
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -1784,7 +1884,7 @@ class _JobDetailPageState extends State<JobDetailPage>
     await Navigator.pushNamed(
       context,
       AppRoutes.fixedPriceScreen,
-      arguments: widget.appointment,
+      arguments: _appointment,
     );
   }
 
@@ -1793,17 +1893,14 @@ class _JobDetailPageState extends State<JobDetailPage>
       context,
       kind: kind,
       jobId: _jobId,
-      jobNumber: widget.appointment.appointmentNumber,
+      jobNumber: _appointment.appointmentNumber,
     );
   }
 
   Widget _buildOnSiteForm(String jobNo) {
     switch (_formKind) {
       case FormKind.bath:
-        return WorksFormPage(
-          jobId: _jobId,
-          jobNumber: jobNo,
-        );
+        return WorksFormPage(jobId: _jobId, jobNumber: jobNo);
       case FormKind.gas:
         return Cp12FormPage(
           appointmentNumber: jobNo,
@@ -1816,12 +1913,9 @@ class _JobDetailPageState extends State<JobDetailPage>
               answers: {'form': 'cp12'},
               photoSlots: const {},
             );
+            await _advanceAfterSignOff();
             if (!mounted) return;
-            setState(() {
-              _statusIndex = _statusLabels.length - 1;
-              _postSubmitPhase = PostSubmitPhase.jobCompleted;
-              _showOnSiteForm = false;
-            });
+            setState(() => _showOnSiteForm = false);
           },
         );
       case FormKind.leak:
@@ -1839,12 +1933,9 @@ class _JobDetailPageState extends State<JobDetailPage>
               answers: answers,
               photoSlots: photos,
             );
+            await _advanceAfterSignOff();
             if (!mounted) return;
-            setState(() {
-              _statusIndex = _statusLabels.length - 1;
-              _postSubmitPhase = PostSubmitPhase.jobCompleted;
-              _showOnSiteForm = false;
-            });
+            setState(() => _showOnSiteForm = false);
           },
         );
     }
@@ -2043,38 +2134,157 @@ class _JobDetailPageState extends State<JobDetailPage>
     );
   }
 
+  Future<void> _openFormByWorkType(String workTypeId, String title) async {
+    if (!isOnSite) {
+      _showOnSiteRequiredSnackbar();
+      return;
+    }
+    final appt = _appointment;
+    final workOrderId = appt.sourceWorkOrderId.isNotEmpty
+        ? appt.sourceWorkOrderId
+        : appt.id;
+    final workOrderLabel = appt.appointmentNumber.isNotEmpty
+        ? appt.appointmentNumber
+        : workOrderId;
+    final normalized = workTypeId.toLowerCase();
+
+    Widget page;
+    if (normalized.contains('damp')) {
+      page = DampSurveyFormPage(
+        saId: _jobId,
+        workOrderId: workOrderId,
+        workOrderLabel: workOrderLabel,
+        workTypeId: workTypeId,
+      );
+    } else if (normalized.contains('vent')) {
+      page = VentHygieneFormPage(
+        saId: _jobId,
+        workOrderId: workOrderId,
+        workOrderLabel: workOrderLabel,
+        workTypeId: workTypeId,
+      );
+    } else if (normalized.contains('cp12') || normalized.contains('gas')) {
+      page = Cp12FormPage(
+        jobId: _jobId,
+        appointmentNumber: workOrderLabel,
+      );
+    } else if (normalized.contains('works') || normalized.contains('bath')) {
+      page = WorksFormPage(
+        jobId: _jobId,
+        jobNumber: workOrderLabel,
+      );
+    } else {
+      page = LdFormPage(
+        saId: _jobId,
+        workOrderId: workOrderId,
+        workOrderLabel: workOrderLabel,
+        workTypeId: workTypeId,
+      );
+    }
+
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => page),
+    );
+
+    if (result == true) {
+      setState(() {
+        _localFormCompletedOverrides[workTypeId] = true;
+      });
+    }
+    await _fetchForms();
+  }
+
+  String _subtitleForWorkType(String workTypeId) {
+    final wt = workTypeId.toLowerCase();
+    if (wt.contains('ld') || wt.contains('leak')) {
+      return 'Electrical Installation Condition Report · BS 7671:2018+A2:2022';
+    }
+    if (wt.contains('damp')) {
+      return 'Surface / depth readings · BS 5250:2021';
+    }
+    if (wt.contains('vent')) {
+      return 'Vent heat loss calculation · BS 8204:2011';
+    }
+    if (wt.contains('cp12') || wt.contains('gas')) {
+      return 'Gas Safety Record · Landlord Certificate';
+    }
+    return 'Inspection & Certification Record';
+  }
+
   Widget _buildFormsCard(DashboardTheme theme) {
     final pinkColor = const Color(0xFFEC4899);
     final onSite = isOnSite;
-    final formItems = [
-      (
-        'LD Form',
-        'Electrical Installation Condition Report · BS 7671:2018+A2:2022',
-        _ldFormCompleted,
-        (bool v) => setState(() => _ldFormCompleted = v),
-        FormType.LDForm,
-      ),
-      (
-        'Damp Survey Form',
-        'Surface / depth readings · BS 5250:2021',
-        _dampSurveyCompleted,
-        (bool v) => setState(() => _dampSurveyCompleted = v),
-        FormType.DampSurveyForm,
-      ),
-      (
-        'Vent Hygiene Forms',
-        'Vent heat loss calculation · BS 8204:2011',
-        _ventHygieneCompleted,
-        (bool v) => setState(() => _ventHygieneCompleted = v),
-        FormType.VentHygeineForm,
-      ),
-    ];
 
-    final completedCount = [
-      _ldFormCompleted,
-      _dampSurveyCompleted,
-      _ventHygieneCompleted,
-    ].where((e) => e).length;
+    // Build form display items from API fetched list or fallback standard forms
+    final List<({
+      String workTypeId,
+      String title,
+      String subtitle,
+      bool isCompleted,
+      bool isDraft,
+      ValueChanged<bool> onToggle,
+      VoidCallback onTap,
+    })> formItems;
+
+    if (_formsList.isNotEmpty) {
+      final activeForms = _formsList.where((form) {
+        final wt = form.workTypeId.toLowerCase();
+        // Comment out LD form for now — keep only HVAC / other active forms
+        return !wt.contains('ld') && !wt.contains('leak');
+      }).toList();
+
+      formItems = activeForms.map((form) {
+        final isCompleted = _localFormCompletedOverrides[form.workTypeId] ??
+            form.isSubmitted ||
+            form.status.toLowerCase() == 'completed' ||
+            form.status.toLowerCase() == 'submitted';
+        final isDraft = form.isDraft && !isCompleted;
+        return (
+          workTypeId: form.workTypeId,
+          title: form.title.isNotEmpty ? form.title : form.workTypeId,
+          subtitle: _subtitleForWorkType(form.workTypeId),
+          isCompleted: isCompleted,
+          isDraft: isDraft,
+          onToggle: (bool v) {
+            setState(() {
+              _localFormCompletedOverrides[form.workTypeId] = v;
+            });
+          },
+          onTap: () => _openFormByWorkType(form.workTypeId, form.title),
+        );
+      }).toList();
+    } else {
+      formItems = [
+        // LD Form commented out for now — keeping HVAC only
+        // (
+        //   workTypeId: 'ld_form',
+        //   title: 'LD Form',
+        //   subtitle: 'Electrical Installation Condition Report · BS 7671:2018+A2:2022',
+        //   isCompleted: _localFormCompletedOverrides['ld_form'] ?? _ldFormCompleted,
+        //   isDraft: false,
+        //   onToggle: (bool v) => setState(() {
+        //     _ldFormCompleted = v;
+        //     _localFormCompletedOverrides['ld_form'] = v;
+        //   }),
+        //   onTap: () => _openFormByWorkType('ld_form', 'LD Form'),
+        // ),
+        (
+          workTypeId: 'vent_hygiene',
+          title: 'Vent Hygiene Forms (HVAC)',
+          subtitle: 'Vent heat loss calculation · BS 8204:2011',
+          isCompleted: _localFormCompletedOverrides['vent_hygiene'] ?? _ventHygieneCompleted,
+          isDraft: false,
+          onToggle: (bool v) => setState(() {
+            _ventHygieneCompleted = v;
+            _localFormCompletedOverrides['vent_hygiene'] = v;
+          }),
+          onTap: () => _openFormByWorkType('vent_hygiene', 'Vent Hygiene Forms'),
+        ),
+      ];
+    }
+
+    final completedCount = formItems.where((e) => e.isCompleted).length;
     final totalForms = formItems.length;
 
     return Padding(
@@ -2109,6 +2319,17 @@ class _JobDetailPageState extends State<JobDetailPage>
                     color: onSite ? theme.text : theme.textMuted,
                   ),
                 ),
+                if (_formsLoading) ...[
+                  SizedBox(width: 8.w),
+                  SizedBox(
+                    width: 12.w,
+                    height: 12.w,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.5,
+                      color: pinkColor,
+                    ),
+                  ),
+                ],
                 const Spacer(),
                 if (!onSite)
                   Row(
@@ -2147,60 +2368,19 @@ class _JobDetailPageState extends State<JobDetailPage>
                 opacity: onSite ? 1.0 : 0.55,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: () async {
-                    if (!onSite) {
-                      _showOnSiteRequiredSnackbar();
-                      return;
-                    }
-                    final result = await Navigator.push<bool>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) {
-                          final appt = widget.appointment;
-                          final workOrderId = appt.sourceWorkOrderId.isNotEmpty
-                              ? appt.sourceWorkOrderId
-                              : appt.id;
-                          final workOrderLabel =
-                              appt.appointmentNumber.isNotEmpty
-                              ? appt.appointmentNumber
-                              : workOrderId;
-
-                          switch (item.$5) {
-                            case FormType.LDForm:
-                              return LdFormPage(
-                                workOrderId: workOrderId,
-                                workOrderLabel: workOrderLabel,
-                              );
-                            case FormType.DampSurveyForm:
-                              return DampSurveyFormPage(
-                                workOrderId: workOrderId,
-                                workOrderLabel: workOrderLabel,
-                              );
-                            case FormType.VentHygeineForm:
-                              return VentHygieneFormPage(
-                                workOrderId: workOrderId,
-                                workOrderLabel: workOrderLabel,
-                              );
-                          }
-                        },
-                      ),
-                    );
-                    if (result == true) {
-                      item.$4(true);
-                    }
-                  },
+                  onTap: item.onTap,
                   child: Container(
                     margin: EdgeInsets.only(bottom: 10.h),
                     padding: EdgeInsets.all(12.r),
                     decoration: BoxDecoration(
-                      color: item.$3
+                      color: item.isCompleted
                           ? pinkColor.withValues(alpha: 0.06)
                           : theme.isDark
                           ? AppColors.darkSurfaceDeep
                           : AppColors.backgroundGray,
                       borderRadius: BorderRadius.circular(10.r),
                       border: Border.all(
-                        color: item.$3
+                        color: item.isCompleted
                             ? pinkColor.withValues(alpha: 0.35)
                             : theme.border,
                         width: 0.75,
@@ -2217,7 +2397,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                               _showOnSiteRequiredSnackbar();
                               return;
                             }
-                            item.$4(!item.$3);
+                            item.onToggle(!item.isCompleted);
                           },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 250),
@@ -2225,16 +2405,16 @@ class _JobDetailPageState extends State<JobDetailPage>
                             width: 20.w,
                             height: 20.w,
                             decoration: BoxDecoration(
-                              color: item.$3 ? pinkColor : Colors.transparent,
+                              color: item.isCompleted ? pinkColor : Colors.transparent,
                               borderRadius: BorderRadius.circular(5.r),
                               border: Border.all(
-                                color: item.$3
+                                color: item.isCompleted
                                     ? pinkColor
                                     : theme.textMuted.withValues(alpha: 0.4),
                                 width: 1.5,
                               ),
                             ),
-                            child: item.$3
+                            child: item.isCompleted
                                 ? Icon(
                                     LucideIcons.check,
                                     size: 12.sp,
@@ -2248,20 +2428,46 @@ class _JobDetailPageState extends State<JobDetailPage>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                item.$1,
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: onSite ? theme.text : theme.textMuted,
-                                  decoration: item.$3
-                                      ? TextDecoration.lineThrough
-                                      : TextDecoration.none,
-                                ),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      item.title,
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: onSite ? theme.text : theme.textMuted,
+                                        decoration: item.isCompleted
+                                            ? TextDecoration.lineThrough
+                                            : TextDecoration.none,
+                                      ),
+                                    ),
+                                  ),
+                                  if (item.isDraft)
+                                    Container(
+                                      margin: EdgeInsets.only(left: 6.w),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 6.w,
+                                        vertical: 2.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(4.r),
+                                      ),
+                                      child: Text(
+                                        'Draft',
+                                        style: TextStyle(
+                                          fontSize: 9.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFFD97706),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                               SizedBox(height: 2.h),
                               Text(
-                                item.$2,
+                                item.subtitle,
                                 style: TextStyle(
                                   fontSize: 11.sp,
                                   color: theme.textMuted,
@@ -2354,10 +2560,8 @@ class _JobDetailPageState extends State<JobDetailPage>
     Color statusColor,
     bool isCompleted,
   ) {
-    // final isFormsStep = _statusIndex == 6;
-    // final allFormsChecked = _form1Checked && _form2Checked && _form3Checked;
-    // final canAdvance = !isCompleted && (!isFormsStep || allFormsChecked);
-    final canAdvance = !isCompleted;
+    final primary = _primaryNextStatus;
+    final skipAhead = _skipAheadStatuses;
 
     return Positioned(
       bottom: 0,
@@ -2383,7 +2587,6 @@ class _JobDetailPageState extends State<JobDetailPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag handle
             Container(
               width: 36.w,
               height: 4.h,
@@ -2393,16 +2596,27 @@ class _JobDetailPageState extends State<JobDetailPage>
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
-            if (!isCompleted)
-              CallStyleActionSlider(
-                text: _actionLabels[_statusIndex],
-                backgroundColor: statusColor,
-                icon: _statusIcons[_statusIndex],
-                isEnabled: canAdvance,
-                onConfirm: _advanceStatus,
+            if (_loadingDetail)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                child: SizedBox(
+                  width: 20.w,
+                  height: 20.w,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: statusColor,
+                  ),
+                ),
               )
-            else
-              // Completed terminal state badge
+            else if (!isCompleted && primary != null)
+              CallStyleActionSlider(
+                text: SaStatus.actionLabel(primary),
+                backgroundColor: statusColor,
+                icon: _currentStatusIcon,
+                isEnabled: !_statusUpdating,
+                onConfirm: () => _advanceStatus(primary),
+              )
+            else if (isCompleted)
               Container(
                 width: double.infinity,
                 height: 48.h,
@@ -2424,7 +2638,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                     ),
                     SizedBox(width: 8.w),
                     Text(
-                      'Job Closed',
+                      'Visit Complete',
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
@@ -2434,6 +2648,22 @@ class _JobDetailPageState extends State<JobDetailPage>
                   ],
                 ),
               ),
+            if (skipAhead.isNotEmpty && !isCompleted && !_loadingDetail) ...[
+              SizedBox(height: 10.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                alignment: WrapAlignment.center,
+                children: skipAhead.map((status) {
+                  return OutlinedButton(
+                    onPressed: _statusUpdating
+                        ? null
+                        : () => _advanceStatus(status),
+                    child: Text(status),
+                  );
+                }).toList(growable: false),
+              ),
+            ],
           ],
         ),
       ),

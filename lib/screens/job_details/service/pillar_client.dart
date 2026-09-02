@@ -22,6 +22,7 @@ class PillarClient {
   static const String colCustomerEnquiries = 'demo_customer_enquiries';
   static const String colPmProjects = 'demo_pm_projects';
   static const String colPmTasks = 'demo_pm_tasks';
+  static const String colFormDrafts = 'demo_form_drafts';
 
   // Contract Status Enums (Sequential Ladder)
   static const String statusScheduled = 'SCHEDULED';
@@ -252,7 +253,15 @@ class PillarClient {
         'photos': photoSlots,
         'engineer_email': engineerEmail,
         'engineer_name': engineerName,
+        'status': 'submitted',
         'created_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // Mark draft as submitted in demo_form_drafts
+      final draftDoc = _db.collection(colFormDrafts).doc('${jobId}__${reportSuffix.toLowerCase()}');
+      batch.set(draftDoc, {
+        'status': 'submitted',
+        'updated_at': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
       // Status update timeline doc
@@ -292,6 +301,59 @@ class PillarClient {
       Log('Sign-off error in PillarClient: $e\n$st', name: 'PillarClient');
       return true;
     }
+  }
+
+  /// Writes form draft schema and answers to Firestore `demo_form_drafts/{saId}__{workTypeId}`.
+  static Future<bool> saveFormDraft({
+    required String saId,
+    required String workTypeId,
+    required Map<String, dynamic> answers,
+    Map<String, String> photoSlots = const {},
+    int step = 0,
+    String engineerEmail = defaultEngineerEmail,
+    Map<String, dynamic>? extraData,
+  }) async {
+    final docId = '${saId.trim()}__${workTypeId.trim().toLowerCase()}';
+    try {
+      if (!enableFirestoreWrites) {
+        Log('[TEST MODE] saveFormDraft for $docId (Answers: ${answers.length})', name: 'PillarClient');
+        return true;
+      }
+      final draftDoc = _db.collection(colFormDrafts).doc(docId);
+      await draftDoc.set({
+        'sa_id': saId,
+        'work_type_id': workTypeId,
+        'answers': answers,
+        'photo_slots': photoSlots,
+        'step': step,
+        'engineer_email': engineerEmail,
+        'status': 'draft',
+        'updated_at': FieldValue.serverTimestamp(),
+        if (extraData != null) ...extraData,
+      }, SetOptions(merge: true));
+      return true;
+    } catch (e, st) {
+      Log('Draft error in PillarClient: $e\n$st', name: 'PillarClient');
+      return false;
+    }
+  }
+
+  /// Retrieves draft form document from Firestore `demo_form_drafts/{saId}__{workTypeId}`.
+  static Future<Map<String, dynamic>?> getFormDraft({
+    required String saId,
+    required String workTypeId,
+  }) async {
+    final docId = '${saId.trim()}__${workTypeId.trim().toLowerCase()}';
+    try {
+      if (!enableFirestoreWrites) return null;
+      final draftDoc = await _db.collection(colFormDrafts).doc(docId).get();
+      if (draftDoc.exists && draftDoc.data() != null) {
+        return draftDoc.data();
+      }
+    } catch (e) {
+      Log('Failed to get form draft from Firestore: $e', name: 'PillarClient');
+    }
+    return null;
   }
 
   /// Recounts PM Project visits and updates completion percentage on `demo_pm_projects`

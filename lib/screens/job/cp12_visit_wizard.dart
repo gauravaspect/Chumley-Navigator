@@ -72,20 +72,36 @@ class _Cp12VisitWizardState extends State<Cp12VisitWizard> {
   }
 
   Future<void> _hydrate() async {
-    _answers = await _store.loadAnswers(widget.job.id);
-    _photos = await _store.loadPhotos(widget.job.id);
+    final draft = await _jobs.fetchFormDraft(
+      saId: widget.job.saId,
+      workTypeId: 'CP12',
+    );
+    if (draft != null) {
+      _answers = Map<String, dynamic>.from(draft.answers);
+      _photos = Map<String, String>.from(draft.photoSlots);
+      if (draft.step > _step) {
+        _step = draft.step.clamp(0, JobJourney.gas.form.length - 1);
+      }
+    } else {
+      _answers = await _store.loadAnswers(widget.job.id);
+      _photos = await _store.loadPhotos(widget.job.id);
+    }
     if (mounted) setState(() {});
     await _jobs.ensureOnSiteAtFormEntry(
-      jobId: widget.job.id,
+      saId: widget.job.saId,
       formStepIndex: _step,
     );
-    await _store.saveFurthestStep(widget.job.id, _step);
+    await _persist();
   }
 
   Future<void> _persist() async {
-    await _store.saveAnswers(widget.job.id, _answers);
-    await _store.savePhotos(widget.job.id, _photos);
-    await _store.saveFurthestStep(widget.job.id, _step);
+    await _jobs.saveFormDraft(
+      saId: widget.job.saId,
+      workTypeId: 'CP12',
+      answers: _answers,
+      photoSlots: _photos,
+      step: _step,
+    );
   }
 
   Future<void> _saveDraft() async {
@@ -102,10 +118,11 @@ class _Cp12VisitWizardState extends State<Cp12VisitWizard> {
     }
     setState(() => _busy = true);
     try {
-      await _jobs.signOff(
-        jobId: widget.job.id,
-        reportType: 'pm_stage',
-        reportSuffix: 'pm',
+      await _jobs.submitForm(
+        saId: widget.job.saId,
+        workTypeId: 'CP12',
+        reportType: 'CP12',
+        reportSuffix: 'gas_safety_record',
         answers: _answers,
         photoSlots: _photos,
         pmProjectId: widget.job.pmProjectId,

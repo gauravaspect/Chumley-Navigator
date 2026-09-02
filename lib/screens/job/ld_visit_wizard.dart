@@ -53,24 +53,37 @@ class _LdVisitWizardState extends State<LdVisitWizard> {
   }
 
   Future<void> _hydrate() async {
-    final answers = await _store.loadAnswers(widget.job.id);
-    final photos = await _store.loadPhotos(widget.job.id);
+    final draft = await _jobs.fetchFormDraft(
+      saId: widget.job.saId,
+      workTypeId: 'leak_detection',
+    );
+    if (draft != null) {
+      _answers = Map<String, dynamic>.from(draft.answers);
+      _photos = Map<String, String>.from(draft.photoSlots);
+      if (draft.step > _step) {
+        _step = draft.step.clamp(0, LdFlow.hosts.length - 1);
+      }
+    } else {
+      _answers = await _store.loadAnswers(widget.job.id);
+      _photos = await _store.loadPhotos(widget.job.id);
+    }
     if (!mounted) return;
-    setState(() {
-      _answers = answers;
-      _photos = photos;
-    });
+    setState(() {});
     await _jobs.ensureOnSiteAtFormEntry(
-      jobId: widget.job.id,
+      saId: widget.job.saId,
       formStepIndex: _step,
     );
-    await _store.saveFurthestStep(widget.job.id, _step);
+    await _persist();
   }
 
   Future<void> _persist() async {
-    await _store.saveAnswers(widget.job.id, _answers);
-    await _store.savePhotos(widget.job.id, _photos);
-    await _store.saveFurthestStep(widget.job.id, _step);
+    await _jobs.saveFormDraft(
+      saId: widget.job.saId,
+      workTypeId: 'leak_detection',
+      answers: _answers,
+      photoSlots: _photos,
+      step: _step,
+    );
   }
 
   void _setAnswer(String key, String value) {
@@ -95,8 +108,9 @@ class _LdVisitWizardState extends State<LdVisitWizard> {
       _error = null;
     });
     try {
-      await _jobs.signOff(
-        jobId: widget.job.id,
+      await _jobs.submitForm(
+        saId: widget.job.saId,
+        workTypeId: 'leak_detection',
         reportType: 'leak_detection',
         reportSuffix: 'ld',
         answers: _answers,

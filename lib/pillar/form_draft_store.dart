@@ -44,7 +44,7 @@ class FormDraftStore {
 
   Future<void> saveStatus(String jobId, String status) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('$_statusPrefix$jobId', status.toUpperCase());
+    await prefs.setString('$_statusPrefix$jobId', status.trim());
   }
 
   Future<Map<String, String>> loadPhotos(String jobId) async {

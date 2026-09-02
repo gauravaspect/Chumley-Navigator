@@ -24,6 +24,19 @@ class ApiEndpoints {
   static const getFixedPriceWorkTypes = "/api/work-orders/catalog/work-types";
   static const submitWorkOrder = '/api/work-orders';
   static const getPpmJobs = '/api/demo/ppm-tasks';
+  static const engineerAppointments = '/api/engineer/appointments';
+  static String engineerAppointment(String saId) =>
+      '/api/engineer/appointments/$saId';
+  static String engineerAppointmentStatus(String saId) =>
+      '/api/engineer/appointments/$saId/status';
+  static String engineerAppointmentForms(String saId) =>
+      '/api/engineer/appointments/$saId/forms';
+  static String engineerAppointmentFormDetail(String saId, String workTypeId) =>
+      '/api/engineer/appointments/$saId/forms/$workTypeId';
+  static String engineerAppointmentFormDraft(String saId, String workTypeId) =>
+      '/api/engineer/appointments/$saId/forms/$workTypeId/draft';
+  static String engineerAppointmentFormSubmit(String saId, String workTypeId) =>
+      '/api/engineer/appointments/$saId/forms/$workTypeId/submit';
 
   // Chumley / Navigator chat
   static const chatToken = '/api/auth/chat-token';

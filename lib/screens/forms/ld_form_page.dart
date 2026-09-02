@@ -1,4 +1,6 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/core/log.dart';
+import 'package:chumley_navigator/pillar/jobs_repository.dart';
 import 'package:chumley_navigator/screens/forms/widgets/hse_risk_section.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
@@ -16,6 +18,8 @@ class LdFormPage extends StatefulWidget {
     super.key,
     this.workOrderId = '',
     this.workOrderLabel = '',
+    this.workTypeId = 'ld_form',
+    this.saId = '',
   });
 
   /// Salesforce / source work order id from job details.
@@ -23,6 +27,12 @@ class LdFormPage extends StatefulWidget {
 
   /// Display label (appointment number) when available.
   final String workOrderLabel;
+
+  /// Form identifier for API endpoint / Firebase schema.
+  final String workTypeId;
+
+  /// Service Appointment id.
+  final String saId;
 
   @override
   State<LdFormPage> createState() => _LdFormPageState();
@@ -86,6 +96,14 @@ class _LdFormPageState extends State<LdFormPage>
   DateTime? _surveyDateTime;
   String? _dateTimeError;
 
+  final _jobs = JobsRepository();
+
+  String get _effectiveSaId {
+    if (widget.saId.trim().isNotEmpty) return widget.saId.trim();
+    if (widget.workOrderId.trim().isNotEmpty) return widget.workOrderId.trim();
+    return '';
+  }
+
   String get _workOrderDisplay {
     if (widget.workOrderLabel.trim().isNotEmpty) {
       return widget.workOrderLabel.trim();
@@ -102,7 +120,77 @@ class _LdFormPageState extends State<LdFormPage>
     _tabController = TabController(length: _tabs.length, vsync: this);
     _scrollController.addListener(_onScroll);
     _formNameController.text = 'LD Form';
+    _restoreDraft();
   }
+
+  Future<void> _restoreDraft() async {
+    final saId = _effectiveSaId;
+    if (saId.isEmpty) return;
+    try {
+      final draft = await _jobs.fetchFormDraft(
+        saId: saId,
+        workTypeId: widget.workTypeId,
+      );
+      if (draft != null && mounted) {
+        final answers = draft.answers;
+        setState(() {
+          if (answers['form_name'] != null) {
+            _formNameController.text = answers['form_name'].toString();
+          }
+          if (answers['pdf_url'] != null) {
+            _pdfUrlController.text = answers['pdf_url'].toString();
+          }
+          if (answers['front_of_property'] != null) {
+            _frontOfPropertyController.text = answers['front_of_property'].toString();
+          }
+          if (answers['visual_image_desc'] != null) {
+            _visualImageDescController.text = answers['visual_image_desc'].toString();
+          }
+          if (answers['visual_findings'] != null) {
+            _visualFindingsController.text = answers['visual_findings'].toString();
+          }
+          if (answers['weather_other'] != null) {
+            _weatherOtherController.text = answers['weather_other'].toString();
+          }
+          if (answers['service_appointment'] != null) {
+            _selectedAppointment = answers['service_appointment'] as String?;
+          }
+          if (answers['operative'] != null) {
+            _selectedOperative = answers['operative'] as String?;
+          }
+          if (answers['weather'] != null) {
+            _selectedWeather = answers['weather'] as String?;
+          }
+          if (answers['survey_date_time'] != null) {
+            _surveyDateTime = DateTime.tryParse(answers['survey_date_time'].toString());
+          }
+          final rawHse = answers['hse'];
+          if (rawHse is Map) {
+            _hse.fromMap(Map<String, dynamic>.from(rawHse));
+          }
+          if (draft.step > 0 && draft.step < _tabs.length) {
+            _tabController.index = draft.step;
+          }
+        });
+      }
+    } catch (e) {
+      Log('Failed to restore draft for LD form: $e', name: 'LdFormPage');
+    }
+  }
+
+  Map<String, dynamic> _buildAnswersMap() => {
+        'form_name': _formNameController.text.trim(),
+        'pdf_url': _pdfUrlController.text.trim(),
+        'service_appointment': _selectedAppointment,
+        'operative': _selectedOperative,
+        'front_of_property': _frontOfPropertyController.text.trim(),
+        'weather': _selectedWeather,
+        'weather_other': _weatherOtherController.text.trim(),
+        'survey_date_time': _surveyDateTime?.toIso8601String(),
+        'visual_image_desc': _visualImageDescController.text.trim(),
+        'visual_findings': _visualFindingsController.text.trim(),
+        'hse': _hse.toMap(),
+      };
 
   @override
   void dispose() {
@@ -398,23 +486,60 @@ class _LdFormPageState extends State<LdFormPage>
 
   void _onCancel() => Navigator.of(context).maybePop(false);
 
-  void _onSave({required bool andNew}) {
-    if (!_validateForSave()) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          andNew ? 'LD Form saved — ready for another.' : 'LD Form saved.',
-          style: TextStyle(fontSize: 14.sp),
-        ),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.primaryBlue,
-      ),
-    );
+  Future<void> _onSave({required bool andNew}) async {
+    final saId = _effectiveSaId;
+    final answers = _buildAnswersMap();
 
     if (andNew) {
+      // Save Draft mode
+      if (saId.isNotEmpty) {
+        await _jobs.saveFormDraft(
+          saId: saId,
+          workTypeId: widget.workTypeId,
+          answers: answers,
+          step: _tabController.index,
+        );
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'LD Form draft saved — ready for another.',
+            style: TextStyle(fontSize: 14.sp),
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.primaryBlue,
+        ),
+      );
       _resetForm();
     } else {
+      // Submit mode
+      if (!_validateForSave()) return;
+      if (saId.isNotEmpty) {
+        try {
+          await _jobs.submitForm(
+            saId: saId,
+            workTypeId: widget.workTypeId,
+            reportType: 'LD',
+            reportSuffix: 'ld_form',
+            answers: answers,
+            photoSlots: const {},
+          );
+        } catch (e) {
+          Log('Submit form failed: $e', name: 'LdFormPage');
+        }
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'LD Form submitted successfully.',
+            style: TextStyle(fontSize: 14.sp),
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF22C55E),
+        ),
+      );
       Navigator.of(context).pop(true);
     }
   }

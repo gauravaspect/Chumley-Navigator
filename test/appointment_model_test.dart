@@ -56,6 +56,63 @@ void main() {
       expect(appointment.accountId, '0014G00002jTnJuQAK');
       expect(appointment.contactId, '0034G000002s0ZqvQAE');
     });
+
+    test('reads appointment schema from navigator /api/engineer/appointments/{id}', () {
+      final json = {
+        "id": "08pTl000003fXSvIAM",
+        "appointment_number": "SA-840942",
+        "status": "Scheduled",
+        "scheduled_start": "2026-08-30T16:58:00.000+0000",
+        "scheduled_end": "2026-08-30T17:58:00.000+0000",
+        "actual_start": null,
+        "actual_end": null,
+        "title": "J-434471 - Andrew Secular - Ravenscourt Close  - RM12 6HR",
+        "work_type":
+            "Blocked Sink & Sink Waste Only - Blockage - Drainage (Wastewater)",
+        "site": {
+          "name": "Andrew Secular - Ravenscourt Close  - RM12 6HR",
+          "address": "12 Ravenscourt Close",
+          "postcode": "RM12 6HR"
+        },
+        "customer": {
+          "name": "Andrew Secular",
+          "contact_name": "Andrew Secular"
+        },
+        "allowed_next_statuses": [
+          "In Transit",
+          "On site",
+          "Job Closure",
+          "Visit Complete"
+        ],
+        "updated_at": "2026-08-30T11:15:49.000+0000"
+      };
+
+      final appointment = Appointment.fromJson(json);
+
+      expect(appointment.id, "08pTl000003fXSvIAM");
+      expect(appointment.appointmentNumber, "SA-840942");
+      expect(appointment.status, "Scheduled");
+      expect(appointment.workType,
+          "Blocked Sink & Sink Waste Only - Blockage - Drainage (Wastewater)");
+      expect(appointment.siteName,
+          "Andrew Secular - Ravenscourt Close  - RM12 6HR");
+      expect(appointment.siteAddress, "12 Ravenscourt Close");
+      expect(appointment.sitePostcode, "RM12 6HR");
+      expect(appointment.customerName, "Andrew Secular");
+      expect(appointment.customerContactName, "Andrew Secular");
+      expect(appointment.allowedNextStatuses, [
+        "In Transit",
+        "On site",
+        "Job Closure",
+        "Visit Complete",
+      ]);
+      expect(appointment.scheduledStart,
+          DateTime.parse("2026-08-30T16:58:00.000Z"));
+      expect(appointment.scheduledEnd,
+          DateTime.parse("2026-08-30T17:58:00.000Z"));
+      expect(appointment.updatedAt,
+          DateTime.parse("2026-08-30T11:15:49.000Z"));
+    });
   });
 
   group('FixedPriceJobContext.fromAppointment', () {

@@ -1,4 +1,6 @@
 import 'package:chumley_navigator/models/ppm_jobs_models.dart';
+import 'package:chumley_navigator/models/points_model.dart';
+import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/screens/dashboard/cubit/dashboard_state.dart';
 import 'package:chumley_navigator/screens/dashboard/repo/dashboard_repository.dart';
 import 'package:chumley_navigator/screens/dashboard/service/dashboard_api_service.dart';
@@ -15,20 +17,26 @@ class DashboardCubit extends Cubit<DashboardState> {
     final stalePoints =
         state.performanceHistoryOrNull ?? await _repository.readCachedPoints();
     final stalePpm = state.ppmTasksOrEmpty;
+    final staleAppointments = state.appointmentsOrEmpty;
+
     emit(DashboardLoading(
       cachedUser: staleUser,
       cachedPoints: stalePoints,
       cachedPpmTasks: stalePpm,
+      cachedAppointments: staleAppointments,
     ));
 
     try {
       final user = await _repository.fetchDashboardData();
       final points = await _repository.fetchPoints();
       final ppmTasks = await _fetchPpmBestEffort(stalePpm);
+      final appointments =
+          await _repository.fetchAppointments(profileFallback: user);
       emit(DashboardLoaded(
         user: user,
         performanceHistory: points,
         ppmTasks: ppmTasks,
+        appointments: appointments,
       ));
     } on DashboardApiException catch (e) {
       emit(DashboardError(
@@ -36,6 +44,7 @@ class DashboardCubit extends Cubit<DashboardState> {
         cachedUser: staleUser,
         cachedPoints: stalePoints,
         cachedPpmTasks: stalePpm,
+        cachedAppointments: staleAppointments,
       ));
     } catch (_) {
       emit(DashboardError(
@@ -43,6 +52,7 @@ class DashboardCubit extends Cubit<DashboardState> {
         cachedUser: staleUser,
         cachedPoints: stalePoints,
         cachedPpmTasks: stalePpm,
+        cachedAppointments: staleAppointments,
       ));
     }
   }

@@ -5,6 +5,8 @@ import 'package:chumley_navigator/widgets/vehicle/vcr_dashed_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 /// Leak Detection (LD) 12-step on-site form — aligned with the Navigator prototype.
 class OnSiteWizard extends StatefulWidget {
@@ -182,6 +184,12 @@ class _OnSiteWizardState extends State<OnSiteWizard> {
   late final TextEditingController _engineerNameController;
   late final TextEditingController _signOffDateController;
 
+  final SpeechToText _speech = SpeechToText();
+  bool _speechReady = false;
+  bool _isListening = false;
+  TextEditingController? _dictationController;
+  String _dictationBaseText = '';
+
   static const _riskAssessmentOptions = [
     'Yes - risk assessment completed, standard controls in place',
     'Yes - risk assessment completed, additional controls in place (note below)',
@@ -215,6 +223,7 @@ class _OnSiteWizardState extends State<OnSiteWizard> {
   @override
   void initState() {
     super.initState();
+    _initSpeech();
     _equipmentController = TextEditingController(
       text:
           'Standard ladders required. Double height limits on external fixture.',
@@ -389,6 +398,7 @@ class _OnSiteWizardState extends State<OnSiteWizard> {
 
   @override
   void dispose() {
+    _speech.stop();
     _equipmentController.dispose();
     _siteEntryController.dispose();
     _claimRefController.dispose();
@@ -2442,6 +2452,87 @@ class _OnSiteWizardState extends State<OnSiteWizard> {
     );
   }
 
+  Future<void> _initSpeech() async {
+    _speechReady = await _speech.initialize(
+      onStatus: (status) {
+        if (status == 'done' || status == 'notListening') {
+          if (mounted) setState(() => _isListening = false);
+        }
+      },
+      onError: (_) {
+        if (mounted) setState(() => _isListening = false);
+      },
+    );
+  }
+
+  Future<void> _toggleDictation(TextEditingController controller) async {
+    if (_isListening && _dictationController == controller) {
+      await _speech.stop();
+      if (mounted) setState(() => _isListening = false);
+      return;
+    }
+
+    if (_isListening) {
+      await _speech.stop();
+    }
+
+    final mic = await Permission.microphone.request();
+    if (!mic.isGranted) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Microphone permission is required for voice input.'),
+        ),
+      );
+      return;
+    }
+
+    if (!_speechReady) {
+      await _initSpeech();
+      if (!_speechReady) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Speech recognition is not available on this device.'),
+          ),
+        );
+        return;
+      }
+    }
+
+    _dictationController = controller;
+    _dictationBaseText = controller.text;
+    if (_dictationBaseText.isNotEmpty && !_dictationBaseText.endsWith(' ')) {
+      _dictationBaseText = '$_dictationBaseText ';
+    }
+
+    if (mounted) setState(() => _isListening = true);
+
+    await _speech.listen(
+      onResult: (result) {
+        if (!mounted || _dictationController != controller) return;
+        final words = result.recognizedWords.trim();
+        if (words.isEmpty) return;
+        controller.text = '$_dictationBaseText$words';
+        controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: controller.text.length),
+        );
+        if (result.finalResult) {
+          _dictationBaseText = controller.text;
+          if (_dictationBaseText.isNotEmpty &&
+              !_dictationBaseText.endsWith(' ')) {
+            _dictationBaseText = '$_dictationBaseText ';
+          }
+        }
+      },
+      listenOptions: SpeechListenOptions(
+        listenMode: ListenMode.dictation,
+        partialResults: true,
+        localeId: 'en_GB',
+      ),
+    );
+  }
+
   Widget _textField(
     TextEditingController controller,
     String hint, {
@@ -2486,6 +2577,8 @@ class _OnSiteWizardState extends State<OnSiteWizard> {
 
     if (!isMulti) return field;
 
+    final listening = _isListening && _dictationController == controller;
+
     return SizedBox(
       height: 96.h,
       child: Stack(
@@ -2494,18 +2587,33 @@ class _OnSiteWizardState extends State<OnSiteWizard> {
           Positioned(
             right: 6.w,
             bottom: 25.h,
-            child: Container(
-              width: 36.w,
-              height: 36.w,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFD3DBE8), width: 1),
-              ),
-              child: Icon(
-                LucideIcons.mic,
-                size: 18.sp,
-                color: AppColors.primaryBlue,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _toggleDictation(controller),
+                customBorder: const CircleBorder(),
+                child: Container(
+                  width: 36.w,
+                  height: 36.w,
+                  decoration: BoxDecoration(
+                    color: listening
+                        ? AppColors.primaryBlue.withValues(alpha: 0.12)
+                        : Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: listening
+                          ? AppColors.primaryBlue
+                          : const Color(0xFFD3DBE8),
+                      width: 1,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    listening ? LucideIcons.micOff : LucideIcons.mic,
+                    size: 18.sp,
+                    color: AppColors.primaryBlue,
+                  ),
+                ),
               ),
             ),
           ),

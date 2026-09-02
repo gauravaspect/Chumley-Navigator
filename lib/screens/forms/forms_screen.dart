@@ -134,16 +134,17 @@ class _FormsScreenState extends State<FormsScreen> {
                         },
                       ),
                       SizedBox(height: 14.h),
-                      FadeSlideIn(
-                        child: _FormListTile(
-                          icon: LucideIcons.zap,
-                          title: 'LD FORM',
-                          subtitle:
-                          'Electrical Installation Condition Report · BS 7671:2018+A2:2022',
-                          onTap: () => _openForm(context, FormType.LDForm),
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
+                      // LD FORM commented out for now — keeping only HVAC
+                      // FadeSlideIn(
+                      //   child: _FormListTile(
+                      //     icon: LucideIcons.zap,
+                      //     title: 'LD FORM',
+                      //     subtitle:
+                      //     'Electrical Installation Condition Report · BS 7671:2018+A2:2022',
+                      //     onTap: () => _openForm(context, FormType.LDForm),
+                      //   ),
+                      // ),
+                      // SizedBox(height: 8.h),
                       FadeSlideIn(
                         delay: const Duration(milliseconds: 50),
                         child: _FormListTile(

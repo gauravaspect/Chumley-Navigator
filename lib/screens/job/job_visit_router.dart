@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/models/sa_status.dart';
 import 'package:chumley_navigator/models/ppm_jobs_models.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/pillar/form_draft_store.dart';
@@ -151,11 +152,24 @@ class _WorkOrderHostState extends State<_WorkOrderHost> {
 
   Future<void> _startJourney() async {
     try {
-      await _jobs.setStatus(jobId: _job.id, status: 'IN_TRANSIT');
+      final detail = await _jobs.fetchAppointment(_job.saId);
+      String? next = SaStatus.pickAllowed(
+        detail.allowedNextStatuses,
+        SaStatus.inTransit,
+      );
+      next ??=
+          detail.allowedNextStatuses.isNotEmpty
+              ? detail.allowedNextStatuses.first
+              : null;
+      if (next == null) {
+        setState(() => _error = 'No status transition available.');
+        return;
+      }
+      final result = await _jobs.setStatus(saId: _job.saId, status: next);
       if (!mounted) return;
       setState(() {
-        _phase = journey.ResumePhase.transit;
-        _job = _job.copyWith(status: 'IN_TRANSIT');
+        _phase = journey.resumePhase(result.status);
+        _job = _job.copyWith(status: result.status);
         _error = null;
       });
     } catch (e) {

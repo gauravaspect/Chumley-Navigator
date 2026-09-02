@@ -54,6 +54,10 @@
 	<string>Chumley Navigator needs your location to navigate to the job site.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Chumley Navigator needs your location to track transit to the job site.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone access is required for voice notes on job forms.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Speech recognition is used to dictate notes into job forms.</string>
 
 	<!-- map_launcher URL schemes — needed to detect installed apps -->
 	<key>LSApplicationQueriesSchemes</key>

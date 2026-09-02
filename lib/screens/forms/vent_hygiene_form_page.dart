@@ -1,4 +1,6 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/core/log.dart';
+import 'package:chumley_navigator/pillar/jobs_repository.dart';
 import 'package:chumley_navigator/screens/forms/widgets/hse_risk_section.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
@@ -17,10 +19,14 @@ class VentHygieneFormPage extends StatefulWidget {
     super.key,
     this.workOrderId = '',
     this.workOrderLabel = '',
+    this.workTypeId = 'vent_hygiene',
+    this.saId = '',
   });
 
   final String workOrderId;
   final String workOrderLabel;
+  final String workTypeId;
+  final String saId;
 
   @override
   State<VentHygieneFormPage> createState() => _VentHygieneFormPageState();
@@ -112,6 +118,14 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
   final _hse = HseRiskFormController();
   final List<_SubOperativeControllers> _subOperatives = [];
 
+  final _jobs = JobsRepository();
+
+  String get _effectiveSaId {
+    if (widget.saId.trim().isNotEmpty) return widget.saId.trim();
+    if (widget.workOrderId.trim().isNotEmpty) return widget.workOrderId.trim();
+    return '';
+  }
+
   String get _workOrderDisplay {
     if (widget.workOrderLabel.trim().isNotEmpty) {
       return widget.workOrderLabel.trim();
@@ -131,7 +145,101 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _restoreDraft();
   }
+
+  Future<void> _restoreDraft() async {
+    final saId = _effectiveSaId;
+    if (saId.isEmpty) return;
+    try {
+      final draft = await _jobs.fetchFormDraft(
+        saId: saId,
+        workTypeId: widget.workTypeId,
+      );
+      if (draft != null && mounted) {
+        final answers = draft.answers;
+        setState(() {
+          if (answers['travel_hours'] != null) {
+            _travelHoursController.text = answers['travel_hours'].toString();
+          }
+          if (answers['lead_engineer_cost'] != null) {
+            _leadEngineerCostController.text = answers['lead_engineer_cost'].toString();
+          }
+          if (answers['hours_worked'] != null) {
+            _hoursWorkedController.text = answers['hours_worked'].toString();
+          }
+          if (answers['scope_of_work'] != null) {
+            _scopeOfWorkController.text = answers['scope_of_work'].toString();
+          }
+          if (answers['certificate_desc'] != null) {
+            _certificateDescController.text = answers['certificate_desc'].toString();
+          }
+          if (answers['pre_clean_pdf_url'] != null) {
+            _preCleanPdfUrlController.text = answers['pre_clean_pdf_url'].toString();
+          }
+          if (answers['service_appointment'] != null) {
+            _selectedAppointment = answers['service_appointment'] as String?;
+          }
+          if (answers['operative'] != null) {
+            _selectedOperative = answers['operative'] as String?;
+          }
+          if (answers['currency'] != null) {
+            _currency = answers['currency'] as String?;
+          }
+          if (answers['sub_operative_count'] != null) {
+            _subOperativeCount = answers['sub_operative_count'].toString();
+          }
+          if (answers['last_service_clean'] != null) {
+            _lastServiceClean = DateTime.tryParse(answers['last_service_clean'].toString());
+          }
+          if (answers['date_time'] != null) {
+            _dateTime = DateTime.tryParse(answers['date_time'].toString());
+          }
+          if (answers['sub_operatives'] is List) {
+            final subs = answers['sub_operatives'] as List;
+            _syncSubOperativeControllers(subs.length);
+            for (var i = 0; i < subs.length && i < _subOperatives.length; i++) {
+              final s = subs[i];
+              if (s is Map) {
+                _subOperatives[i].name.text = s['name']?.toString() ?? '';
+                _subOperatives[i].travelHours.text = s['travel_hours']?.toString() ?? '';
+                _subOperatives[i].totalCost.text = s['total_cost']?.toString() ?? '';
+              }
+            }
+          }
+          final rawHse = answers['hse'];
+          if (rawHse is Map) {
+            _hse.fromMap(Map<String, dynamic>.from(rawHse));
+          }
+        });
+      }
+    } catch (e) {
+      Log('Failed to restore draft for Vent Hygiene form: $e', name: 'VentHygieneFormPage');
+    }
+  }
+
+  Map<String, dynamic> _buildAnswersMap() => {
+        'service_appointment': _selectedAppointment,
+        'operative': _selectedOperative,
+        'currency': _currency,
+        'travel_hours': _travelHoursController.text.trim(),
+        'lead_engineer_cost': _leadEngineerCostController.text.trim(),
+        'hours_worked': _hoursWorkedController.text.trim(),
+        'scope_of_work': _scopeOfWorkController.text.trim(),
+        'certificate_desc': _certificateDescController.text.trim(),
+        'pre_clean_pdf_url': _preCleanPdfUrlController.text.trim(),
+        'sub_operative_count': _subOperativeCount,
+        'last_service_clean': _lastServiceClean?.toIso8601String(),
+        'date_time': _dateTime?.toIso8601String(),
+        'sub_operatives': _subOperatives
+            .map((s) => {
+                  'name': s.name.text.trim(),
+                  'travel_hours': s.travelHours.text.trim(),
+                  'total_cost': s.totalCost.text.trim(),
+                })
+            .toList(),
+        'hse': _hse.toMap(),
+      };
 
   @override
   void dispose() {
@@ -472,25 +580,59 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
 
   void _onCancel() => Navigator.of(context).maybePop(false);
 
-  void _onSave({required bool andNew}) {
-    if (!_validateForSave()) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          andNew
-              ? 'Vent Hygiene form saved — ready for another.'
-              : 'Vent Hygiene form saved.',
-          style: TextStyle(fontSize: 14.sp),
-        ),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.primaryBlue,
-      ),
-    );
+  Future<void> _onSave({required bool andNew}) async {
+    final saId = _effectiveSaId;
+    final answers = _buildAnswersMap();
 
     if (andNew) {
+      // Save Draft mode
+      if (saId.isNotEmpty) {
+        await _jobs.saveFormDraft(
+          saId: saId,
+          workTypeId: widget.workTypeId,
+          answers: answers,
+        );
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Vent Hygiene form draft saved — ready for another.',
+            style: TextStyle(fontSize: 14.sp),
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.primaryBlue,
+        ),
+      );
       _resetForm();
     } else {
+      // Submit mode
+      if (!_validateForSave()) return;
+      if (saId.isNotEmpty) {
+        try {
+          await _jobs.submitForm(
+            saId: saId,
+            workTypeId: widget.workTypeId,
+            reportType: 'VENT_HYGIENE',
+            reportSuffix: 'vent_hygiene',
+            answers: answers,
+            photoSlots: const {},
+          );
+        } catch (e) {
+          Log('Submit vent hygiene form failed: $e', name: 'VentHygieneFormPage');
+        }
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Vent Hygiene form submitted successfully.',
+            style: TextStyle(fontSize: 14.sp),
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF22C55E),
+        ),
+      );
       Navigator.of(context).pop(true);
     }
   }

@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/models/sa_status.dart';
 import 'package:chumley_navigator/pillar/form_kind.dart';
 
 /// Port of `app/state_runtime.js` `JOURNEY` + `resumeScreen`.
@@ -63,12 +64,16 @@ class JobJourney {
 enum ResumePhase { dispatched, transit, form, complete }
 
 ResumePhase resumePhase(String status) {
-  final st = status.toUpperCase();
-  if (st == 'COMPLETE' || st == 'AWAITING_APPROVAL' || st == 'APPROVED') {
+  if (SaStatus.isVisitComplete(status)) return ResumePhase.complete;
+  if (SaStatus.isJobClosure(status)) return ResumePhase.complete;
+  final key = SaStatus.normalizedKey(status);
+  if (key == 'awaiting_approval' || key == 'approved') {
     return ResumePhase.complete;
   }
-  if (st == 'ON_SITE') return ResumePhase.form;
-  if (st == 'IN_TRANSIT') return ResumePhase.transit;
+  if (SaStatus.isOnSite(status) || key == 'in progress') {
+    return ResumePhase.form;
+  }
+  if (key == 'in transit' || key == 'in_transit') return ResumePhase.transit;
   return ResumePhase.dispatched;
 }
 

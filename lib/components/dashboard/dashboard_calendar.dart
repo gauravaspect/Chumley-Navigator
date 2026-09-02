@@ -2,6 +2,7 @@ import 'package:chumley_navigator/components/calendar/calendar_bottom_sheet.dart
 import 'package:chumley_navigator/components/dashboard/compact_schedule_job_card.dart';
 import 'package:chumley_navigator/models/ppm_jobs_models.dart';
 import 'package:chumley_navigator/models/user_model.dart';
+import 'package:chumley_navigator/shimmers/schedule_shimmer.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ class DashboardCalendar extends StatefulWidget {
     this.appointments = const [],
     this.ppmTasks = const [],
     this.showHeader = true,
+    this.isLoading = false,
   });
 
   final List<Appointment> appointments;
@@ -21,6 +23,8 @@ class DashboardCalendar extends StatefulWidget {
 
   /// When false, hides the "My Calendar / See All" row (e.g. full-screen page).
   final bool showHeader;
+
+  final bool isLoading;
 
   @override
   State<DashboardCalendar> createState() => _DashboardCalendarState();
@@ -123,8 +127,7 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  bool _hasPpmOn(DateTime date) =>
-      widget.ppmTasks.isNotEmpty && _isSameDay(date, _today);
+  bool _hasPpmOn(DateTime date) => false;
 
   static const _fullWeekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -145,17 +148,6 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
         () => _DayScheduleGroup(date: key),
       );
       group.appointments.add(appointment);
-    }
-
-    final todayInFocusedMonth =
-        _today.year == _focusedMonth.year &&
-        _today.month == _focusedMonth.month;
-    if (todayInFocusedMonth && widget.ppmTasks.isNotEmpty) {
-      final group = groups.putIfAbsent(
-        _today,
-        () => _DayScheduleGroup(date: _today),
-      );
-      group.ppmTasks.addAll(widget.ppmTasks);
     }
 
     final sorted = groups.values.toList()
@@ -420,7 +412,9 @@ class _DashboardCalendarState extends State<DashboardCalendar> {
             ),
           ),
           SizedBox(height: 8.h),
-          if (scheduleEmpty)
+          if (widget.isLoading)
+            CalendarScheduleShimmer(theme: theme)
+          else if (scheduleEmpty)
             Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 16.w),
@@ -600,29 +594,53 @@ class JobScheduleCard extends StatelessWidget {
   // Status → colour mapping  (mirrors the 8-state lifecycle from JobDetailPage)
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'scheduled':   return const Color(0xFF6728C8);
-      case 'dispatched':  return const Color(0xFF2563EB);
-      case 'received':    return const Color(0xFF0891B2);
-      case 'in transit':  return const Color(0xFFF59E0B);
-      case 'on site':     return const Color(0xFF10B981);
-      case 'in progress': return const Color(0xFF8B5CF6);
-      case 'forms':       return const Color(0xFFEC4899);
-      case 'job completed': return const Color(0xFF22C55E);
-      default:            return const Color(0xFF2563EB); // fallback = blue
+      case 'scheduled':
+        return const Color(0xFF6728C8);
+      case 'dispatched':
+        return const Color(0xFF2563EB);
+      case 'received':
+        return const Color(0xFF0891B2);
+      case 'in transit':
+        return const Color(0xFFF59E0B);
+      case 'on site':
+        return const Color(0xFF10B981);
+      case 'in progress':
+        return const Color(0xFF8B5CF6);
+      case 'job closure':
+        return const Color(0xFF3B82F6);
+      case 'visit complete':
+      case 'job completed':
+        return const Color(0xFF22C55E);
+      case 'forms':
+        return const Color(0xFFEC4899);
+      default:
+        return const Color(0xFF2563EB);
     }
   }
 
   IconData _statusIcon(String status) {
     switch (status.toLowerCase()) {
-      case 'scheduled':     return LucideIcons.calendarClock;
-      case 'dispatched':    return LucideIcons.send;
-      case 'received':      return LucideIcons.checkCheck;
-      case 'in transit':    return LucideIcons.navigation;
-      case 'on site':       return LucideIcons.mapPin;
-      case 'in progress':   return LucideIcons.wrench;
-      case 'forms':         return LucideIcons.clipboardList;
-      case 'job completed': return LucideIcons.badgeCheck;
-      default:              return LucideIcons.send;
+      case 'scheduled':
+        return LucideIcons.calendarClock;
+      case 'dispatched':
+        return LucideIcons.send;
+      case 'received':
+        return LucideIcons.checkCheck;
+      case 'in transit':
+        return LucideIcons.navigation;
+      case 'on site':
+        return LucideIcons.mapPin;
+      case 'in progress':
+        return LucideIcons.wrench;
+      case 'job closure':
+        return LucideIcons.clipboardCheck;
+      case 'visit complete':
+      case 'job completed':
+        return LucideIcons.badgeCheck;
+      case 'forms':
+        return LucideIcons.clipboardList;
+      default:
+        return LucideIcons.send;
     }
   }
 

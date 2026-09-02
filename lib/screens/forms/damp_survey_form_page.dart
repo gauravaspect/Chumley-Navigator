@@ -1,4 +1,6 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/core/log.dart';
+import 'package:chumley_navigator/pillar/jobs_repository.dart';
 import 'package:chumley_navigator/screens/forms/widgets/hse_risk_section.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
@@ -16,10 +18,14 @@ class DampSurveyFormPage extends StatefulWidget {
     super.key,
     this.workOrderId = '',
     this.workOrderLabel = '',
+    this.workTypeId = 'damp_survey',
+    this.saId = '',
   });
 
   final String workOrderId;
   final String workOrderLabel;
+  final String workTypeId;
+  final String saId;
 
   @override
   State<DampSurveyFormPage> createState() => _DampSurveyFormPageState();
@@ -197,6 +203,14 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
   String? _furtherVisitRequired;
   final Set<String> _diagnosisMethods = {};
 
+  final _jobs = JobsRepository();
+
+  String get _effectiveSaId {
+    if (widget.saId.trim().isNotEmpty) return widget.saId.trim();
+    if (widget.workOrderId.trim().isNotEmpty) return widget.workOrderId.trim();
+    return '';
+  }
+
   String get _workOrderDisplay {
     if (widget.workOrderLabel.trim().isNotEmpty) {
       return widget.workOrderLabel.trim();
@@ -212,7 +226,190 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
     _scrollController.addListener(_onScroll);
+    _restoreDraft();
   }
+
+  Future<void> _restoreDraft() async {
+    final saId = _effectiveSaId;
+    if (saId.isEmpty) return;
+    try {
+      final draft = await _jobs.fetchFormDraft(
+        saId: saId,
+        workTypeId: widget.workTypeId,
+      );
+      if (draft != null && mounted) {
+        final answers = draft.answers;
+        setState(() {
+          if (answers['form_name'] != null) {
+            _formNameController.text = answers['form_name'].toString();
+          }
+          if (answers['pdf_url'] != null) {
+            _pdfUrlController.text = answers['pdf_url'].toString();
+          }
+          if (answers['front_of_property'] != null) {
+            _frontOfPropertyController.text = answers['front_of_property'].toString();
+          }
+          if (answers['visual_image_desc'] != null) {
+            _visualImageDescController.text = answers['visual_image_desc'].toString();
+          }
+          if (answers['visual_findings'] != null) {
+            _visualFindingsController.text = answers['visual_findings'].toString();
+          }
+          if (answers['weather_other'] != null) {
+            _weatherOtherController.text = answers['weather_other'].toString();
+          }
+          if (answers['access_made_other'] != null) {
+            _accessMadeOtherController.text = answers['access_made_other'].toString();
+          }
+          if (answers['what_accessed_other'] != null) {
+            _whatAccessedOtherController.text = answers['what_accessed_other'].toString();
+          }
+          if (answers['after_access_image_desc'] != null) {
+            _afterAccessImageDescController.text = answers['after_access_image_desc'].toString();
+          }
+          if (answers['before_repair_photo_desc'] != null) {
+            _beforeRepairPhotoDescController.text = answers['before_repair_photo_desc'].toString();
+          }
+          if (answers['works_undertaken'] != null) {
+            _worksUndertakenController.text = answers['works_undertaken'].toString();
+          }
+          if (answers['repair_duration'] != null) {
+            _repairDurationController.text = answers['repair_duration'].toString();
+          }
+          if (answers['materials_used'] != null) {
+            _materialsUsedController.text = answers['materials_used'].toString();
+          }
+          if (answers['material_cost'] != null) {
+            _materialCostController.text = answers['material_cost'].toString();
+          }
+          if (answers['after_repair_image_desc'] != null) {
+            _afterRepairImageDescController.text = answers['after_repair_image_desc'].toString();
+          }
+          if (answers['further_works_desc'] != null) {
+            _furtherWorksDescController.text = answers['further_works_desc'].toString();
+          }
+          if (answers['additional_comments'] != null) {
+            _additionalCommentsController.text = answers['additional_comments'].toString();
+          }
+          if (answers['leak_description'] != null) {
+            _leakDescriptionController.text = answers['leak_description'].toString();
+          }
+          if (answers['brief_image_desc'] != null) {
+            _briefImageDescController.text = answers['brief_image_desc'].toString();
+          }
+          if (answers['further_visit_other'] != null) {
+            _furtherVisitOtherController.text = answers['further_visit_other'].toString();
+          }
+          if (answers['leak_present'] != null) {
+            _leakPresentController.text = answers['leak_present'].toString();
+          }
+          if (answers['service_appointment'] != null) {
+            _selectedAppointment = answers['service_appointment'] as String?;
+          }
+          if (answers['operative'] != null) {
+            _selectedOperative = answers['operative'] as String?;
+          }
+          if (answers['weather'] != null) {
+            _weather = answers['weather'] as String?;
+          }
+          if (answers['access_type'] != null) {
+            _accessType = answers['access_type'] as String?;
+          }
+          if (answers['access_location'] != null) {
+            _accessLocation = answers['access_location'] as String?;
+          }
+          if (answers['what_accessed'] != null) {
+            _whatAccessed = answers['what_accessed'] as String?;
+          }
+          if (answers['did_make_repair'] != null) {
+            _didMakeRepair = answers['did_make_repair'] as String?;
+          }
+          if (answers['repair_kind'] != null) {
+            _repairKind = answers['repair_kind'] as String?;
+          }
+          if (answers['bought_materials'] != null) {
+            _boughtMaterials = answers['bought_materials'] as String?;
+          }
+          if (answers['further_work_required'] != null) {
+            _furtherWorkRequired = answers['further_work_required'] as String?;
+          }
+          if (answers['drying_required'] != null) {
+            _dryingRequired = answers['drying_required'] as String?;
+          }
+          if (answers['drying_option'] != null) {
+            _dryingOption = answers['drying_option'] as String?;
+          }
+          if (answers['need_additional_comments'] != null) {
+            _needAdditionalComments = answers['need_additional_comments'] as String?;
+          }
+          if (answers['conclusion'] != null) {
+            _conclusion = answers['conclusion'] as String?;
+          }
+          if (answers['further_visit_required'] != null) {
+            _furtherVisitRequired = answers['further_visit_required'] as String?;
+          }
+          if (answers['diagnosis_methods'] is List) {
+            _diagnosisMethods.clear();
+            _diagnosisMethods.addAll((answers['diagnosis_methods'] as List).map((e) => e.toString()));
+          }
+          if (answers['survey_date_time'] != null) {
+            _surveyDateTime = DateTime.tryParse(answers['survey_date_time'].toString());
+          }
+          final rawHse = answers['hse'];
+          if (rawHse is Map) {
+            _hse.fromMap(Map<String, dynamic>.from(rawHse));
+          }
+          if (draft.step > 0 && draft.step < _tabs.length) {
+            _tabController.index = draft.step;
+          }
+        });
+      }
+    } catch (e) {
+      Log('Failed to restore draft for Damp Survey form: $e', name: 'DampSurveyFormPage');
+    }
+  }
+
+  Map<String, dynamic> _buildAnswersMap() => {
+        'form_name': _formNameController.text.trim(),
+        'pdf_url': _pdfUrlController.text.trim(),
+        'service_appointment': _selectedAppointment,
+        'operative': _selectedOperative,
+        'front_of_property': _frontOfPropertyController.text.trim(),
+        'weather': _weather,
+        'weather_other': _weatherOtherController.text.trim(),
+        'survey_date_time': _surveyDateTime?.toIso8601String(),
+        'access_type': _accessType,
+        'access_location': _accessLocation,
+        'access_made_other': _accessMadeOtherController.text.trim(),
+        'what_accessed': _whatAccessed,
+        'what_accessed_other': _whatAccessedOtherController.text.trim(),
+        'visual_image_desc': _visualImageDescController.text.trim(),
+        'visual_findings': _visualFindingsController.text.trim(),
+        'after_access_image_desc': _afterAccessImageDescController.text.trim(),
+        'did_make_repair': _didMakeRepair,
+        'repair_kind': _repairKind,
+        'before_repair_photo_desc': _beforeRepairPhotoDescController.text.trim(),
+        'works_undertaken': _worksUndertakenController.text.trim(),
+        'repair_duration': _repairDurationController.text.trim(),
+        'bought_materials': _boughtMaterials,
+        'materials_used': _materialsUsedController.text.trim(),
+        'material_cost': _materialCostController.text.trim(),
+        'after_repair_image_desc': _afterRepairImageDescController.text.trim(),
+        'further_work_required': _furtherWorkRequired,
+        'further_works_desc': _furtherWorksDescController.text.trim(),
+        'drying_required': _dryingRequired,
+        'drying_option': _dryingOption,
+        'need_additional_comments': _needAdditionalComments,
+        'additional_comments': _additionalCommentsController.text.trim(),
+        'conclusion': _conclusion,
+        'leak_description': _leakDescriptionController.text.trim(),
+        'brief_image_desc': _briefImageDescController.text.trim(),
+        'further_visit_required': _furtherVisitRequired,
+        'further_visit_other': _furtherVisitOtherController.text.trim(),
+        'leak_present': _leakPresentController.text.trim(),
+        'diagnosis_methods': _diagnosisMethods.toList(),
+        'hse': _hse.toMap(),
+      };
 
   @override
   void dispose() {
@@ -529,25 +726,60 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
 
   void _onCancel() => Navigator.of(context).maybePop(false);
 
-  void _onSave({required bool andNew}) {
-    if (!_validateForSave()) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          andNew
-              ? 'Damp Survey form saved — ready for another.'
-              : 'Damp Survey form saved.',
-          style: TextStyle(fontSize: 14.sp),
-        ),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.primaryBlue,
-      ),
-    );
+  Future<void> _onSave({required bool andNew}) async {
+    final saId = _effectiveSaId;
+    final answers = _buildAnswersMap();
 
     if (andNew) {
+      // Save Draft mode
+      if (saId.isNotEmpty) {
+        await _jobs.saveFormDraft(
+          saId: saId,
+          workTypeId: widget.workTypeId,
+          answers: answers,
+          step: _tabController.index,
+        );
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Damp Survey form draft saved — ready for another.',
+            style: TextStyle(fontSize: 14.sp),
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.primaryBlue,
+        ),
+      );
       _resetForm();
     } else {
+      // Submit mode
+      if (!_validateForSave()) return;
+      if (saId.isNotEmpty) {
+        try {
+          await _jobs.submitForm(
+            saId: saId,
+            workTypeId: widget.workTypeId,
+            reportType: 'DAMP_SURVEY',
+            reportSuffix: 'damp_survey',
+            answers: answers,
+            photoSlots: const {},
+          );
+        } catch (e) {
+          Log('Submit damp survey form failed: $e', name: 'DampSurveyFormPage');
+        }
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Damp Survey form submitted successfully.',
+            style: TextStyle(fontSize: 14.sp),
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF22C55E),
+        ),
+      );
       Navigator.of(context).pop(true);
     }
   }

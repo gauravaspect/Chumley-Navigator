@@ -44,6 +44,15 @@ class ApiResponseHelper {
       final message = map['message']?.toString().trim();
       if (message != null && message.isNotEmpty) return message;
 
+      final detail = map['detail']?.toString().trim();
+      if (detail != null && detail.isNotEmpty) {
+        final match = RegExp(r"'message':\s*'([^']+)'").firstMatch(detail);
+        if (match != null && match.group(1) != null) {
+          return match.group(1)!;
+        }
+        return detail;
+      }
+
       final error = map['error']?.toString().trim();
       if (error != null && error.isNotEmpty) return error;
 

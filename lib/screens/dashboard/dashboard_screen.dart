@@ -267,8 +267,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       PointsCard(user: user),
       // EarningCard(user: user),
       TodaysScheduleCard(
-        appointments: user.dashboard.appointmentsThisMonth,
+        appointments: state.appointmentsOrEmpty,
         ppmTasks: state.ppmTasksOrEmpty,
+        isLoading: state.isAppointmentsLoading,
       ),
       KpiOverview(user: user),
       EarningCard(user: user),

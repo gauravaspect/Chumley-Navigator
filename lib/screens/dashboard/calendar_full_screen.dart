@@ -11,21 +11,25 @@ class CalendarFullScreen extends StatelessWidget {
     super.key,
     this.appointments = const [],
     this.ppmTasks = const [],
+    this.isLoading = false,
   });
 
   final List<Appointment> appointments;
   final List<PpmJobTask> ppmTasks;
+  final bool isLoading;
 
   static Future<void> open(
     BuildContext context, {
     required List<Appointment> appointments,
     List<PpmJobTask> ppmTasks = const [],
+    bool isLoading = false,
   }) {
     return Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => CalendarFullScreen(
           appointments: appointments,
           ppmTasks: ppmTasks,
+          isLoading: isLoading,
         ),
       ),
     );
@@ -62,6 +66,7 @@ class CalendarFullScreen extends StatelessWidget {
             appointments: appointments,
             ppmTasks: ppmTasks,
             showHeader: false,
+            isLoading: isLoading,
           ),
         ),
       ),

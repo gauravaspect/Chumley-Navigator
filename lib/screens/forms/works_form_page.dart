@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/pillar/jobs_repository.dart';
 import 'package:chumley_navigator/screens/job_details/service/photo_pipeline_service.dart';
 import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
 import 'package:chumley_navigator/utils/colors.dart';
@@ -90,6 +91,8 @@ class _WorksFormPageState extends State<WorksFormPage>
   final _customerNameController = TextEditingController();
   bool _clientSatisfied = true;
 
+  final _jobs = JobsRepository();
+
   @override
   void initState() {
     super.initState();
@@ -99,7 +102,11 @@ class _WorksFormPageState extends State<WorksFormPage>
   }
 
   Future<void> _loadSavedDraft() async {
-    final draft = await PillarClient.getFormAnswers(widget.workOrderId);
+    final draftDetail = await _jobs.fetchFormDraft(
+      saId: widget.workOrderId,
+      workTypeId: 'PM_WORKS',
+    );
+    final draft = draftDetail?.answers ?? await PillarClient.getFormAnswers(widget.workOrderId);
     if (draft.isNotEmpty && mounted) {
       setState(() {
         _waterIsolated = draft['water_isolated'] ?? _waterIsolated;
@@ -107,6 +114,11 @@ class _WorksFormPageState extends State<WorksFormPage>
         _surfaceProtection = draft['surface_protection'] ?? _surfaceProtection;
         _accessNotesController.text = draft['access_notes'] ?? '';
         _completionNotesController.text = draft['completion_notes'] ?? '';
+      });
+    }
+    if (draftDetail != null && draftDetail.photoSlots.isNotEmpty && mounted) {
+      setState(() {
+        _photos.addAll(draftDetail.photoSlots);
       });
     }
   }
@@ -123,7 +135,12 @@ class _WorksFormPageState extends State<WorksFormPage>
       'completion_notes': _completionNotesController.text,
       'client_satisfied': _clientSatisfied,
     };
-    await PillarClient.saveFormAnswers(widget.workOrderId, data);
+    await _jobs.saveFormDraft(
+      saId: widget.workOrderId,
+      workTypeId: 'PM_WORKS',
+      answers: data,
+      photoSlots: _photos,
+    );
   }
 
   Future<void> _pickPhoto(String slot, ImageSource source) async {
@@ -170,28 +187,32 @@ class _WorksFormPageState extends State<WorksFormPage>
       },
     };
 
-    final success = await PillarClient.submitSignOff(
-      jobId: widget.workOrderId,
-      reportSuffix: 'pm',
-      reportType: 'PM_WORKS',
-      answers: answers,
-      photoSlots: _photos,
-      pmProjectId: widget.pmProjectId,
-    );
+    try {
+      await _jobs.submitForm(
+        saId: widget.workOrderId,
+        workTypeId: 'PM_WORKS',
+        reportSuffix: 'pm',
+        reportType: 'PM_WORKS',
+        answers: answers,
+        photoSlots: _photos,
+        pmProjectId: widget.pmProjectId,
+      );
 
-    if (mounted) {
-      setState(() => _isSubmitting = false);
-      if (success) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Bathroom Works Report & Sign-off committed to Firestore.'),
+            content: Text('Bathroom Works Report submitted.'),
             backgroundColor: Color(0xFF22C55E),
           ),
         );
         Navigator.of(context).pop(true);
-      } else {
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error saving sign-off.')),
+          SnackBar(content: Text('Error submitting form: $e')),
         );
       }
     }

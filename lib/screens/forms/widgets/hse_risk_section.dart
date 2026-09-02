@@ -43,6 +43,27 @@ class HseRiskFormController {
     'Present - STOP until arranged',
   ];
 
+  Map<String, dynamic> toMap() => {
+        'risk_assessment': riskAssessment,
+        'work_at_height': workAtHeight,
+        'safe_isolation': safeIsolation,
+        'client_briefed': clientBriefed,
+        'vulnerable': vulnerable,
+        'risk_note': riskNoteController.text,
+      };
+
+  void fromMap(Map<String, dynamic>? data) {
+    if (data == null) return;
+    riskAssessment = data['risk_assessment'] as String?;
+    workAtHeight = data['work_at_height'] as String?;
+    safeIsolation = data['safe_isolation'] as String?;
+    clientBriefed = data['client_briefed'] as String?;
+    vulnerable = data['vulnerable'] as String?;
+    if (data['risk_note'] != null) {
+      riskNoteController.text = data['risk_note'].toString();
+    }
+  }
+
   void clear() {
     riskAssessment = null;
     workAtHeight = null;

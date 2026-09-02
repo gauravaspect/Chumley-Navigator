@@ -62,15 +62,27 @@ class _WorksVisitWizardState extends State<WorksVisitWizard> {
   }
 
   Future<void> _hydrate() async {
-    _answers = await _store.loadAnswers(widget.job.id);
-    _photos = await _store.loadPhotos(widget.job.id);
+    final draft = await _jobs.fetchFormDraft(
+      saId: widget.job.saId,
+      workTypeId: 'works',
+    );
+    if (draft != null) {
+      _answers = Map<String, dynamic>.from(draft.answers);
+      _photos = Map<String, String>.from(draft.photoSlots);
+      if (draft.step > _step) {
+        _step = draft.step.clamp(0, JobJourney.bath.form.length - 1);
+      }
+    } else {
+      _answers = await _store.loadAnswers(widget.job.id);
+      _photos = await _store.loadPhotos(widget.job.id);
+    }
     _lines = await _loadLines();
     if (mounted) setState(() {});
     await _jobs.ensureOnSiteAtFormEntry(
-      jobId: widget.job.id,
+      saId: widget.job.saId,
       formStepIndex: _step,
     );
-    await _store.saveFurthestStep(widget.job.id, _step);
+    await _persist();
   }
 
   Future<List<Map<String, dynamic>>> _loadLines() async {
@@ -98,22 +110,33 @@ class _WorksVisitWizardState extends State<WorksVisitWizard> {
   }
 
   List<Map<String, dynamic>> _demoLines() {
-    if (widget.job.coercedJobType == 'FP') {
-      return [
-        {'title': 'Replace basin tap', 'description': 'Chrome mixer tap'},
-        {'title': 'Silicone reseal', 'description': 'Bath perimeter'},
-      ];
-    }
     return [
-      {'title': 'First fix plumbing', 'description': 'Stage 1'},
-      {'title': 'Second fix & snagging', 'description': 'Stage 2'},
+      {
+        'id': 'task_1',
+        'title': 'Remove bath panel & isolate waste pipe',
+        'trade': 'Plumbing',
+      },
+      {
+        'id': 'task_2',
+        'title': 'Fit replacement compression trap and waste run',
+        'trade': 'Plumbing',
+      },
+      {
+        'id': 'task_3',
+        'title': 'Test flow & seal inspection hatch',
+        'trade': 'Finishing',
+      },
     ];
   }
 
   Future<void> _persist() async {
-    await _store.saveAnswers(widget.job.id, _answers);
-    await _store.savePhotos(widget.job.id, _photos);
-    await _store.saveFurthestStep(widget.job.id, _step);
+    await _jobs.saveFormDraft(
+      saId: widget.job.saId,
+      workTypeId: 'works',
+      answers: _answers,
+      photoSlots: _photos,
+      step: _step,
+    );
   }
 
   Future<void> _saveDraft() async {
@@ -130,8 +153,9 @@ class _WorksVisitWizardState extends State<WorksVisitWizard> {
     }
     setState(() => _busy = true);
     try {
-      await _jobs.signOff(
-        jobId: widget.job.id,
+      await _jobs.submitForm(
+        saId: widget.job.saId,
+        workTypeId: 'works',
         reportType: 'pm_stage',
         reportSuffix: 'pm',
         answers: _answers,

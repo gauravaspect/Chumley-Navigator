@@ -19,6 +19,7 @@ Widget _wrap(Widget child) {
 void main() {
   final testJob = VisitJob(
     id: 'demo-rx-101',
+    saId: 'sa-demo-101',
     jobNumber: 'SA-818687',
     status: 'COMPLETE',
     trade: 'Leak Detection',

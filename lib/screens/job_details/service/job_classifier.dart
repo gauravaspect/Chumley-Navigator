@@ -41,6 +41,7 @@ class JobClassifier {
     return kindOf(
       jobType: appointment.type,
       title: appointment.title,
+      workType: appointment.workType,
     );
   }
 
