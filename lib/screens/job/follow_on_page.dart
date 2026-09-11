@@ -42,10 +42,7 @@ class _RaiseFollowOnView extends StatelessWidget {
   void _goToJobClosed(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => FollowOnPage(
-          job: job,
-          phase: FollowOnPhase.jobClosed,
-        ),
+        builder: (_) => FollowOnPage(job: job, phase: FollowOnPhase.jobClosed),
       ),
     );
   }
@@ -91,16 +88,26 @@ class _RaiseFollowOnView extends StatelessWidget {
             SizedBox(height: 8.h),
             Text(
               'Specify urgent callback or reactive attendance details for ${job.jobNumber}.',
-              style: TextStyle(fontSize: 12.sp, color: NavigatorTokens.textSecondary),
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: NavigatorTokens.textSecondary,
+              ),
             ),
             SizedBox(height: 14.h),
             TextField(
               controller: noteController,
               maxLines: 3,
-              style: TextStyle(fontSize: 13.sp, color: NavigatorTokens.textPrimary),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: NavigatorTokens.textPrimary,
+              ),
               decoration: InputDecoration(
-                hintText: 'e.g. Return required with 22mm copper pipe & fittings...',
-                hintStyle: TextStyle(fontSize: 12.sp, color: NavigatorTokens.textTertiary),
+                hintText:
+                    'e.g. Return required with 22mm copper pipe & fittings...',
+                hintStyle: TextStyle(
+                  fontSize: 12.sp,
+                  color: NavigatorTokens.textTertiary,
+                ),
                 filled: true,
                 fillColor: NavigatorTokens.brandNavySoft,
                 border: OutlineInputBorder(
@@ -116,7 +123,9 @@ class _RaiseFollowOnView extends StatelessWidget {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: NavigatorTokens.brandNavy,
-                  shape: RoundedRectangleBorder(borderRadius: NavigatorTokens.buttonRadius),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: NavigatorTokens.buttonRadius,
+                  ),
                 ),
                 onPressed: () async {
                   await PillarClient.raiseEnquiry(
@@ -185,12 +194,18 @@ class _RaiseFollowOnView extends StatelessWidget {
             SizedBox(height: 8.h),
             Text(
               'Refer work outside your trade and earn points / rewards.',
-              style: TextStyle(fontSize: 12.sp, color: NavigatorTokens.textSecondary),
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: NavigatorTokens.textSecondary,
+              ),
             ),
             SizedBox(height: 14.h),
             TextField(
               controller: tradeController,
-              style: TextStyle(fontSize: 13.sp, color: NavigatorTokens.textPrimary),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: NavigatorTokens.textPrimary,
+              ),
               decoration: InputDecoration(
                 labelText: 'Trade required',
                 hintText: 'e.g. Roofing, Carpentry, Electrical',
@@ -206,7 +221,10 @@ class _RaiseFollowOnView extends StatelessWidget {
             TextField(
               controller: noteController,
               maxLines: 2,
-              style: TextStyle(fontSize: 13.sp, color: NavigatorTokens.textPrimary),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: NavigatorTokens.textPrimary,
+              ),
               decoration: InputDecoration(
                 labelText: 'Customer scope / notes',
                 hintText: 'Customer needs guttering replaced...',
@@ -225,12 +243,15 @@ class _RaiseFollowOnView extends StatelessWidget {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: NavigatorTokens.brandNavy,
-                  shape: RoundedRectangleBorder(borderRadius: NavigatorTokens.buttonRadius),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: NavigatorTokens.buttonRadius,
+                  ),
                 ),
                 onPressed: () async {
                   await PillarClient.raiseEnquiry(
                     category: 'REFERRAL',
-                    description: 'Referral for ${tradeController.text.trim()}: ${noteController.text.trim()}',
+                    description:
+                        'Referral for ${tradeController.text.trim()}: ${noteController.text.trim()}',
                     details: {'job_id': job.id, 'job_number': job.jobNumber},
                   );
                   if (context.mounted) {
@@ -320,7 +341,7 @@ class _RaiseFollowOnView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          job.customerName ?? 'Customer',
+                          job.customerName,
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w700,
@@ -368,7 +389,8 @@ class _RaiseFollowOnView extends StatelessWidget {
                   _OptionTile(
                     icon: LucideIcons.fileText,
                     title: 'Create a fixed price quote',
-                    subtitle: 'Create a new Fixed Price work order for this site',
+                    subtitle:
+                        'Create a new Fixed Price work order for this site',
                     onTap: () async {
                       await Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -380,14 +402,20 @@ class _RaiseFollowOnView extends StatelessWidget {
                       }
                     },
                   ),
-                  const Divider(height: 1, color: NavigatorTokens.borderHairline),
+                  const Divider(
+                    height: 1,
+                    color: NavigatorTokens.borderHairline,
+                  ),
                   _OptionTile(
                     icon: LucideIcons.zap,
                     title: 'Raise an hourly attendance',
                     subtitle: 'Raise an urgent reactive task or callback',
                     onTap: () => _showHourlyAttendanceSheet(context),
                   ),
-                  const Divider(height: 1, color: NavigatorTokens.borderHairline),
+                  const Divider(
+                    height: 1,
+                    color: NavigatorTokens.borderHairline,
+                  ),
                   _OptionTile(
                     icon: LucideIcons.gift,
                     title: 'Refer and earn',
@@ -405,7 +433,9 @@ class _RaiseFollowOnView extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 14.h),
           decoration: const BoxDecoration(
             color: NavigatorTokens.surfaceCard,
-            border: Border(top: BorderSide(color: NavigatorTokens.borderHairline)),
+            border: Border(
+              top: BorderSide(color: NavigatorTokens.borderHairline),
+            ),
           ),
           child: Material(
             color: NavigatorTokens.brandNavySoft,
@@ -419,7 +449,11 @@ class _RaiseFollowOnView extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(LucideIcons.check, color: NavigatorTokens.brandNavy, size: 18.sp),
+                    Icon(
+                      LucideIcons.check,
+                      color: NavigatorTokens.brandNavy,
+                      size: 18.sp,
+                    ),
                     SizedBox(width: 8.w),
                     Text(
                       'No enquiry required',
@@ -494,7 +528,11 @@ class _OptionTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(LucideIcons.chevronRight, color: NavigatorTokens.textTertiary, size: 18.sp),
+            Icon(
+              LucideIcons.chevronRight,
+              color: NavigatorTokens.textTertiary,
+              size: 18.sp,
+            ),
           ],
         ),
       ),
@@ -513,10 +551,8 @@ class _JobClosedView extends StatelessWidget {
   void _goToVisitComplete(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => FollowOnPage(
-          job: job,
-          phase: FollowOnPhase.visitComplete,
-        ),
+        builder: (_) =>
+            FollowOnPage(job: job, phase: FollowOnPhase.visitComplete),
       ),
     );
   }
@@ -547,7 +583,10 @@ class _JobClosedView extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
                   decoration: BoxDecoration(
                     color: NavigatorTokens.successBg,
                     borderRadius: BorderRadius.circular(20.r),
@@ -619,7 +658,9 @@ class _JobClosedView extends StatelessWidget {
                 color: NavigatorTokens.surfaceCard,
                 borderRadius: NavigatorTokens.cardRadius,
                 boxShadow: NavigatorTokens.cardShadows,
-                border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.2)),
+                border: Border.all(
+                  color: const Color(0xFF16A34A).withValues(alpha: 0.2),
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -631,7 +672,11 @@ class _JobClosedView extends StatelessWidget {
                       color: Color(0xFF16A34A),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(LucideIcons.check, color: Colors.white, size: 18.sp),
+                    child: Icon(
+                      LucideIcons.check,
+                      color: Colors.white,
+                      size: 18.sp,
+                    ),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
@@ -685,13 +730,21 @@ class _JobClosedView extends StatelessWidget {
                   ),
                   SizedBox(height: 12.h),
                   _detailRow('Appointment ID', job.jobNumber),
-                  const Divider(height: 18, color: NavigatorTokens.borderHairline),
+                  const Divider(
+                    height: 18,
+                    color: NavigatorTokens.borderHairline,
+                  ),
                   _detailRow('Type', WorkOrderPage.jobTypeChip(job)),
-                  const Divider(height: 18, color: NavigatorTokens.borderHairline),
-                  _detailRow('Customer', job.customerName ?? 'Customer'),
+                  const Divider(
+                    height: 18,
+                    color: NavigatorTokens.borderHairline,
+                  ),
+                  _detailRow('Customer', job.customerName),
                   _detailRow(
                     'Description',
-                    (job.description?.isNotEmpty == true) ? job.description! : job.siteAddress,
+                    (job.description?.isNotEmpty == true)
+                        ? job.description!
+                        : job.siteAddress,
                   ),
                 ],
               ),
@@ -899,7 +952,9 @@ class _VisitCompleteView extends StatelessWidget {
                           Clipboard.setData(ClipboardData(text: job.jobNumber));
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Appointment ID copied to clipboard'),
+                              content: Text(
+                                'Appointment ID copied to clipboard',
+                              ),
                               duration: Duration(seconds: 2),
                             ),
                           );
@@ -953,7 +1008,9 @@ class _VisitCompleteView extends StatelessWidget {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: NavigatorTokens.brandNavy,
-                shape: RoundedRectangleBorder(borderRadius: NavigatorTokens.buttonRadius),
+                shape: RoundedRectangleBorder(
+                  borderRadius: NavigatorTokens.buttonRadius,
+                ),
                 elevation: 0,
               ),
               onPressed: () {

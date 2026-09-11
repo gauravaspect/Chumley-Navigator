@@ -42,9 +42,9 @@ class ChumleyChatSocket {
       final wsBase = base
           .replaceFirst('https://', 'wss://')
           .replaceFirst('http://', 'ws://');
-      final uri = Uri.parse('$wsBase/ws').replace(
-        queryParameters: {'token': token},
-      );
+      final uri = Uri.parse(
+        '$wsBase/ws',
+      ).replace(queryParameters: {'token': token});
 
       final channel = WebSocketChannel.connect(uri);
       await channel.ready;

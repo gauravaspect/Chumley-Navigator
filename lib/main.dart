@@ -55,7 +55,10 @@ class MyApp extends StatelessWidget {
                 final isDark = themeNotifier.isDark;
                 return MaterialApp(
                   navigatorKey: AppDependencies.navigatorKey,
-                  navigatorObservers: [ChumleyAiRouteObserver()],
+                  navigatorObservers: [
+                    ChumleyAiRouteObserver(),
+                    AppDependencies.routeObserver,
+                  ],
                   debugShowCheckedModeBanner: false,
                   title: 'Chumley Navigator',
                   routes: AppRoutes.routes,

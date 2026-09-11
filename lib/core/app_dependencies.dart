@@ -41,6 +41,9 @@ class AppDependencies {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
+  static final RouteObserver<ModalRoute<void>> routeObserver =
+      RouteObserver<ModalRoute<void>>();
+
   static final ApiClient apiClient = ApiClient();
   static final AzureAuthService azureAuthService = AzureAuthService(
     navigatorKey: navigatorKey,

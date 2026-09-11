@@ -14,6 +14,7 @@ import 'package:chumley_navigator/widgets/vehicle/vcr_form_card.dart';
 import 'package:chumley_navigator/widgets/vehicle/vcr_warning_banner.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -32,6 +33,7 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
   late final VehicleCheckCubit _cubit;
   final _notesController = TextEditingController();
   bool _notesFocused = false;
+  bool _showBottomBar = true;
 
   @override
   void initState() {
@@ -136,10 +138,41 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
                           ),
                         ),
                         Expanded(
-                          child: RefreshIndicator(
-                            color: theme.dashPrimary,
-                            onRefresh: _cubit.refresh,
-                            child: ListView(
+                          child: NotificationListener<ScrollNotification>(
+                            onNotification: (notification) {
+                              final metrics = notification.metrics;
+
+                              if (metrics.maxScrollExtent <= 100.h) {
+                                if (!_showBottomBar) {
+                                  setState(() => _showBottomBar = true);
+                                }
+                                return false;
+                              }
+
+                              if (notification is UserScrollNotification) {
+                                final direction = notification.direction;
+                                if (direction == ScrollDirection.reverse &&
+                                    _showBottomBar) {
+                                  setState(() => _showBottomBar = false);
+                                } else if (direction ==
+                                        ScrollDirection.forward &&
+                                    !_showBottomBar) {
+                                  setState(() => _showBottomBar = true);
+                                }
+                              } else if (notification
+                                  is ScrollEndNotification) {
+                                if (metrics.pixels <= 0) {
+                                  if (!_showBottomBar) {
+                                    setState(() => _showBottomBar = true);
+                                  }
+                                }
+                              }
+                              return false;
+                            },
+                            child: RefreshIndicator(
+                              color: theme.dashPrimary,
+                              onRefresh: _cubit.refresh,
+                              child: ListView(
                               physics: const AlwaysScrollableScrollPhysics(
                                 parent: BouncingScrollPhysics(),
                               ),
@@ -506,13 +539,16 @@ class _VehileCheckScreenState extends State<VehileCheckScreen> {
                             ),
                           ),
                         ),
-                        Container(
+                      ),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 280),
+                          curve: Curves.easeOutCubic,
                           width: double.infinity,
                           padding: EdgeInsets.fromLTRB(
                             20.w,
                             12.h,
                             20.w,
-                            12.h,
+                            _showBottomBar ? 88.h : 12.h,
                           ),
                           decoration: BoxDecoration(
                             color: theme.isDark

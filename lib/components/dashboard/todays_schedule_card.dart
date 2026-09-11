@@ -27,7 +27,15 @@ class TodaysScheduleCard extends StatefulWidget {
 }
 
 class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
-  static const _weekDayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const _weekDayLabels = [
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
+  ];
 
   late DateTime _selectedDate;
   String _filter = 'All';
@@ -55,8 +63,14 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
+  List<Appointment> get _activeAppointments {
+    return widget.appointments
+        .where((a) => a.status.trim().toLowerCase() != 'scheduled')
+        .toList();
+  }
+
   bool _hasAppointment(DateTime date) {
-    for (final appointment in widget.appointments) {
+    for (final appointment in _activeAppointments) {
       final start = appointment.scheduledStart;
       if (start == null) continue;
       if (_isSameDay(start, date)) return true;
@@ -67,7 +81,7 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
   bool _hasPpm(DateTime date) => false;
 
   List<Appointment> get _dayAppointments {
-    return widget.appointments.where((a) {
+    return _activeAppointments.where((a) {
       final start = a.scheduledStart;
       if (start == null) return false;
       if (!_isSameDay(start, _selectedDate)) return false;
@@ -83,7 +97,7 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
 
   List<String> get _filterOptions {
     final types = <String>{'All'};
-    for (final a in widget.appointments) {
+    for (final a in _activeAppointments) {
       final type = a.type.isNotEmpty ? a.type : null;
       if (type != null && type.isNotEmpty) types.add(type);
     }
@@ -105,7 +119,7 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
           children: [
             Expanded(
               child: Text(
-                isToday ? "Today's schedule" : 'Schedule',
+                isToday ? "Today's Schedule" : 'Schedule',
                 style: TextStyle(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w700,
@@ -116,7 +130,7 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
             GestureDetector(
               onTap: () => CalendarFullScreen.open(
                 context,
-                appointments: widget.appointments,
+                appointments: _activeAppointments,
                 ppmTasks: widget.ppmTasks,
                 isLoading: widget.isLoading,
               ),
@@ -181,11 +195,11 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
                   if (i > 0) Divider(height: 1, color: theme.dashBorderLight),
                   CompactScheduleJobCard(appointment: appointments[i]),
                 ],
-                for (var i = 0; i < ppmTasks.length; i++) ...[
-                  if (appointments.isNotEmpty || i > 0)
-                    Divider(height: 1, color: theme.dashBorderLight),
-                  CompactSchedulePpmCard(task: ppmTasks[i]),
-                ],
+                // for (var i = 0; i < ppmTasks.length; i++) ...[
+                //   if (appointments.isNotEmpty || i > 0)
+                //     Divider(height: 1, color: theme.dashBorderLight),
+                //   CompactSchedulePpmCard(task: ppmTasks[i]),
+                // ],
               ],
             ],
           ),
@@ -202,15 +216,9 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
     final bg = selected
         ? AppColors.accentLime
         : (theme.isDark ? theme.dashSurfaceTint : const Color(0xFFF1F3F8));
-    final dayColor = selected
-        ? AppColors.textDarkBlue
-        : theme.dashMuted;
-    final dateColor = selected
-        ? AppColors.textDarkBlue
-        : theme.dashTitle;
-    final dotColor = selected
-        ? AppColors.textDarkBlue
-        : theme.dashPrimary;
+    final dayColor = selected ? AppColors.textDarkBlue : theme.dashMuted;
+    final dateColor = selected ? AppColors.textDarkBlue : theme.dashTitle;
+    final dotColor = selected ? AppColors.textDarkBlue : theme.dashPrimary;
 
     return GestureDetector(
       onTap: () => setState(() => _selectedDate = date),

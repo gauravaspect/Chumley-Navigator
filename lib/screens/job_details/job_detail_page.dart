@@ -12,7 +12,6 @@ import 'package:chumley_navigator/pillar/form_kind.dart';
 import 'package:chumley_navigator/pillar/jobs_repository.dart';
 import 'package:chumley_navigator/screens/forms/cp12_form_page.dart';
 import 'package:chumley_navigator/screens/forms/damp_survey_form_page.dart';
-import 'package:chumley_navigator/screens/forms/form_details.dart';
 import 'package:chumley_navigator/screens/forms/ld_form_page.dart';
 import 'package:chumley_navigator/screens/forms/vent_hygiene_form_page.dart';
 import 'package:chumley_navigator/screens/job_details/on_site_wizard.dart';
@@ -281,9 +280,7 @@ class _JobDetailPageState extends State<JobDetailPage>
           _appointment = detail.appointment!;
         }
         _applyStatusResponse(
-          status: detail.status.isNotEmpty
-              ? detail.status
-              : _currentStatus,
+          status: detail.status.isNotEmpty ? detail.status : _currentStatus,
           allowedNext: detail.allowedNextStatuses.isNotEmpty
               ? detail.allowedNextStatuses
               : _appointment.allowedNextStatuses,
@@ -912,12 +909,15 @@ class _JobDetailPageState extends State<JobDetailPage>
             ),
           ),
           SizedBox(height: 4.h),
-          Row(
+          Wrap(
+            spacing: 8.w,
+            runSpacing: 6.h,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
                 decoration: BoxDecoration(
-                  color: Color(0xFFE3E9F2),
+                  color: const Color(0xFFE3E9F2),
                   borderRadius: BorderRadius.circular(100.r),
                 ),
                 child: Text(
@@ -925,11 +925,10 @@ class _JobDetailPageState extends State<JobDetailPage>
                   style: TextStyle(
                     fontSize: 9.sp,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF5A6B85),
+                    color: const Color(0xFF5A6B85),
                   ),
                 ),
               ),
-              SizedBox(width: 8.w),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
                 decoration: BoxDecoration(
@@ -957,7 +956,13 @@ class _JobDetailPageState extends State<JobDetailPage>
   }
 
   Widget _buildStatusProgressTrack(DashboardTheme theme, Color statusColor) {
-    const shortLabels = ['Disp.', 'Transit', 'On Site', 'Closure', 'Done'];
+    const shortLabels = [
+      'Dispatched',
+      'In Transit',
+      'On Site',
+      'Job Closure',
+      'Visit Complete',
+    ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1122,6 +1127,16 @@ class _JobDetailPageState extends State<JobDetailPage>
                   interactionOptions: const InteractionOptions(
                     flags: InteractiveFlag.all,
                   ),
+                  onTap: (tapPosition, point) {
+                    if (_sitePosition != null) {
+                      _mapNavigationService.launchNavigation(
+                        context: context,
+                        destinationLat: _sitePosition!.latitude,
+                        destinationLng: _sitePosition!.longitude,
+                        address: siteAddress,
+                      );
+                    }
+                  },
                 ),
                 children: [
                   theme.isDark
@@ -1242,7 +1257,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                   ),
                 ),
 
-              // Floating Route Info Overlay (bottom-left)
+              // Floating Route Info Overlay (bottom-left) - Tap to open navigation
               if (_engineerPosition != null &&
                   _sitePosition != null &&
                   _distanceInMiles != null &&
@@ -1251,73 +1266,96 @@ class _JobDetailPageState extends State<JobDetailPage>
                   bottom: 10.h,
                   left: 10.w,
                   right: 50.w,
-                  child: Container(
-                    padding: EdgeInsets.all(10.r),
-                    decoration: BoxDecoration(
-                      color: theme.surface.withValues(alpha: 0.92),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: theme.border, width: 0.5),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          siteAddress,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.w700,
-                            color: theme.text,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (_sitePosition != null) {
+                        _mapNavigationService.launchNavigation(
+                          context: context,
+                          destinationLat: _sitePosition!.latitude,
+                          destinationLng: _sitePosition!.longitude,
+                          address: siteAddress,
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(10.r),
+                      decoration: BoxDecoration(
+                        color: theme.surface.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: theme.border, width: 0.5),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 6,
+                            offset: Offset(0, 2),
                           ),
-                        ),
-                        SizedBox(height: 2.h),
-                        Row(
-                          children: [
-                            Icon(
-                              LucideIcons.navigation,
-                              size: 10.sp,
-                              color: theme.isDark
-                                  ? AppColors.accentBlue
-                                  : AppColors.primaryBlue,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              '${_distanceInMiles!.toStringAsFixed(1)} miles away',
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w600,
-                                color: theme.text,
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  siteAddress,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.text,
+                                  ),
+                                ),
                               ),
-                            ),
-                            const Spacer(),
-                            Icon(
-                              LucideIcons.clock,
-                              size: 10.sp,
-                              color: theme.isDark
-                                  ? AppColors.accentBlue
-                                  : AppColors.primaryBlue,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              '$_travelTimeMinutes mins travel',
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w600,
-                                color: theme.text,
+                              Icon(
+                                LucideIcons.externalLink,
+                                size: 10.sp,
+                                color: theme.textMuted,
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                          SizedBox(height: 2.h),
+                          Row(
+                            children: [
+                              Icon(
+                                LucideIcons.navigation,
+                                size: 10.sp,
+                                color: theme.isDark
+                                    ? AppColors.accentBlue
+                                    : AppColors.primaryBlue,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                '${_distanceInMiles!.toStringAsFixed(1)} miles away',
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.text,
+                                ),
+                              ),
+                              const Spacer(),
+                              Icon(
+                                LucideIcons.clock,
+                                size: 10.sp,
+                                color: theme.isDark
+                                    ? AppColors.accentBlue
+                                    : AppColors.primaryBlue,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                '$_travelTimeMinutes mins travel',
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.text,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -2164,15 +2202,9 @@ class _JobDetailPageState extends State<JobDetailPage>
         workTypeId: workTypeId,
       );
     } else if (normalized.contains('cp12') || normalized.contains('gas')) {
-      page = Cp12FormPage(
-        jobId: _jobId,
-        appointmentNumber: workOrderLabel,
-      );
+      page = Cp12FormPage(jobId: _jobId, appointmentNumber: workOrderLabel);
     } else if (normalized.contains('works') || normalized.contains('bath')) {
-      page = WorksFormPage(
-        jobId: _jobId,
-        jobNumber: workOrderLabel,
-      );
+      page = WorksFormPage(jobId: _jobId, jobNumber: workOrderLabel);
     } else {
       page = LdFormPage(
         saId: _jobId,
@@ -2217,15 +2249,18 @@ class _JobDetailPageState extends State<JobDetailPage>
     final onSite = isOnSite;
 
     // Build form display items from API fetched list or fallback standard forms
-    final List<({
-      String workTypeId,
-      String title,
-      String subtitle,
-      bool isCompleted,
-      bool isDraft,
-      ValueChanged<bool> onToggle,
-      VoidCallback onTap,
-    })> formItems;
+    final List<
+      ({
+        String workTypeId,
+        String title,
+        String subtitle,
+        bool isCompleted,
+        bool isDraft,
+        ValueChanged<bool> onToggle,
+        VoidCallback onTap,
+      })
+    >
+    formItems;
 
     if (_formsList.isNotEmpty) {
       final activeForms = _formsList.where((form) {
@@ -2235,10 +2270,11 @@ class _JobDetailPageState extends State<JobDetailPage>
       }).toList();
 
       formItems = activeForms.map((form) {
-        final isCompleted = _localFormCompletedOverrides[form.workTypeId] ??
+        final isCompleted =
+            _localFormCompletedOverrides[form.workTypeId] ??
             form.isSubmitted ||
-            form.status.toLowerCase() == 'completed' ||
-            form.status.toLowerCase() == 'submitted';
+                form.status.toLowerCase() == 'completed' ||
+                form.status.toLowerCase() == 'submitted';
         final isDraft = form.isDraft && !isCompleted;
         return (
           workTypeId: form.workTypeId,
@@ -2273,13 +2309,16 @@ class _JobDetailPageState extends State<JobDetailPage>
           workTypeId: 'vent_hygiene',
           title: 'Vent Hygiene Forms (HVAC)',
           subtitle: 'Vent heat loss calculation · BS 8204:2011',
-          isCompleted: _localFormCompletedOverrides['vent_hygiene'] ?? _ventHygieneCompleted,
+          isCompleted:
+              _localFormCompletedOverrides['vent_hygiene'] ??
+              _ventHygieneCompleted,
           isDraft: false,
           onToggle: (bool v) => setState(() {
             _ventHygieneCompleted = v;
             _localFormCompletedOverrides['vent_hygiene'] = v;
           }),
-          onTap: () => _openFormByWorkType('vent_hygiene', 'Vent Hygiene Forms'),
+          onTap: () =>
+              _openFormByWorkType('vent_hygiene', 'Vent Hygiene Forms'),
         ),
       ];
     }
@@ -2405,7 +2444,9 @@ class _JobDetailPageState extends State<JobDetailPage>
                             width: 20.w,
                             height: 20.w,
                             decoration: BoxDecoration(
-                              color: item.isCompleted ? pinkColor : Colors.transparent,
+                              color: item.isCompleted
+                                  ? pinkColor
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(5.r),
                               border: Border.all(
                                 color: item.isCompleted
@@ -2436,7 +2477,9 @@ class _JobDetailPageState extends State<JobDetailPage>
                                       style: TextStyle(
                                         fontSize: 13.sp,
                                         fontWeight: FontWeight.w600,
-                                        color: onSite ? theme.text : theme.textMuted,
+                                        color: onSite
+                                            ? theme.text
+                                            : theme.textMuted,
                                         decoration: item.isCompleted
                                             ? TextDecoration.lineThrough
                                             : TextDecoration.none,
@@ -2451,8 +2494,12 @@ class _JobDetailPageState extends State<JobDetailPage>
                                         vertical: 2.h,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(4.r),
+                                        color: const Color(
+                                          0xFFF59E0B,
+                                        ).withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(
+                                          4.r,
+                                        ),
                                       ),
                                       child: Text(
                                         'Draft',
@@ -2654,14 +2701,16 @@ class _JobDetailPageState extends State<JobDetailPage>
                 spacing: 8.w,
                 runSpacing: 8.h,
                 alignment: WrapAlignment.center,
-                children: skipAhead.map((status) {
-                  return OutlinedButton(
-                    onPressed: _statusUpdating
-                        ? null
-                        : () => _advanceStatus(status),
-                    child: Text(status),
-                  );
-                }).toList(growable: false),
+                children: skipAhead
+                    .map((status) {
+                      return OutlinedButton(
+                        onPressed: _statusUpdating
+                            ? null
+                            : () => _advanceStatus(status),
+                        child: Text(status),
+                      );
+                    })
+                    .toList(growable: false),
               ),
             ],
           ],
@@ -2766,78 +2815,253 @@ class MapNavigationService {
     required double destinationLng,
     required String address,
   }) async {
-    if (Platform.isAndroid) {
-      final googleMapsUrl = Uri.parse(
+    final encodedAddress = Uri.encodeComponent(address.trim());
+
+    Future<void> openAppleMaps() async {
+      final appUrl = Uri.parse(
+        'maps://?daddr=$destinationLat,$destinationLng&q=$encodedAddress',
+      );
+      final webUrl = Uri.parse(
+        'https://maps.apple.com/?daddr=$destinationLat,$destinationLng&q=$encodedAddress',
+      );
+      if (await canLaunchUrl(appUrl)) {
+        await launchUrl(appUrl, mode: LaunchMode.externalApplication);
+      } else if (await canLaunchUrl(webUrl)) {
+        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+      }
+    }
+
+    Future<void> openGoogleMaps() async {
+      final iosAppUrl = Uri.parse(
+        'comgooglemaps://?daddr=$destinationLat,$destinationLng&directionsmode=driving',
+      );
+      final universalUrl = Uri.parse(
         'https://www.google.com/maps/dir/?api=1&destination=$destinationLat,$destinationLng',
       );
-      if (await canLaunchUrl(googleMapsUrl)) {
-        await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not launch Google Maps')),
-          );
-        }
+      if (Platform.isIOS && await canLaunchUrl(iosAppUrl)) {
+        await launchUrl(iosAppUrl, mode: LaunchMode.externalApplication);
+      } else if (await canLaunchUrl(universalUrl)) {
+        await launchUrl(universalUrl, mode: LaunchMode.externalApplication);
       }
-    } else if (Platform.isIOS) {
-      if (context.mounted) {
-        showCupertinoModalPopup(
-          context: context,
-          builder: (BuildContext context) => CupertinoActionSheet(
-            title: const Text('Navigate Using'),
-            actions: <CupertinoActionSheetAction>[
-              CupertinoActionSheetAction(
-                child: const Text('Apple Maps'),
-                onPressed: () async {
-                  Navigator.pop(context);
-                  final appleMapsUrl = Uri.parse(
-                    'maps://?daddr=$destinationLat,$destinationLng',
-                  );
-                  if (await canLaunchUrl(appleMapsUrl)) {
-                    await launchUrl(
-                      appleMapsUrl,
-                      mode: LaunchMode.externalApplication,
-                    );
-                  }
-                },
-              ),
-              CupertinoActionSheetAction(
-                child: const Text('Google Maps'),
-                onPressed: () async {
-                  Navigator.pop(context);
-                  final googleMapsAppUrl = Uri.parse(
-                    'comgooglemaps://?daddr=$destinationLat,$destinationLng',
-                  );
-                  if (await canLaunchUrl(googleMapsAppUrl)) {
-                    await launchUrl(
-                      googleMapsAppUrl,
-                      mode: LaunchMode.externalApplication,
-                    );
-                  } else {
-                    // Fallback to browser Google Maps
-                    final googleMapsWebUrl = Uri.parse(
-                      'https://www.google.com/maps/dir/?api=1&destination=$destinationLat,$destinationLng',
-                    );
-                    if (await canLaunchUrl(googleMapsWebUrl)) {
-                      await launchUrl(
-                        googleMapsWebUrl,
-                        mode: LaunchMode.externalApplication,
-                      );
-                    }
-                  }
-                },
-              ),
-            ],
-            cancelButton: CupertinoActionSheetAction(
-              isDefaultAction: true,
-              child: const Text('Cancel'),
+    }
+
+    Future<void> openWaze() async {
+      final appUrl = Uri.parse(
+        'waze://?ll=$destinationLat,$destinationLng&navigate=yes',
+      );
+      final webUrl = Uri.parse(
+        'https://waze.com/ul?ll=$destinationLat,$destinationLng&navigate=yes',
+      );
+      if (await canLaunchUrl(appUrl)) {
+        await launchUrl(appUrl, mode: LaunchMode.externalApplication);
+      } else if (await canLaunchUrl(webUrl)) {
+        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+      }
+    }
+
+    Future<void> openCitymapper() async {
+      final appUrl = Uri.parse(
+        'citymapper://directions?endcoord=$destinationLat,$destinationLng&endname=$encodedAddress',
+      );
+      final webUrl = Uri.parse(
+        'https://citymapper.com/directions?endcoord=$destinationLat,$destinationLng&endname=$encodedAddress',
+      );
+      if (await canLaunchUrl(appUrl)) {
+        await launchUrl(appUrl, mode: LaunchMode.externalApplication);
+      } else if (await canLaunchUrl(webUrl)) {
+        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+      }
+    }
+
+    if (!context.mounted) return;
+
+    if (Platform.isIOS) {
+      showCupertinoModalPopup(
+        context: context,
+        builder: (BuildContext ctx) => CupertinoActionSheet(
+          title: const Text('Navigate Using'),
+          message: Text(
+            address.isNotEmpty ? address : 'Choose a navigation app',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          actions: <CupertinoActionSheetAction>[
+            CupertinoActionSheetAction(
+              child: const Text('Apple Maps'),
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(ctx);
+                openAppleMaps();
               },
             ),
+            CupertinoActionSheetAction(
+              child: const Text('Google Maps'),
+              onPressed: () {
+                Navigator.pop(ctx);
+                openGoogleMaps();
+              },
+            ),
+            CupertinoActionSheetAction(
+              child: const Text('Waze'),
+              onPressed: () {
+                Navigator.pop(ctx);
+                openWaze();
+              },
+            ),
+            CupertinoActionSheetAction(
+              child: const Text('Citymapper'),
+              onPressed: () {
+                Navigator.pop(ctx);
+                openCitymapper();
+              },
+            ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            isDefaultAction: true,
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx),
           ),
-        );
-      }
+        ),
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        builder: (BuildContext ctx) {
+          return SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 36.w,
+                    height: 4.h,
+                    margin: EdgeInsets.only(bottom: 12.h),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20.w,
+                      vertical: 4.h,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Navigate Using',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Divider(height: 16.h, color: Colors.grey.shade200),
+                  ListTile(
+                    leading: Container(
+                      width: 36.w,
+                      height: 36.w,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F0FE),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        LucideIcons.mapPin,
+                        color: const Color(0xFF1A73E8),
+                        size: 20.sp,
+                      ),
+                    ),
+                    title: Text(
+                      'Google Maps',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Turn-by-turn navigation',
+                      style: TextStyle(fontSize: 11.sp, color: Colors.grey),
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      openGoogleMaps();
+                    },
+                  ),
+                  ListTile(
+                    leading: Container(
+                      width: 36.w,
+                      height: 36.w,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0F7FA),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        LucideIcons.navigation,
+                        color: const Color(0xFF00ACC1),
+                        size: 20.sp,
+                      ),
+                    ),
+                    title: Text(
+                      'Waze',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Real-time traffic & alerts',
+                      style: TextStyle(fontSize: 11.sp, color: Colors.grey),
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      openWaze();
+                    },
+                  ),
+                  ListTile(
+                    leading: Container(
+                      width: 36.w,
+                      height: 36.w,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        LucideIcons.compass,
+                        color: const Color(0xFF2E7D32),
+                        size: 20.sp,
+                      ),
+                    ),
+                    title: Text(
+                      'Citymapper',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Urban routing & transit',
+                      style: TextStyle(fontSize: 11.sp, color: Colors.grey),
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      openCitymapper();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
     }
   }
 }

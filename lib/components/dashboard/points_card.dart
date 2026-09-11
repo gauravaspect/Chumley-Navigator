@@ -11,8 +11,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../redeem_points/redeem_points_bottom_model.dart';
-
 class PointsCard extends StatelessWidget {
   const PointsCard({super.key, required this.user});
 
@@ -190,7 +188,7 @@ class _PointsCardBody extends StatelessWidget {
                             SizedBox(width: 8.w),
                             Icon(
                               LucideIcons.gift,
-                                size: 18.sp,
+                              size: 18.sp,
                               color: AppColors.primaryBlue,
                             ),
                           ],

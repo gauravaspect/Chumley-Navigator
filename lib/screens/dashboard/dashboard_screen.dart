@@ -27,10 +27,11 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
   static const _sectionGap = 14.0;
 
   late final DashboardCubit _cubit;
+  ModalRoute<void>? _route;
 
   @override
   void initState() {
@@ -39,9 +40,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null && route != _route) {
+      if (_route != null) {
+        AppDependencies.routeObserver.unsubscribe(this);
+      }
+      _route = route;
+      AppDependencies.routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
   void dispose() {
+    AppDependencies.routeObserver.unsubscribe(this);
     _cubit.close();
     super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _cubit.refreshAppointments();
   }
 
   UserModel? _userFromState(DashboardState state) => state.userOrNull;
@@ -276,7 +296,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ];
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
@@ -286,7 +306,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (state is DashboardError) ...[
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                 decoration: BoxDecoration(
                   color: AppColors.errorBackground,
                   borderRadius: BorderRadius.circular(10.r),

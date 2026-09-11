@@ -160,7 +160,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               builder: (context, state) {
                 final leaderboard = _leaderboardFromState(state);
                 final users = leaderboard?.users ?? const <LeaderboardUser>[];
-                final showShimmer = state is LeaderboardInitial ||
+                final showShimmer =
+                    state is LeaderboardInitial ||
                     (state is LeaderboardLoading && users.isEmpty);
                 final me = _myEntry(users);
                 final top1 = _byRank(users, 1);
@@ -305,9 +306,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                   ),
                                   child: Column(
                                     children: [
-                                      for (var i = 0;
-                                          i < ranking.length;
-                                          i++) ...[
+                                      for (
+                                        var i = 0;
+                                        i < ranking.length;
+                                        i++
+                                      ) ...[
                                         if (i > 0)
                                           Divider(
                                             height: 1,
@@ -315,9 +318,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                                 .withValues(alpha: 0.35),
                                           ),
                                         FadeSlideIn(
-                                          delay: Duration(
-                                            milliseconds: 30 * i,
-                                          ),
+                                          delay: Duration(milliseconds: 30 * i),
                                           offsetY: 6,
                                           child: _RankRow(
                                             theme: theme,
@@ -600,8 +601,8 @@ class _PodiumPerson extends StatelessWidget {
             color: elevated
                 ? theme.dashPrimary
                 : (theme.isDark
-                    ? theme.dashSurfaceTint
-                    : const Color(0xFFE9EDF5)),
+                      ? theme.dashSurfaceTint
+                      : const Color(0xFFE9EDF5)),
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
@@ -642,8 +643,8 @@ class _PodiumPerson extends StatelessWidget {
             color: elevated
                 ? AppColors.accentLime
                 : (theme.isDark
-                    ? theme.dashSurfaceTint
-                    : const Color(0xFFE9EDF5)),
+                      ? theme.dashSurfaceTint
+                      : const Color(0xFFE9EDF5)),
             borderRadius: BorderRadius.circular(8.r),
           ),
           alignment: Alignment.center,
@@ -675,6 +676,12 @@ class _RankRow extends StatelessWidget {
   final bool isMe;
   final String initials;
   final int delta;
+
+  static String _cleanName(String raw) {
+    return raw
+        .replaceAll(RegExp(r'\s*[\(\[][A-Za-z0-9\s]+[\)\]]\s*$'), '')
+        .trim();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -715,8 +722,8 @@ class _RankRow extends StatelessWidget {
               color: isMe
                   ? theme.dashPrimary
                   : (theme.isDark
-                      ? theme.dashSurfaceTint
-                      : const Color(0xFFE9EDF5)),
+                        ? theme.dashSurfaceTint
+                        : const Color(0xFFE9EDF5)),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
@@ -736,7 +743,7 @@ class _RankRow extends StatelessWidget {
               children: [
                 Flexible(
                   child: Text(
-                    user.name.trim().isEmpty ? 'Engineer' : user.name.trim(),
+                    _cleanName(user.name),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
