@@ -77,26 +77,10 @@ class JobsRepository {
       }
       return detail;
     } catch (e) {
-      Log('API fetchFormDetail failed for $saId / $workTypeId, checking Firebase / local: $e', name: 'JobsRepository');
+      Log('API fetchFormDetail failed for $saId / $workTypeId: $e', name: 'JobsRepository');
     }
 
-    // Fallback 1: Firebase Firestore draft document
-    final firebaseDraft = await PillarClient.getFormDraft(
-      saId: saId,
-      workTypeId: workTypeId,
-    );
-    if (firebaseDraft != null) {
-      final detail = EngineerFormDetail.fromJson(firebaseDraft);
-      await _drafts.saveDraft(
-        jobId: saId,
-        step: detail.step,
-        answers: detail.answers,
-        photos: detail.photoSlots,
-      );
-      return detail;
-    }
-
-    // Fallback 2: SharedPreferences local store
+    // Fallback: SharedPreferences local store
     final localAnswers = await _drafts.loadAnswers(saId);
     final localPhotos = await _drafts.loadPhotos(saId);
     final localStep = await _drafts.loadFurthestStep(saId);
@@ -132,7 +116,6 @@ class JobsRepository {
       photos: photoSlots,
     );
 
-    // 2. Firebase schema creation / write
     await PillarClient.saveFormDraft(
       saId: saId,
       workTypeId: workTypeId,
@@ -141,8 +124,6 @@ class JobsRepository {
       step: step,
       extraData: extraData,
     );
-
-    // 3. API endpoint call
     try {
       await _appointments.saveFormDraft(
         saId: saId,
@@ -153,7 +134,7 @@ class JobsRepository {
         extraData: extraData,
       );
     } catch (e) {
-      Log('PUT form draft endpoint failed for $saId / $workTypeId (saved to Firebase & local): $e', name: 'JobsRepository');
+      Log('PUT form draft endpoint failed for $saId / $workTypeId: $e', name: 'JobsRepository');
     }
   }
 
@@ -169,9 +150,15 @@ class JobsRepository {
     String? pmProjectId,
     Map<String, dynamic>? extraData,
   }) async {
+    // Save draft / locally mark completed
+    await _drafts.saveDraft(
+      jobId: saId,
+      step: 0,
+      answers: answers,
+      photos: photoSlots,
+    );
     await _drafts.saveStatus(saId, SaStatus.visitComplete);
 
-    // 1. POST API submit endpoint
     try {
       await _appointments.submitForm(
         saId: saId,
@@ -182,9 +169,8 @@ class JobsRepository {
       );
     } catch (e) {
       Log('POST submit form API failed for $saId / $workTypeId: $e', name: 'JobsRepository');
+      rethrow;
     }
-
-    // 2. Commit sign-off to Firestore
     final ok = await PillarClient.submitSignOff(
       jobId: saId,
       reportType: reportType,
@@ -194,8 +180,9 @@ class JobsRepository {
       pmProjectId: pmProjectId,
     );
     if (!ok) {
-      throw StateError('Could not submit report for $saId');
+      Log('PillarClient submitSignOff skipped/returned false for $saId', name: 'JobsRepository');
     }
+    await _drafts.saveStatus(saId, SaStatus.jobClosure);
   }
 
   Future<void> signOff({
@@ -217,15 +204,28 @@ class JobsRepository {
     );
   }
 
+  /// After sign-off, advance SA status to Job Closure if allowed.
+  Future<EngineerAppointmentDetail?> advanceToJobClosure(String saId) async {
+    try {
+      final detail = await fetchAppointment(saId);
+      final allowed = SaStatus.pickAllowed(detail.allowedNextStatuses, SaStatus.jobClosure);
+      if (allowed != null) {
+        return await setStatus(saId: saId, status: allowed);
+      }
+      return detail;
+    } catch (e) {
+      Log('advanceToJobClosure failed for $saId: $e', name: 'JobsRepository');
+      return null;
+    }
+  }
+
   /// After sign-off, advance SA status when the API allows (Job Closure → Visit Complete).
   Future<EngineerAppointmentDetail?> advanceAfterSignOff(String saId) async {
     try {
-      var detail = await fetchAppointment(saId);
-      for (final target in [SaStatus.jobClosure, SaStatus.visitComplete]) {
-        final allowed = SaStatus.pickAllowed(detail.allowedNextStatuses, target);
-        if (allowed == null) continue;
-        detail = await setStatus(saId: saId, status: allowed);
-        if (SaStatus.isVisitComplete(detail.status)) return detail;
+      final detail = await fetchAppointment(saId);
+      final allowed = SaStatus.pickAllowed(detail.allowedNextStatuses, SaStatus.jobClosure);
+      if (allowed != null) {
+        return await setStatus(saId: saId, status: allowed);
       }
       return detail;
     } catch (e) {

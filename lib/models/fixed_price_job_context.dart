@@ -58,6 +58,27 @@ class FixedPriceJobContext extends Equatable {
     );
   }
 
+  factory FixedPriceJobContext.fromVisitJob(dynamic job) {
+    final scheduled = job.scheduledStart;
+    final dateStr = scheduled != null
+        ? '${scheduled.year}-'
+            '${scheduled.month.toString().padLeft(2, '0')}-'
+            '${scheduled.day.toString().padLeft(2, '0')}'
+        : '';
+    final jobId = (job.id as String?) ?? '';
+    final jobNo = (job.jobNumber as String?) ?? jobId;
+    final siteId = (job.siteId as String?) ?? '';
+    return FixedPriceJobContext(
+      sourceWorkOrderId: jobId,
+      workOrderLabel: jobNo,
+      siteId: siteId,
+      accountId: '',
+      contactId: '',
+      customerEmail: '',
+      earliestRequestedDate: dateStr,
+    );
+  }
+
   FixedPriceSalesforceContext toSalesforceContext() {
     return FixedPriceSalesforceContext(
       siteId: siteId,

@@ -456,6 +456,11 @@ class PillarClient {
     String? postcode,
     String engineerEmail = defaultEngineerEmail,
   }) async {
+    // NOTE: Firebase write logic commented out as requested.
+    Log('[MOCK] raiseEnquiry category: $category for job: $jobId (Firebase write commented out)', name: 'PillarClient');
+    return true;
+
+    /*
     if (!enableFirestoreWrites) {
       Log('[TEST MODE: Firebase writes disabled] raiseEnquiry category: $category for job: $jobId', name: 'PillarClient');
       return true;
@@ -485,6 +490,7 @@ class PillarClient {
       Log('raiseEnquiry error: $e\n$st', name: 'PillarClient');
       return true;
     }
+    */
   }
 
   // ---------------------------------------------------------------------------

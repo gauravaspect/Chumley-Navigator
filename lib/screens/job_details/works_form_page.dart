@@ -11,10 +11,14 @@ class WorksFormPage extends StatefulWidget {
     super.key,
     required this.jobId,
     this.jobNumber = '',
+    this.onSubmitted,
+    this.onCancelToInTransit,
   });
 
   final String jobId;
   final String jobNumber;
+  final VoidCallback? onSubmitted;
+  final VoidCallback? onCancelToInTransit;
 
   static Future<bool?> open(
     BuildContext context, {
@@ -110,7 +114,11 @@ class _WorksFormPageState extends State<WorksFormPage> {
       },
     );
     if (!mounted) return;
-    Navigator.of(context).pop(true);
+    if (widget.onSubmitted != null) {
+      widget.onSubmitted!();
+    } else {
+      Navigator.of(context).pop(true);
+    }
   }
 
   @override
@@ -128,6 +136,8 @@ class _WorksFormPageState extends State<WorksFormPage> {
                     onTap: () {
                       if (_step > 0) {
                         setState(() => _step--);
+                      } else if (widget.onCancelToInTransit != null) {
+                        widget.onCancelToInTransit!();
                       } else {
                         Navigator.of(context).maybePop(false);
                       }

@@ -25,6 +25,8 @@ class PostSubmitFlow extends StatelessWidget {
     required this.description,
     required this.onPhaseChanged,
     required this.onBackToHome,
+    this.onCloseJob,
+    this.onVisitComplete,
     this.onRaiseEstimate,
     this.onRaiseReactive,
     this.onReferAndEarn,
@@ -38,6 +40,8 @@ class PostSubmitFlow extends StatelessWidget {
   final String description;
   final ValueChanged<PostSubmitPhase> onPhaseChanged;
   final VoidCallback onBackToHome;
+  final VoidCallback? onCloseJob;
+  final VoidCallback? onVisitComplete;
   final VoidCallback? onRaiseEstimate;
   final VoidCallback? onRaiseReactive;
   final VoidCallback? onReferAndEarn;
@@ -71,7 +75,7 @@ class PostSubmitFlow extends StatelessWidget {
             workTypeLabel: workTypeLabel,
             customerName: customerName,
             description: description,
-            onCloseJob: () => onPhaseChanged(PostSubmitPhase.followOn),
+            onCloseJob: onCloseJob ?? () => onPhaseChanged(PostSubmitPhase.followOn),
           ),
         PostSubmitPhase.followOn => _FollowOnScreen(
             jobNumber: jobNumber,
@@ -88,7 +92,7 @@ class PostSubmitFlow extends StatelessWidget {
             workTypeLabel: workTypeLabel,
             customerName: customerName,
             description: description,
-            onVisitComplete: () => onPhaseChanged(PostSubmitPhase.visitComplete),
+            onVisitComplete: onVisitComplete ?? () => onPhaseChanged(PostSubmitPhase.visitComplete),
           ),
         PostSubmitPhase.visitComplete => _VisitCompleteScreen(
             jobNumber: jobNumber,

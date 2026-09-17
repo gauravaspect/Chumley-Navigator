@@ -191,7 +191,7 @@ class _JobDetailPageState extends State<JobDetailPage>
       _postSubmitPhase ??= PostSubmitPhase.jobCompleted;
     } else if (SaStatus.isVisitComplete(status)) {
       _showOnSiteForm = false;
-      _postSubmitPhase = PostSubmitPhase.visitComplete;
+      _postSubmitPhase ??= PostSubmitPhase.visitComplete;
     }
   }
 
@@ -200,12 +200,18 @@ class _JobDetailPageState extends State<JobDetailPage>
 
     setState(() => _statusUpdating = true);
     try {
+      // Local state progression without external API dependency
       final result = await _jobs.setStatus(saId: _jobId, status: targetStatus);
       if (!mounted) return;
       setState(() {
         _statusUpdating = false;
         if (result.appointment != null) {
           _appointment = result.appointment!;
+        } else {
+          _appointment = _appointment.copyWith(
+            status: result.status,
+            allowedNextStatuses: result.allowedNextStatuses,
+          );
         }
         _applyStatusResponse(
           status: result.status,
@@ -213,7 +219,7 @@ class _JobDetailPageState extends State<JobDetailPage>
         );
       });
     } catch (e) {
-      Log('API status update failed: $e', name: 'JobDetail');
+      Log('Status update failed: $e', name: 'JobDetail');
       if (!mounted) return;
       setState(() => _statusUpdating = false);
       final errorMsg = e is AppointmentApiException
@@ -236,17 +242,34 @@ class _JobDetailPageState extends State<JobDetailPage>
     }
   }
 
-  Future<void> _advanceAfterSignOff() async {
-    final result = await _jobs.advanceAfterSignOff(_jobId);
-    if (!mounted || result == null) return;
-    setState(() {
-      if (result.appointment != null) {
-        _appointment = result.appointment!;
+  Future<void> _advanceToJobClosure() async {
+    try {
+      final result = await _jobs.advanceToJobClosure(_jobId);
+      if (result != null && mounted) {
+        setState(() {
+          if (result.appointment != null) {
+            _appointment = result.appointment!;
+          } else {
+            _appointment = _appointment.copyWith(
+              status: result.status,
+              allowedNextStatuses: result.allowedNextStatuses,
+            );
+          }
+          _currentStatus = result.status;
+          _allowedNextStatuses = result.allowedNextStatuses;
+        });
       }
-      _applyStatusResponse(
-        status: result.status,
-        allowedNext: result.allowedNextStatuses,
-      );
+    } catch (e) {
+      Log('advanceToJobClosure failed: $e', name: 'JobDetail');
+    }
+  }
+
+  Future<void> _handleFormSubmitted() async {
+    await _advanceToJobClosure();
+    if (!mounted) return;
+    setState(() {
+      _showOnSiteForm = false;
+      _postSubmitPhase = PostSubmitPhase.jobCompleted;
     });
   }
 
@@ -686,8 +709,13 @@ class _JobDetailPageState extends State<JobDetailPage>
         !showPostSubmit &&
         _showOnSiteForm;
 
+    final effectivePostSubmitPhase = _postSubmitPhase ??
+        (isCompleted
+            ? PostSubmitPhase.visitComplete
+            : PostSubmitPhase.jobCompleted);
+
     VoidCallback postSubmitBack;
-    switch (_postSubmitPhase) {
+    switch (effectivePostSubmitPhase) {
       case PostSubmitPhase.jobClosed:
         postSubmitBack = () =>
             setState(() => _postSubmitPhase = PostSubmitPhase.followOn);
@@ -698,7 +726,6 @@ class _JobDetailPageState extends State<JobDetailPage>
         postSubmitBack = () =>
             setState(() => _postSubmitPhase = PostSubmitPhase.jobClosed);
       case PostSubmitPhase.jobCompleted:
-      case null:
         postSubmitBack = () => Navigator.of(context).pop();
     }
 
@@ -741,19 +768,48 @@ class _JobDetailPageState extends State<JobDetailPage>
                   brandingHeader(onBack: postSubmitBack),
                   Expanded(
                     child: PostSubmitFlow(
-                      phase: _postSubmitPhase!,
+                      phase: effectivePostSubmitPhase,
                       jobNumber: jobNo,
                       customerName: customerName,
                       jobType: jobType,
                       workTypeLabel: jobTitleDescription,
                       description: jobTitleDescription,
-                      onPhaseChanged: (phase) {
-                        setState(() => _postSubmitPhase = phase);
+                      onPhaseChanged: (phase) async {
+                        if (phase == PostSubmitPhase.visitComplete) {
+                          await _advanceStatus(SaStatus.visitComplete);
+                        }
+                        if (mounted) {
+                          setState(() => _postSubmitPhase = phase);
+                        }
+                      },
+                      onCloseJob: () {
+                        setState(() => _postSubmitPhase = PostSubmitPhase.followOn);
+                      },
+                      onVisitComplete: () async {
+                        await _advanceStatus(SaStatus.visitComplete);
+                        if (mounted) {
+                          setState(() => _postSubmitPhase = PostSubmitPhase.visitComplete);
+                        }
                       },
                       onBackToHome: () => Navigator.of(context).pop(),
-                      onRaiseEstimate: _openFixedPrice,
-                      onRaiseReactive: () => _openLead(RaiseLeadKind.reactive),
-                      onReferAndEarn: () => _openLead(RaiseLeadKind.refer),
+                      onRaiseEstimate: () async {
+                        await _openFixedPrice();
+                        if (mounted) {
+                          setState(() => _postSubmitPhase = PostSubmitPhase.jobClosed);
+                        }
+                      },
+                      onRaiseReactive: () async {
+                        await _openLead(RaiseLeadKind.reactive);
+                        if (mounted) {
+                          setState(() => _postSubmitPhase = PostSubmitPhase.jobClosed);
+                        }
+                      },
+                      onReferAndEarn: () async {
+                        await _openLead(RaiseLeadKind.refer);
+                        if (mounted) {
+                          setState(() => _postSubmitPhase = PostSubmitPhase.jobClosed);
+                        }
+                      },
                     ),
                   ),
                 ],
@@ -1938,7 +1994,16 @@ class _JobDetailPageState extends State<JobDetailPage>
   Widget _buildOnSiteForm(String jobNo) {
     switch (_formKind) {
       case FormKind.bath:
-        return WorksFormPage(jobId: _jobId, jobNumber: jobNo);
+        return WorksFormPage(
+          jobId: _jobId,
+          jobNumber: jobNo,
+          onCancelToInTransit: () {
+            setState(() => _showOnSiteForm = false);
+          },
+          onSubmitted: () async {
+            await _handleFormSubmitted();
+          },
+        );
       case FormKind.gas:
         return Cp12FormPage(
           appointmentNumber: jobNo,
@@ -1951,9 +2016,7 @@ class _JobDetailPageState extends State<JobDetailPage>
               answers: {'form': 'cp12'},
               photoSlots: const {},
             );
-            await _advanceAfterSignOff();
-            if (!mounted) return;
-            setState(() => _showOnSiteForm = false);
+            await _handleFormSubmitted();
           },
         );
       case FormKind.leak:
@@ -1971,9 +2034,7 @@ class _JobDetailPageState extends State<JobDetailPage>
               answers: answers,
               photoSlots: photos,
             );
-            await _advanceAfterSignOff();
-            if (!mounted) return;
-            setState(() => _showOnSiteForm = false);
+            await _handleFormSubmitted();
           },
         );
     }

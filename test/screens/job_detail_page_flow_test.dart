@@ -91,6 +91,48 @@ void main() {
       },
     );
 
+    testWidgets(
+      'followOn phase triggers onRaiseEstimate, onRaiseReactive, onReferAndEarn callbacks',
+      (tester) async {
+        tester.view.physicalSize = const Size(393 * 3, 1200 * 3);
+        tester.view.devicePixelRatio = 3.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        bool estimateCalled = false;
+        bool reactiveCalled = false;
+        bool referCalled = false;
+
+        await tester.pumpWidget(
+          wrapWithScreenUtil(
+            PostSubmitFlow(
+              phase: PostSubmitPhase.followOn,
+              jobNumber: 'SA-10293',
+              customerName: 'Alice Green',
+              jobType: 'Leak Detection',
+              workTypeLabel: 'Leak Survey',
+              description: 'Inspect ground floor ceiling leak.',
+              onPhaseChanged: (_) {},
+              onBackToHome: () {},
+              onRaiseEstimate: () => estimateCalled = true,
+              onRaiseReactive: () => reactiveCalled = true,
+              onReferAndEarn: () => referCalled = true,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Create a fixed price quote'));
+        expect(estimateCalled, isTrue);
+
+        await tester.tap(find.text('Raise an hourly attendance'));
+        expect(reactiveCalled, isTrue);
+
+        await tester.tap(find.text('Refer and earn'));
+        expect(referCalled, isTrue);
+      },
+    );
+
     testWidgets('renders jobClosed phase with "Slide to visit complete"', (
       tester,
     ) async {
@@ -110,8 +152,9 @@ void main() {
             workTypeLabel: 'Leak Survey',
             description: 'Inspect ground floor ceiling leak.',
             onPhaseChanged: (p) {
-              if (p == PostSubmitPhase.visitComplete)
+              if (p == PostSubmitPhase.visitComplete) {
                 visitCompleteCalled = true;
+              }
             },
             onBackToHome: () {},
           ),

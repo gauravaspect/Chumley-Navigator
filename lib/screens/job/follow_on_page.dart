@@ -1,8 +1,9 @@
+import 'package:chumley_navigator/models/fixed_price_job_context.dart';
 import 'package:chumley_navigator/pillar/visit_job.dart';
 import 'package:chumley_navigator/screens/job/work_order_page.dart';
-import 'package:chumley_navigator/screens/job_details/fixed_price_page.dart';
 import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
 import 'package:chumley_navigator/theme/navigator_tokens.dart';
+import 'package:chumley_navigator/utils/routes.dart';
 import 'package:chumley_navigator/widgets/ui/call_style_action_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -71,12 +72,14 @@ class _RaiseFollowOnView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Raise Hourly Attendance',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                    color: NavigatorTokens.brandNavy,
+                Expanded(
+                  child: Text(
+                    'Raise Hourly Attendance',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: NavigatorTokens.brandNavy,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -177,12 +180,14 @@ class _RaiseFollowOnView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Refer and Earn',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                    color: NavigatorTokens.brandNavy,
+                Expanded(
+                  child: Text(
+                    'Refer and Earn',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: NavigatorTokens.brandNavy,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -392,10 +397,9 @@ class _RaiseFollowOnView extends StatelessWidget {
                     subtitle:
                         'Create a new Fixed Price work order for this site',
                     onTap: () async {
-                      await Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const FixedPricePage(),
-                        ),
+                      await Navigator.of(context).pushNamed(
+                        AppRoutes.fixedPriceScreen,
+                        arguments: FixedPriceJobContext.fromVisitJob(job),
                       );
                       if (context.mounted) {
                         _goToJobClosed(context);

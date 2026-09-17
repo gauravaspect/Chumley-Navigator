@@ -66,6 +66,53 @@ void main() {
       expect(find.text('No enquiry required'), findsOneWidget);
     });
 
+    testWidgets('Tapping "Raise an hourly attendance" opens the attendance sheet', (tester) async {
+      tester.view.physicalSize = const Size(393 * 3, 1200 * 3);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        _wrap(
+          FollowOnPage(
+            job: testJob,
+            phase: FollowOnPhase.raise,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Raise an hourly attendance'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Raise Hourly Attendance'), findsOneWidget);
+      expect(find.text('Submit Attendance Request'), findsOneWidget);
+    });
+
+    testWidgets('Tapping "Refer and earn" opens the referral sheet', (tester) async {
+      tester.view.physicalSize = const Size(393 * 3, 1200 * 3);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        _wrap(
+          FollowOnPage(
+            job: testJob,
+            phase: FollowOnPhase.raise,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Refer and earn'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Refer and Earn'), findsOneWidget);
+      expect(find.text('Trade required'), findsOneWidget);
+      expect(find.text('Submit Referral'), findsOneWidget);
+    });
+
     testWidgets('FollowOnPhase.jobClosed renders closed screen and "Slide to visit complete"', (tester) async {
       await tester.pumpWidget(
         _wrap(
