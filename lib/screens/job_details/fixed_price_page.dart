@@ -1316,6 +1316,12 @@ class _FixedPricePageState extends State<FixedPricePage> {
         jobContext?.customerEmail.isNotEmpty == true
             ? jobContext!.customerEmail
             : '—';
+    final siteLabel = () {
+      if (jobContext == null) return '—';
+      final id = jobContext.siteId.trim();
+      if (id.isEmpty) return '—';
+      return id;
+    }();
 
     final deposit = (_totalCustomerCharges * 1.2) * 0.50;
     final missingJobContext = jobContext == null;
@@ -1370,6 +1376,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
               ),
               SizedBox(height: 12.h),
               _buildDetailRow('Contact Email', customerEmail, theme),
+              _buildDetailRow('Site', siteLabel, theme),
               _buildDetailRow(
                 'Earliest Work Order Requested Date',
                 dateStr,
@@ -1378,6 +1385,13 @@ class _FixedPricePageState extends State<FixedPricePage> {
               _buildDetailRow('Job Type', 'Fixed Price (Single)', theme),
               _buildDetailRow('Status', 'Pending Confirmation', theme),
               _buildDetailRow('Work Order ID', workOrderId, theme),
+              if (jobContext?.sourceWorkOrderId.isNotEmpty == true &&
+                  jobContext!.sourceWorkOrderId != workOrderId)
+                _buildDetailRow(
+                  'Source Work Order',
+                  jobContext.sourceWorkOrderId,
+                  theme,
+                ),
             ],
           ),
         ),

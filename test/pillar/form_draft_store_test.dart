@@ -13,4 +13,14 @@ void main() {
     await store.saveAnswers('job-b', {'Q1': 'No'});
     expect(await store.loadAnswers('job-a'), {'Q1': 'Yes'});
   });
+
+  test('persists forms-dismissed so reopen does not auto-open wizard', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = FormDraftStore();
+    expect(await store.loadFormsDismissed('SA-1'), isFalse);
+    await store.saveFormsDismissed('SA-1', true);
+    expect(await store.loadFormsDismissed('SA-1'), isTrue);
+    await store.saveFormsDismissed('SA-1', false);
+    expect(await store.loadFormsDismissed('SA-1'), isFalse);
+  });
 }

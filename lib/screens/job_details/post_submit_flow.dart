@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/models/sa_status.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/widgets/ui/call_style_action_slider.dart';
 import 'package:flutter/material.dart';
@@ -153,7 +154,7 @@ class _JobCompletedScreen extends StatelessWidget {
                         ),
                         SizedBox(width: 6.w),
                         Text(
-                          'Completed',
+                          'Job Closure',
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w700,
@@ -195,7 +196,7 @@ class _JobCompletedScreen extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 18.h),
-              _completedProgress(),
+              _StatusProgressTimeline(completed: true),
               SizedBox(height: 16.h),
               Container(
                 width: double.infinity,
@@ -332,54 +333,6 @@ class _JobCompletedScreen extends StatelessWidget {
           color: PostSubmitFlow._textSecondary,
         ),
       ),
-    );
-  }
-
-  Widget _completedProgress() {
-    const labels = ['Sched.', 'Dispatch', 'Transit', 'On Site', 'Done'];
-    return Column(
-      children: [
-        Row(
-          children: List.generate(labels.length * 2 - 1, (index) {
-            if (index.isOdd) {
-              return Expanded(
-                child: Container(
-                  height: 2.h,
-                  color: AppColors.primaryBlue,
-                ),
-              );
-            }
-            return Container(
-              width: 16.w,
-              height: 16.w,
-              decoration: const BoxDecoration(
-                color: AppColors.primaryBlue,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(LucideIcons.check, size: 10.sp, color: Colors.white),
-            );
-          }),
-        ),
-        SizedBox(height: 8.h),
-        Row(
-          children: labels
-              .map(
-                (l) => Expanded(
-                  child: Center(
-                    child: Text(
-                      l,
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w600,
-                        color: PostSubmitFlow._textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-      ],
     );
   }
 
@@ -783,7 +736,7 @@ class _JobClosedScreen extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 18.h),
-              _completedProgress(),
+              _StatusProgressTimeline(completed: true),
               SizedBox(height: 16.h),
               Container(
                 width: double.infinity,
@@ -900,54 +853,6 @@ class _JobClosedScreen extends StatelessWidget {
             isEnabled: true,
             onConfirm: onVisitComplete,
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _completedProgress() {
-    const labels = ['Sched.', 'Dispatch', 'Transit', 'On Site', 'Done'];
-    return Column(
-      children: [
-        Row(
-          children: List.generate(labels.length * 2 - 1, (index) {
-            if (index.isOdd) {
-              return Expanded(
-                child: Container(
-                  height: 2.h,
-                  color: AppColors.primaryBlue,
-                ),
-              );
-            }
-            return Container(
-              width: 16.w,
-              height: 16.w,
-              decoration: const BoxDecoration(
-                color: AppColors.primaryBlue,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(LucideIcons.check, size: 10.sp, color: Colors.white),
-            );
-          }),
-        ),
-        SizedBox(height: 8.h),
-        Row(
-          children: labels
-              .map(
-                (l) => Expanded(
-                  child: Center(
-                    child: Text(
-                      l,
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w600,
-                        color: PostSubmitFlow._textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
         ),
       ],
     );
@@ -1190,6 +1095,115 @@ class _VisitCompleteScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Shared status timeline: Dispatched → Received → In Transit → On site → Job Closure → Visit Complete.
+class _StatusProgressTimeline extends StatelessWidget {
+  const _StatusProgressTimeline({this.completed = false});
+
+  final bool completed;
+
+  static const _labels = SaStatus.progressLabels;
+
+  @override
+  Widget build(BuildContext context) {
+    final progressIdx = completed ? _labels.length - 1 : 0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+        final colWidth = totalWidth / _labels.length;
+        final lineStart = colWidth / 2;
+        final lineLength = totalWidth - colWidth;
+        final activeFraction = progressIdx / (_labels.length - 1);
+        final activeLength = lineLength * activeFraction;
+
+        return Column(
+          children: [
+            SizedBox(
+              height: 20.h,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    left: lineStart,
+                    width: lineLength,
+                    top: 9.h,
+                    height: 2.h,
+                    child: Container(
+                      color: AppColors.primaryBlue.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  Positioned(
+                    left: lineStart,
+                    width: activeLength,
+                    top: 9.h,
+                    height: 2.h,
+                    child: Container(color: AppColors.primaryBlue),
+                  ),
+                  Row(
+                    children: List.generate(_labels.length, (i) {
+                      final isDone = completed || i < progressIdx;
+                      final isCurrent = !completed && i == progressIdx;
+                      final size = isDone
+                          ? 16.w
+                          : isCurrent
+                              ? 12.w
+                              : 8.w;
+                      return Expanded(
+                        child: Center(
+                          child: Container(
+                            width: size,
+                            height: size,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: (isDone || isCurrent)
+                                  ? AppColors.primaryBlue
+                                  : AppColors.primaryBlue.withValues(alpha: 0.25),
+                              shape: BoxShape.circle,
+                            ),
+                            child: isDone
+                                ? Icon(
+                                    LucideIcons.check,
+                                    size: 10.sp,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 6.h),
+            Row(
+              children: List.generate(_labels.length, (i) {
+                final isDone = completed || i <= progressIdx;
+                return Expanded(
+                  child: Text(
+                    _labels[i],
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 8.sp,
+                      height: 1.15,
+                      fontWeight: isDone ? FontWeight.w700 : FontWeight.w500,
+                      color: isDone
+                          ? PostSubmitFlow._textSecondary
+                          : PostSubmitFlow._textCaption,
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ],
+        );
+      },
     );
   }
 }

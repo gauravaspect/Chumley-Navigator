@@ -790,7 +790,7 @@ class _JobClosedView extends StatelessWidget {
   }
 
   Widget _closedLadder() {
-    const labels = ['Sched.', 'Dispatch', 'Transit', 'On Site', 'Done'];
+    const labels = ['Dispatch','Recieved', 'Transit', 'On Site', 'Job Closure','Visit Complete'];
     return Row(
       children: List.generate(5, (i) {
         return Expanded(

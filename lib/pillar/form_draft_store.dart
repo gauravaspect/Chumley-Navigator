@@ -8,6 +8,7 @@ class FormDraftStore {
   static const _progressPrefix = 'navigator.job.progress.';
   static const _statusPrefix = 'navigator.job.status.';
   static const _photosPrefix = 'navigator.form.photos.';
+  static const _formsDismissedPrefix = 'navigator.job.formsDismissed.';
 
   Future<Map<String, dynamic>> loadAnswers(String jobId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -72,5 +73,18 @@ class FormDraftStore {
     await saveFurthestStep(jobId, step);
     await saveAnswers(jobId, answers);
     await savePhotos(jobId, photos);
+  }
+
+  /// True when the engineer cancelled the on-site form session (step 1 cancel).
+  /// Survives leaving the job and reopening so we show "Continue filling forms"
+  /// instead of auto-launching the FormKind wizard (e.g. CP12).
+  Future<bool> loadFormsDismissed(String jobId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('$_formsDismissedPrefix$jobId') ?? false;
+  }
+
+  Future<void> saveFormsDismissed(String jobId, bool dismissed) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('$_formsDismissedPrefix$jobId', dismissed);
   }
 }

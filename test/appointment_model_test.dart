@@ -135,5 +135,36 @@ void main() {
       expect(context.contactId, '0034G000002s0ZqvQAE');
       expect(context.toSalesforceContext().siteId, 'a1q4G000006VbmLQAS');
     });
+
+    test('preserves site and WO ids when detail payload omits them', () {
+      final fromSchedule = Appointment.fromJson({
+        'id': '08pTl000003UkTVIA0',
+        'appointment_number': 'SA-797641',
+        'site_id': 'a1q4G000006VbmLQAS',
+        'account_id': '0014G00002jTnJuQAK',
+        'contact_id': '0034G000002s0ZqvQAE',
+        'work_order': {'id': '0WO4G0000005SG6WAM'},
+      });
+      final fromDetail = Appointment.fromJson({
+        'id': '08pTl000003UkTVIA0',
+        'appointment_number': 'SA-797641',
+        'status': 'On site',
+        'site': {
+          'name': 'Brighton Site',
+          'address': '1 High St',
+          'postcode': 'BN1 1AA',
+        },
+      });
+
+      final merged = fromSchedule.mergePreservingWorkOrderContext(fromDetail);
+      final context = FixedPriceJobContext.fromAppointment(merged);
+
+      expect(merged.siteId, 'a1q4G000006VbmLQAS');
+      expect(merged.sourceWorkOrderId, '0WO4G0000005SG6WAM');
+      expect(merged.accountId, '0014G00002jTnJuQAK');
+      expect(merged.siteName, 'Brighton Site');
+      expect(context.siteId, 'a1q4G000006VbmLQAS');
+      expect(context.sourceWorkOrderId, '0WO4G0000005SG6WAM');
+    });
   });
 }

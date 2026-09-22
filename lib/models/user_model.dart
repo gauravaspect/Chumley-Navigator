@@ -275,6 +275,35 @@ class Appointment extends Equatable {
     );
   }
 
+  /// Prefer [incoming] fields, but keep work-order / site / account / contact
+  /// context from this appointment when the incoming payload omits them
+  /// (common for detail API responses that only return display site fields).
+  Appointment mergePreservingWorkOrderContext(Appointment incoming) {
+    String pick(String newer, String older) =>
+        newer.trim().isNotEmpty ? newer.trim() : older;
+
+    return incoming.copyWith(
+      sourceWorkOrderId:
+          pick(incoming.sourceWorkOrderId, sourceWorkOrderId),
+      siteId: pick(incoming.siteId, siteId),
+      siteName: pick(incoming.siteName, siteName),
+      siteAddress: pick(incoming.siteAddress, siteAddress),
+      sitePostcode: pick(incoming.sitePostcode, sitePostcode),
+      accountId: pick(incoming.accountId, accountId),
+      contactId: pick(incoming.contactId, contactId),
+      customerName: pick(incoming.customerName, customerName),
+      customerContactName:
+          pick(incoming.customerContactName, customerContactName),
+      customerEmail: pick(incoming.customerEmail, customerEmail),
+      resolvedServiceFeePct: incoming.resolvedServiceFeePct != 0
+          ? incoming.resolvedServiceFeePct
+          : null,
+      resolvedMarkupPct: incoming.resolvedMarkupPct != 0
+          ? incoming.resolvedMarkupPct
+          : null,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'appointment_number': appointmentNumber,

@@ -47,11 +47,12 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
   PpmJobTask get task => widget.task;
 
   static const List<Color> _statusColors = [
-    Color(0xFF3B82F6),
-    Color(0xFFF59E0B),
-    Color(0xFF8B5CF6),
-    Color(0xFF2563EB),
-    Color(0xFF22C55E),
+    Color(0xFF3B82F6), // Dispatched
+    Color(0xFF0891B2), // Received
+    Color(0xFFF59E0B), // In Transit
+    Color(0xFF8B5CF6), // On site
+    Color(0xFF2563EB), // Job Closure
+    Color(0xFF22C55E), // Visit Complete
   ];
 
   final _drafts = FormDraftStore();
@@ -64,11 +65,8 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
 
   VisitJob get _visitJob => VisitJob.fromPpmTask(task);
 
-  int get _statusColorIndex {
-    final idx = SaStatus.ladderIndex(_currentStatus);
-    if (idx >= 0) return (idx + 1).clamp(0, _statusColors.length - 1);
-    return 0;
-  }
+  int get _statusColorIndex =>
+      SaStatus.progressIndex(_currentStatus).clamp(0, _statusColors.length - 1);
 
   @override
   void initState() {

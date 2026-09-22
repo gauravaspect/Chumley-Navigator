@@ -4,21 +4,17 @@ import 'dart:io' show Platform;
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/app_constants.dart';
 import 'package:chumley_navigator/core/log.dart';
-import 'package:chumley_navigator/models/engineer_form_model.dart';
+import 'package:chumley_navigator/models/fixed_price_job_context.dart';
 import 'package:chumley_navigator/models/sa_status.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/pillar/form_draft_store.dart';
 import 'package:chumley_navigator/pillar/form_kind.dart';
 import 'package:chumley_navigator/pillar/jobs_repository.dart';
-import 'package:chumley_navigator/screens/forms/cp12_form_page.dart';
-import 'package:chumley_navigator/screens/forms/damp_survey_form_page.dart';
-import 'package:chumley_navigator/screens/forms/ld_form_page.dart';
-import 'package:chumley_navigator/screens/forms/vent_hygiene_form_page.dart';
+import 'package:chumley_navigator/pillar/on_site_forms_session.dart';
 import 'package:chumley_navigator/screens/job_details/on_site_wizard.dart';
 import 'package:chumley_navigator/screens/job_details/post_submit_flow.dart';
 import 'package:chumley_navigator/screens/job_details/raise_lead_page.dart';
 import 'package:chumley_navigator/screens/job_details/service/appointments_api_service.dart';
-import 'package:chumley_navigator/screens/job_details/works_form_page.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/utils/routes.dart';
@@ -64,7 +60,7 @@ class _JobDetailPageState extends State<JobDetailPage>
   StreamSubscription<Position>? _locationSubscription;
   bool _isUsingFallbackLocation = false;
 
-  bool _showOnSiteForm = true;
+  bool _formsDismissed = false;
   final _jobs = JobsRepository();
   final _draftStore = FormDraftStore();
   late Appointment _appointment;
@@ -76,13 +72,8 @@ class _JobDetailPageState extends State<JobDetailPage>
   /// After form submit: job completed → follow-on → visit complete.
   PostSubmitPhase? _postSubmitPhase;
 
-  // Forms panel state
-  List<EngineerFormSummary> _formsList = const [];
-  bool _formsLoading = false;
-  final Map<String, bool> _localFormCompletedOverrides = {};
-  bool _ldFormCompleted = false;
-  bool _dampSurveyCompleted = false;
-  bool _ventHygieneCompleted = false;
+  /// True once the 12-step OnSiteWizard has been submitted for this visit.
+  bool _onSiteWizardSubmitted = false;
 
   // State
   Position? _engineerPosition;
@@ -97,6 +88,7 @@ class _JobDetailPageState extends State<JobDetailPage>
 
   static const List<Color> _statusColors = [
     Color(0xFF27549D), // Dispatched
+    Color(0xFF0891B2), // Received
     Color(0xFFF59E0B), // In Transit
     Color(0xFF8B5CF6), // On site
     Color(0xFF3B82F6), // Job Closure
@@ -105,6 +97,7 @@ class _JobDetailPageState extends State<JobDetailPage>
 
   static const List<IconData> _statusIcons = [
     LucideIcons.bell,
+    LucideIcons.checkCheck,
     LucideIcons.navigation,
     LucideIcons.wrench,
     LucideIcons.clipboardCheck,
@@ -162,8 +155,8 @@ class _JobDetailPageState extends State<JobDetailPage>
     );
   }
 
-  int get _progressIndex =>
-      SaStatus.progressIndex(_currentStatus).clamp(0, _statusColors.length - 1);
+  int get _progressIndex => SaStatus.progressIndex(_currentStatus)
+      .clamp(0, SaStatus.progressLabels.length - 1);
 
   Color get _currentStatusColor => _statusColors[_progressIndex];
 
@@ -176,6 +169,18 @@ class _JobDetailPageState extends State<JobDetailPage>
       ? _allowedNextStatuses.sublist(1)
       : const [];
 
+  Future<void> _dismissOnSiteForms() async {
+    _formsDismissed = true;
+    await _draftStore.saveFormsDismissed(_jobId, true);
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _resumeFillingForms() async {
+    _formsDismissed = false;
+    await _draftStore.saveFormsDismissed(_jobId, false);
+    if (mounted) setState(() {});
+  }
+
   void _applyStatusResponse({
     required String status,
     required List<String> allowedNext,
@@ -184,19 +189,44 @@ class _JobDetailPageState extends State<JobDetailPage>
     _allowedNextStatuses = allowedNext;
 
     if (SaStatus.isOnSite(status)) {
-      _showOnSiteForm = true;
       _postSubmitPhase = null;
     } else if (SaStatus.isJobClosure(status)) {
-      _showOnSiteForm = false;
       _postSubmitPhase ??= PostSubmitPhase.jobCompleted;
     } else if (SaStatus.isVisitComplete(status)) {
-      _showOnSiteForm = false;
       _postSubmitPhase ??= PostSubmitPhase.visitComplete;
     }
   }
 
+  bool get _areRequiredFormsCompleted {
+    if (_onSiteWizardSubmitted) return true;
+    return SaStatus.isJobClosure(_currentStatus) ||
+        SaStatus.isVisitComplete(_currentStatus);
+  }
+
+  void _showFormsRequiredSnack() {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(
+          'Complete all required forms before Job Closure.',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: const Color(0xFFEF4444),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.r),
+        ),
+      ),
+    );
+  }
+
   Future<void> _advanceStatus(String targetStatus) async {
     if (targetStatus.trim().isEmpty || _statusUpdating) return;
+
+    if (SaStatus.isJobClosure(targetStatus) && !_areRequiredFormsCompleted) {
+      _showFormsRequiredSnack();
+      return;
+    }
 
     setState(() => _statusUpdating = true);
     try {
@@ -206,7 +236,8 @@ class _JobDetailPageState extends State<JobDetailPage>
       setState(() {
         _statusUpdating = false;
         if (result.appointment != null) {
-          _appointment = result.appointment!;
+          _appointment =
+              _appointment.mergePreservingWorkOrderContext(result.appointment!);
         } else {
           _appointment = _appointment.copyWith(
             status: result.status,
@@ -242,13 +273,18 @@ class _JobDetailPageState extends State<JobDetailPage>
     }
   }
 
-  Future<void> _advanceToJobClosure() async {
+  Future<void> _advanceToJobClosure({bool afterFormSubmit = false}) async {
+    if (!afterFormSubmit && !_areRequiredFormsCompleted) {
+      if (mounted) _showFormsRequiredSnack();
+      return;
+    }
     try {
       final result = await _jobs.advanceToJobClosure(_jobId);
       if (result != null && mounted) {
         setState(() {
           if (result.appointment != null) {
-            _appointment = result.appointment!;
+            _appointment = _appointment
+                .mergePreservingWorkOrderContext(result.appointment!);
           } else {
             _appointment = _appointment.copyWith(
               status: result.status,
@@ -265,42 +301,28 @@ class _JobDetailPageState extends State<JobDetailPage>
   }
 
   Future<void> _handleFormSubmitted() async {
-    await _advanceToJobClosure();
+    await _draftStore.saveFormsDismissed(_jobId, false);
+    await _advanceToJobClosure(afterFormSubmit: true);
     if (!mounted) return;
     setState(() {
-      _showOnSiteForm = false;
+      _formsDismissed = false;
+      _onSiteWizardSubmitted = true;
       _postSubmitPhase = PostSubmitPhase.jobCompleted;
     });
   }
 
-  Future<void> _fetchForms() async {
-    final id = _jobId.trim();
-    if (id.isEmpty) return;
-    setState(() => _formsLoading = true);
-    try {
-      final forms = await _jobs.fetchForms(id);
-      if (!mounted) return;
-      setState(() {
-        _formsList = forms;
-        _formsLoading = false;
-      });
-    } catch (e) {
-      Log('Failed to fetch appointment forms for $id: $e', name: 'JobDetail');
-      if (!mounted) return;
-      setState(() => _formsLoading = false);
-    }
-  }
-
   Future<void> _restoreVisit() async {
-    _fetchForms();
     setState(() => _loadingDetail = true);
     try {
       final detail = await _jobs.fetchAppointment(_jobId);
+      final dismissed = await _draftStore.loadFormsDismissed(_jobId);
       if (!mounted) return;
       setState(() {
         _loadingDetail = false;
+        _formsDismissed = dismissed;
         if (detail.appointment != null) {
-          _appointment = detail.appointment!;
+          _appointment = _appointment
+              .mergePreservingWorkOrderContext(detail.appointment!);
         }
         _applyStatusResponse(
           status: detail.status.isNotEmpty ? detail.status : _currentStatus,
@@ -308,19 +330,29 @@ class _JobDetailPageState extends State<JobDetailPage>
               ? detail.allowedNextStatuses
               : _appointment.allowedNextStatuses,
         );
+        if (SaStatus.isJobClosure(_currentStatus) ||
+            SaStatus.isVisitComplete(_currentStatus)) {
+          _onSiteWizardSubmitted = true;
+        }
       });
       _resolveSitePosition();
     } catch (e) {
       Log('Failed to fetch appointment $_jobId: $e', name: 'JobDetail');
       final status =
           await _draftStore.loadStatus(_jobId) ?? widget.appointment.status;
+      final dismissed = await _draftStore.loadFormsDismissed(_jobId);
       if (!mounted) return;
       setState(() {
         _loadingDetail = false;
+        _formsDismissed = dismissed;
         _applyStatusResponse(
           status: status,
           allowedNext: _appointment.allowedNextStatuses,
         );
+        if (SaStatus.isJobClosure(_currentStatus) ||
+            SaStatus.isVisitComplete(_currentStatus)) {
+          _onSiteWizardSubmitted = true;
+        }
       });
     }
   }
@@ -704,10 +736,12 @@ class _JobDetailPageState extends State<JobDetailPage>
     final isJobClosure = SaStatus.isJobClosure(_currentStatus);
     final showPostSubmit = _postSubmitPhase != null || isJobClosure;
     final showOnSiteWizard =
-        SaStatus.isOnSite(_currentStatus) &&
         !isCompleted &&
         !showPostSubmit &&
-        _showOnSiteForm;
+        OnSiteFormsSession.shouldShowWizard(
+          isOnSite: SaStatus.isOnSite(_currentStatus),
+          formsDismissed: _formsDismissed,
+        );
 
     final effectivePostSubmitPhase = _postSubmitPhase ??
         (isCompleted
@@ -835,6 +869,10 @@ class _JobDetailPageState extends State<JobDetailPage>
                                 jobNo,
                                 jobType,
                               ),
+                              if (isOnSite) ...[
+                                _buildSectionLabel(theme, 'RAISE JOBS'),
+                                _buildRaiseJobsCard(theme),
+                              ],
                               _buildSectionLabel(theme, 'JOB DETAILS'),
                               _buildJobDetailsCard(theme, jobNo),
                               _buildSectionLabel(theme, 'SCHEDULE'),
@@ -1014,8 +1052,9 @@ class _JobDetailPageState extends State<JobDetailPage>
   Widget _buildStatusProgressTrack(DashboardTheme theme, Color statusColor) {
     const shortLabels = [
       'Dispatched',
+      'Received',
       'In Transit',
-      'On Site',
+      'On site',
       'Job Closure',
       'Visit Complete',
     ];
@@ -1031,10 +1070,9 @@ class _JobDetailPageState extends State<JobDetailPage>
         final lineEnd = totalWidth - colWidth / 2;
         final lineLength = lineEnd - lineStart;
 
-        final progressIdx = _progressIndex;
+        final progressIdx = _progressIndex.clamp(0, shortLabels.length - 1);
         final activeFraction =
-            (progressIdx.clamp(0, shortLabels.length - 1)) /
-            (shortLabels.length - 1);
+            progressIdx / (shortLabels.length - 1);
         final activeLength = lineLength * activeFraction;
 
         return Column(
@@ -1133,7 +1171,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 9.sp,
+                      fontSize: 8.sp,
                       fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
                       color: isCurrent
                           ? statusColor
@@ -1975,10 +2013,16 @@ class _JobDetailPageState extends State<JobDetailPage>
   }
 
   Future<void> _openFixedPrice() async {
+    final contextArgs = FixedPriceJobContext.fromAppointment(_appointment);
+    Log(
+      'Opening FP estimate: wo=${contextArgs.sourceWorkOrderId} '
+      'site=${contextArgs.siteId} account=${contextArgs.accountId}',
+      name: 'JobDetail',
+    );
     await Navigator.pushNamed(
       context,
       AppRoutes.fixedPriceScreen,
-      arguments: _appointment,
+      arguments: contextArgs,
     );
   }
 
@@ -1992,52 +2036,32 @@ class _JobDetailPageState extends State<JobDetailPage>
   }
 
   Widget _buildOnSiteForm(String jobNo) {
-    switch (_formKind) {
-      case FormKind.bath:
-        return WorksFormPage(
+    return OnSiteWizard(
+      jobId: _jobId,
+      jobNumber: jobNo,
+      onCancelToInTransit: () {
+        _dismissOnSiteForms();
+      },
+      onReportSubmitted: (answers, photos) async {
+        final kind = _formKind;
+        await _jobs.signOff(
           jobId: _jobId,
-          jobNumber: jobNo,
-          onCancelToInTransit: () {
-            setState(() => _showOnSiteForm = false);
+          reportType: switch (kind) {
+            FormKind.gas => 'CP12',
+            FormKind.bath => 'WORKS',
+            FormKind.leak => 'LD',
           },
-          onSubmitted: () async {
-            await _handleFormSubmitted();
+          reportSuffix: switch (kind) {
+            FormKind.gas => 'gas_safety_record',
+            FormKind.bath => 'works_report',
+            FormKind.leak => 'leak_detection_report',
           },
+          answers: answers,
+          photoSlots: photos,
         );
-      case FormKind.gas:
-        return Cp12FormPage(
-          appointmentNumber: jobNo,
-          jobId: _jobId,
-          onSubmitted: () async {
-            await _jobs.signOff(
-              jobId: _jobId,
-              reportType: 'CP12',
-              reportSuffix: 'gas_safety_record',
-              answers: {'form': 'cp12'},
-              photoSlots: const {},
-            );
-            await _handleFormSubmitted();
-          },
-        );
-      case FormKind.leak:
-        return OnSiteWizard(
-          jobId: _jobId,
-          jobNumber: jobNo,
-          onCancelToInTransit: () {
-            setState(() => _showOnSiteForm = false);
-          },
-          onReportSubmitted: (answers, photos) async {
-            await _jobs.signOff(
-              jobId: _jobId,
-              reportType: 'LD',
-              reportSuffix: 'leak_detection_report',
-              answers: answers,
-              photoSlots: photos,
-            );
-            await _handleFormSubmitted();
-          },
-        );
-    }
+        await _handleFormSubmitted();
+      },
+    );
   }
 
   Widget _buildRaiseJobItem({
@@ -2194,7 +2218,7 @@ class _JobDetailPageState extends State<JobDetailPage>
             SizedBox(height: 12.h),
             _buildRaiseJobItem(
               theme: theme,
-              title: 'Raise FP',
+              title: 'Raise a Fixed Price Job',
               subtitle: 'Create a new Fixed Price work order for this site',
               icon: LucideIcons.fileText,
               enabled: onSite,
@@ -2203,7 +2227,7 @@ class _JobDetailPageState extends State<JobDetailPage>
             SizedBox(height: 8.h),
             _buildRaiseJobItem(
               theme: theme,
-              title: 'Raise Reactive',
+              title: 'Raise a reactive job',
               subtitle: 'Raise an urgent reactive task or callback',
               icon: LucideIcons.zap,
               enabled: onSite,
@@ -2212,410 +2236,12 @@ class _JobDetailPageState extends State<JobDetailPage>
             SizedBox(height: 8.h),
             _buildRaiseJobItem(
               theme: theme,
-              title: 'PPM lead',
-              subtitle: 'Send PPM interest to the office board',
-              icon: LucideIcons.calendarClock,
+              title: 'Raise multiple fixed price',
+              subtitle: 'Raise several Fixed Price work orders for this site',
+              icon: LucideIcons.layers,
               enabled: onSite,
-              onTap: () => _openLead(RaiseLeadKind.ppm),
+              onTap: _openFixedPrice,
             ),
-            SizedBox(height: 8.h),
-            _buildRaiseJobItem(
-              theme: theme,
-              title: 'PM project lead',
-              subtitle: 'Send PM interest. Does not create a project.',
-              icon: LucideIcons.hammer,
-              enabled: onSite,
-              onTap: () => _openLead(RaiseLeadKind.pm),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openFormByWorkType(String workTypeId, String title) async {
-    if (!isOnSite) {
-      _showOnSiteRequiredSnackbar();
-      return;
-    }
-    final appt = _appointment;
-    final workOrderId = appt.sourceWorkOrderId.isNotEmpty
-        ? appt.sourceWorkOrderId
-        : appt.id;
-    final workOrderLabel = appt.appointmentNumber.isNotEmpty
-        ? appt.appointmentNumber
-        : workOrderId;
-    final normalized = workTypeId.toLowerCase();
-
-    Widget page;
-    if (normalized.contains('damp')) {
-      page = DampSurveyFormPage(
-        saId: _jobId,
-        workOrderId: workOrderId,
-        workOrderLabel: workOrderLabel,
-        workTypeId: workTypeId,
-      );
-    } else if (normalized.contains('vent')) {
-      page = VentHygieneFormPage(
-        saId: _jobId,
-        workOrderId: workOrderId,
-        workOrderLabel: workOrderLabel,
-        workTypeId: workTypeId,
-      );
-    } else if (normalized.contains('cp12') || normalized.contains('gas')) {
-      page = Cp12FormPage(jobId: _jobId, appointmentNumber: workOrderLabel);
-    } else if (normalized.contains('works') || normalized.contains('bath')) {
-      page = WorksFormPage(jobId: _jobId, jobNumber: workOrderLabel);
-    } else {
-      page = LdFormPage(
-        saId: _jobId,
-        workOrderId: workOrderId,
-        workOrderLabel: workOrderLabel,
-        workTypeId: workTypeId,
-      );
-    }
-
-    final result = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(builder: (_) => page),
-    );
-
-    if (result == true) {
-      setState(() {
-        _localFormCompletedOverrides[workTypeId] = true;
-      });
-    }
-    await _fetchForms();
-  }
-
-  String _subtitleForWorkType(String workTypeId) {
-    final wt = workTypeId.toLowerCase();
-    if (wt.contains('ld') || wt.contains('leak')) {
-      return 'Electrical Installation Condition Report · BS 7671:2018+A2:2022';
-    }
-    if (wt.contains('damp')) {
-      return 'Surface / depth readings · BS 5250:2021';
-    }
-    if (wt.contains('vent')) {
-      return 'Vent heat loss calculation · BS 8204:2011';
-    }
-    if (wt.contains('cp12') || wt.contains('gas')) {
-      return 'Gas Safety Record · Landlord Certificate';
-    }
-    return 'Inspection & Certification Record';
-  }
-
-  Widget _buildFormsCard(DashboardTheme theme) {
-    final pinkColor = const Color(0xFFEC4899);
-    final onSite = isOnSite;
-
-    // Build form display items from API fetched list or fallback standard forms
-    final List<
-      ({
-        String workTypeId,
-        String title,
-        String subtitle,
-        bool isCompleted,
-        bool isDraft,
-        ValueChanged<bool> onToggle,
-        VoidCallback onTap,
-      })
-    >
-    formItems;
-
-    if (_formsList.isNotEmpty) {
-      final activeForms = _formsList.where((form) {
-        final wt = form.workTypeId.toLowerCase();
-        // Comment out LD form for now — keep only HVAC / other active forms
-        return !wt.contains('ld') && !wt.contains('leak');
-      }).toList();
-
-      formItems = activeForms.map((form) {
-        final isCompleted =
-            _localFormCompletedOverrides[form.workTypeId] ??
-            form.isSubmitted ||
-                form.status.toLowerCase() == 'completed' ||
-                form.status.toLowerCase() == 'submitted';
-        final isDraft = form.isDraft && !isCompleted;
-        return (
-          workTypeId: form.workTypeId,
-          title: form.title.isNotEmpty ? form.title : form.workTypeId,
-          subtitle: _subtitleForWorkType(form.workTypeId),
-          isCompleted: isCompleted,
-          isDraft: isDraft,
-          onToggle: (bool v) {
-            setState(() {
-              _localFormCompletedOverrides[form.workTypeId] = v;
-            });
-          },
-          onTap: () => _openFormByWorkType(form.workTypeId, form.title),
-        );
-      }).toList();
-    } else {
-      formItems = [
-        // LD Form commented out for now — keeping HVAC only
-        // (
-        //   workTypeId: 'ld_form',
-        //   title: 'LD Form',
-        //   subtitle: 'Electrical Installation Condition Report · BS 7671:2018+A2:2022',
-        //   isCompleted: _localFormCompletedOverrides['ld_form'] ?? _ldFormCompleted,
-        //   isDraft: false,
-        //   onToggle: (bool v) => setState(() {
-        //     _ldFormCompleted = v;
-        //     _localFormCompletedOverrides['ld_form'] = v;
-        //   }),
-        //   onTap: () => _openFormByWorkType('ld_form', 'LD Form'),
-        // ),
-        (
-          workTypeId: 'vent_hygiene',
-          title: 'Vent Hygiene Forms (HVAC)',
-          subtitle: 'Vent heat loss calculation · BS 8204:2011',
-          isCompleted:
-              _localFormCompletedOverrides['vent_hygiene'] ??
-              _ventHygieneCompleted,
-          isDraft: false,
-          onToggle: (bool v) => setState(() {
-            _ventHygieneCompleted = v;
-            _localFormCompletedOverrides['vent_hygiene'] = v;
-          }),
-          onTap: () =>
-              _openFormByWorkType('vent_hygiene', 'Vent Hygiene Forms'),
-        ),
-      ];
-    }
-
-    final completedCount = formItems.where((e) => e.isCompleted).length;
-    final totalForms = formItems.length;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Container(
-        padding: EdgeInsets.all(16.r),
-        decoration: BoxDecoration(
-          color: theme.surface,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: onSite ? pinkColor.withValues(alpha: 0.3) : theme.border,
-            width: 1.0,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                Icon(
-                  LucideIcons.clipboardList,
-                  size: 16.sp,
-                  color: onSite ? pinkColor : theme.textMuted,
-                ),
-                SizedBox(width: 8.w),
-                Text(
-                  'Pre-Completion Forms',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w700,
-                    color: onSite ? theme.text : theme.textMuted,
-                  ),
-                ),
-                if (_formsLoading) ...[
-                  SizedBox(width: 8.w),
-                  SizedBox(
-                    width: 12.w,
-                    height: 12.w,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 1.5,
-                      color: pinkColor,
-                    ),
-                  ),
-                ],
-                const Spacer(),
-                if (!onSite)
-                  Row(
-                    children: [
-                      Icon(
-                        LucideIcons.lock,
-                        size: 12.sp,
-                        color: theme.textMuted,
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        'Requires On Site',
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w600,
-                          color: theme.textMuted,
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  Text(
-                    '$completedCount/$totalForms',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w700,
-                      color: pinkColor,
-                    ),
-                  ),
-              ],
-            ),
-            SizedBox(height: 14.h),
-            // Form items
-            ...formItems.map((item) {
-              return Opacity(
-                opacity: onSite ? 1.0 : 0.55,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: item.onTap,
-                  child: Container(
-                    margin: EdgeInsets.only(bottom: 10.h),
-                    padding: EdgeInsets.all(12.r),
-                    decoration: BoxDecoration(
-                      color: item.isCompleted
-                          ? pinkColor.withValues(alpha: 0.06)
-                          : theme.isDark
-                          ? AppColors.darkSurfaceDeep
-                          : AppColors.backgroundGray,
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(
-                        color: item.isCompleted
-                            ? pinkColor.withValues(alpha: 0.35)
-                            : theme.border,
-                        width: 0.75,
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Clickable checkbox
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            if (!onSite) {
-                              _showOnSiteRequiredSnackbar();
-                              return;
-                            }
-                            item.onToggle(!item.isCompleted);
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeOutCubic,
-                            width: 20.w,
-                            height: 20.w,
-                            decoration: BoxDecoration(
-                              color: item.isCompleted
-                                  ? pinkColor
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(5.r),
-                              border: Border.all(
-                                color: item.isCompleted
-                                    ? pinkColor
-                                    : theme.textMuted.withValues(alpha: 0.4),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: item.isCompleted
-                                ? Icon(
-                                    LucideIcons.check,
-                                    size: 12.sp,
-                                    color: Colors.white,
-                                  )
-                                : null,
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      item.title,
-                                      style: TextStyle(
-                                        fontSize: 13.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: onSite
-                                            ? theme.text
-                                            : theme.textMuted,
-                                        decoration: item.isCompleted
-                                            ? TextDecoration.lineThrough
-                                            : TextDecoration.none,
-                                      ),
-                                    ),
-                                  ),
-                                  if (item.isDraft)
-                                    Container(
-                                      margin: EdgeInsets.only(left: 6.w),
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 6.w,
-                                        vertical: 2.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(
-                                          0xFFF59E0B,
-                                        ).withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(
-                                          4.r,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Draft',
-                                        style: TextStyle(
-                                          fontSize: 9.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: const Color(0xFFD97706),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                item.subtitle,
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: theme.textMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          LucideIcons.chevronRight,
-                          size: 16.sp,
-                          color: theme.textMuted,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-            // Info note
-            if (completedCount < totalForms && onSite)
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: pinkColor.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Row(
-                  children: [
-                    Icon(LucideIcons.info, size: 12.sp, color: pinkColor),
-                    SizedBox(width: 6.w),
-                    Expanded(
-                      child: Text(
-                        'Tap a form to complete, or check it off directly.',
-                        style: TextStyle(fontSize: 11.sp, color: pinkColor),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
           ],
         ),
       ),
@@ -2718,11 +2344,36 @@ class _JobDetailPageState extends State<JobDetailPage>
               )
             else if (!isCompleted && primary != null)
               CallStyleActionSlider(
-                text: SaStatus.actionLabel(primary),
+                text: OnSiteFormsSession.actionLabel(
+                  isOnSite: SaStatus.isOnSite(_currentStatus),
+                  formsCompleted: _areRequiredFormsCompleted,
+                  primaryNextStatus: primary,
+                  statusActionLabel: SaStatus.actionLabel,
+                ),
                 backgroundColor: statusColor,
                 icon: _currentStatusIcon,
                 isEnabled: !_statusUpdating,
-                onConfirm: () => _advanceStatus(primary),
+                onConfirm: () {
+                  if (OnSiteFormsSession.shouldResumeForms(
+                    isOnSite: SaStatus.isOnSite(_currentStatus),
+                    formsCompleted: _areRequiredFormsCompleted,
+                    primaryNextStatus: primary,
+                  )) {
+                    _resumeFillingForms();
+                    return;
+                  }
+                  _advanceStatus(primary);
+                },
+              )
+            else if (!isCompleted &&
+                SaStatus.isOnSite(_currentStatus) &&
+                !_areRequiredFormsCompleted)
+              CallStyleActionSlider(
+                text: OnSiteFormsSession.continueFillingForms,
+                backgroundColor: statusColor,
+                icon: LucideIcons.clipboardList,
+                isEnabled: !_statusUpdating,
+                onConfirm: _resumeFillingForms,
               )
             else if (isCompleted)
               Container(
@@ -2764,11 +2415,23 @@ class _JobDetailPageState extends State<JobDetailPage>
                 alignment: WrapAlignment.center,
                 children: skipAhead
                     .map((status) {
+                      final isClosure = SaStatus.isJobClosure(status);
+                      final blocked = isClosure && !_areRequiredFormsCompleted;
                       return OutlinedButton(
                         onPressed: _statusUpdating
                             ? null
-                            : () => _advanceStatus(status),
-                        child: Text(status),
+                            : () {
+                                if (blocked) {
+                                  _resumeFillingForms();
+                                  return;
+                                }
+                                _advanceStatus(status);
+                              },
+                        child: Text(
+                          blocked
+                              ? OnSiteFormsSession.continueToForms
+                              : status,
+                        ),
                       );
                     })
                     .toList(growable: false),
