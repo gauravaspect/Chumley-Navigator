@@ -176,13 +176,17 @@ class _Cp12VisitWizardState extends State<Cp12VisitWizard> {
             if (_error != null)
               Padding(
                 padding: EdgeInsets.only(bottom: 12.h),
-                child: Text(_error!, style: const TextStyle(color: NavigatorTokens.errorFg)),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: NavigatorTokens.errorFg),
+                ),
               ),
             VisitTextField(
               label: Cp12VisitWizard.titles[_step],
               value: (_answers['step_$_step'] ?? '').toString(),
               maxLines: _step == 10 ? 5 : 2,
-              hint: 'Enter details for ${Cp12VisitWizard.titles[_step].toLowerCase()}',
+              hint:
+                  'Enter details for ${Cp12VisitWizard.titles[_step].toLowerCase()}',
               onChanged: (v) {
                 _answers['step_$_step'] = v;
                 _persist();
@@ -200,7 +204,8 @@ class _Cp12VisitWizardState extends State<Cp12VisitWizard> {
             ],
             if (_step == JobJourney.gas.form.length - 1)
               const VisitInfoBanner(
-                text: 'Submit report writes COMPLETE and the CP12 report to the spine.',
+                text:
+                    'Submit report writes COMPLETE and the CP12 report to the spine.',
               ),
           ],
         ),

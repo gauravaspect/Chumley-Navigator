@@ -45,11 +45,7 @@ class MyAbsenceCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12.r),
             ),
             alignment: Alignment.center,
-            child: Icon(
-              record.icon,
-              color: theme.dashSubtitle,
-              size: 19.sp,
-            ),
+            child: Icon(record.icon, color: theme.dashSubtitle, size: 19.sp),
           ),
           SizedBox(width: 12.w),
           Expanded(
@@ -127,8 +123,9 @@ class MyAbsencesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
-    final hairline =
-        theme.isDark ? theme.dashBorderLight : const Color(0xFFE2E7F0);
+    final hairline = theme.isDark
+        ? theme.dashBorderLight
+        : const Color(0xFFE2E7F0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,10 +157,7 @@ class MyAbsencesSection extends StatelessWidget {
             child: Text(
               'No pending requests.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: theme.dashSubtitle,
-              ),
+              style: TextStyle(fontSize: 13.sp, color: theme.dashSubtitle),
             ),
           )
         else

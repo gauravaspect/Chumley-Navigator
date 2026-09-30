@@ -16,8 +16,8 @@ import 'package:chumley_navigator/widgets/ui/fade_slide_in.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class _GridItem {
   const _GridItem({
@@ -141,12 +141,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       _GridItem(icon: LucideIcons.lightbulb, title: 'Skills', body: skillsBody),
       _GridItem(
-        icon: LucideIcons.map_pin,
+        icon: LucideIcons.mapPin,
         title: 'Sites Covered',
         body: metric('sites_covered'),
       ),
       _GridItem(
-        icon: LucideIcons.badge_check,
+        icon: LucideIcons.badgeCheck,
         title: 'Qualified Wts',
         body: metric('qualified_wts'),
       ),

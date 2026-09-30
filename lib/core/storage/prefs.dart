@@ -188,7 +188,9 @@ class Prefs {
         return EngineerPerformanceHistory.fromJson(decoded);
       }
       if (decoded is Map) {
-        return EngineerPerformanceHistory.fromJson(Map<String, dynamic>.from(decoded));
+        return EngineerPerformanceHistory.fromJson(
+          Map<String, dynamic>.from(decoded),
+        );
       }
     } catch (_) {
       await prefs.remove(_pointsKey);
@@ -242,7 +244,9 @@ class Prefs {
     return null;
   }
 
-  static Future<void> saveFixedPriceTrades(FixedPriceTradesResponse cache) async {
+  static Future<void> saveFixedPriceTrades(
+    FixedPriceTradesResponse cache,
+  ) async {
     final prefs = await getPrefs();
     await prefs.setString(_fixedPriceTradesKey, jsonEncode(cache.toJson()));
   }
@@ -257,7 +261,9 @@ class Prefs {
         return FixedPriceTradesResponse.fromJson(decoded);
       }
       if (decoded is Map) {
-        return FixedPriceTradesResponse.fromJson(Map<String, dynamic>.from(decoded));
+        return FixedPriceTradesResponse.fromJson(
+          Map<String, dynamic>.from(decoded),
+        );
       }
     } catch (_) {
       await prefs.remove(_fixedPriceTradesKey);
@@ -265,12 +271,20 @@ class Prefs {
     return null;
   }
 
-  static Future<void> saveFixedPriceCategories(String tradeId, FixedPriceCategoriesResponse cache) async {
+  static Future<void> saveFixedPriceCategories(
+    String tradeId,
+    FixedPriceCategoriesResponse cache,
+  ) async {
     final prefs = await getPrefs();
-    await prefs.setString('${_fixedPriceTradesKey}_categories_$tradeId', jsonEncode(cache.toJson()));
+    await prefs.setString(
+      '${_fixedPriceTradesKey}_categories_$tradeId',
+      jsonEncode(cache.toJson()),
+    );
   }
 
-  static Future<FixedPriceCategoriesResponse?> getFixedPriceCategories(String tradeId) async {
+  static Future<FixedPriceCategoriesResponse?> getFixedPriceCategories(
+    String tradeId,
+  ) async {
     final prefs = await getPrefs();
     final json = prefs.getString('${_fixedPriceTradesKey}_categories_$tradeId');
     if (json == null || json.trim().isEmpty) return null;
@@ -280,7 +294,9 @@ class Prefs {
         return FixedPriceCategoriesResponse.fromJson(decoded);
       }
       if (decoded is Map) {
-        return FixedPriceCategoriesResponse.fromJson(Map<String, dynamic>.from(decoded));
+        return FixedPriceCategoriesResponse.fromJson(
+          Map<String, dynamic>.from(decoded),
+        );
       }
     } catch (_) {
       await prefs.remove('${_fixedPriceTradesKey}_categories_$tradeId');
@@ -288,12 +304,20 @@ class Prefs {
     return null;
   }
 
-  static Future<void> saveFixedPriceWorkTypes(String groupId, FixedPriceWorkTypesResponse cache) async {
+  static Future<void> saveFixedPriceWorkTypes(
+    String groupId,
+    FixedPriceWorkTypesResponse cache,
+  ) async {
     final prefs = await getPrefs();
-    await prefs.setString('${_fixedPriceTradesKey}_worktypes_$groupId', jsonEncode(cache.toJson()));
+    await prefs.setString(
+      '${_fixedPriceTradesKey}_worktypes_$groupId',
+      jsonEncode(cache.toJson()),
+    );
   }
 
-  static Future<FixedPriceWorkTypesResponse?> getFixedPriceWorkTypes(String groupId) async {
+  static Future<FixedPriceWorkTypesResponse?> getFixedPriceWorkTypes(
+    String groupId,
+  ) async {
     final prefs = await getPrefs();
     final json = prefs.getString('${_fixedPriceTradesKey}_worktypes_$groupId');
     if (json == null || json.trim().isEmpty) return null;
@@ -303,7 +327,9 @@ class Prefs {
         return FixedPriceWorkTypesResponse.fromJson(decoded);
       }
       if (decoded is Map) {
-        return FixedPriceWorkTypesResponse.fromJson(Map<String, dynamic>.from(decoded));
+        return FixedPriceWorkTypesResponse.fromJson(
+          Map<String, dynamic>.from(decoded),
+        );
       }
     } catch (_) {
       await prefs.remove('${_fixedPriceTradesKey}_worktypes_$groupId');

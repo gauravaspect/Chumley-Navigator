@@ -8,8 +8,8 @@ import 'package:chumley_navigator/utils/number_display.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class RedeemPointsScreen extends StatefulWidget {
   const RedeemPointsScreen({super.key});
@@ -29,9 +29,11 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final user = args?['user'] as UserModel?;
-    final performanceHistory = args?['performanceHistory'] as EngineerPerformanceHistory?;
+    final performanceHistory =
+        args?['performanceHistory'] as EngineerPerformanceHistory?;
 
     return ListenableBuilder(
       listenable: ThemeScope.of(context),
@@ -73,7 +75,7 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
                       ),
                       _HeaderIconButton(
                         theme: theme,
-                        icon: LucideIcons.clipboard_list,
+                        icon: LucideIcons.clipboardList,
                         onTap: () {
                           if (performanceHistory != null) {
                             showModalBottomSheet(
@@ -83,7 +85,9 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
                               builder: (context) => SizedBox(
                                 height:
                                     MediaQuery.of(context).size.height * 0.90,
-                                child: RedeemPointsBottomModal(performanceHistory: performanceHistory),
+                                child: RedeemPointsBottomModal(
+                                  performanceHistory: performanceHistory,
+                                ),
                               ),
                             );
                           }
@@ -93,7 +97,7 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
                       _HeaderIconButton(
                         theme: theme,
                         icon: Icons.close,
-                        onTap: () => Navigator.pop(context)
+                        onTap: () => Navigator.pop(context),
                       ),
                     ],
                   ),
@@ -175,7 +179,8 @@ class _AvailablePointsCard extends StatefulWidget {
   State<_AvailablePointsCard> createState() => _AvailablePointsCardState();
 }
 
-class _AvailablePointsCardState extends State<_AvailablePointsCard> with SingleTickerProviderStateMixin {
+class _AvailablePointsCardState extends State<_AvailablePointsCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   int _targetPoints = 0;
@@ -183,29 +188,37 @@ class _AvailablePointsCardState extends State<_AvailablePointsCard> with SingleT
   @override
   void initState() {
     super.initState();
-    _targetPoints = widget.performanceHistory?.cumulativeTotal ?? widget.user?.performanceScore.round() ?? 0;
+    _targetPoints =
+        widget.performanceHistory?.cumulativeTotal ??
+        widget.user?.performanceScore.round() ??
+        0;
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    _animation = Tween<double>(begin: 0.0, end: _targetPoints.toDouble()).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    _animation = Tween<double>(
+      begin: 0.0,
+      end: _targetPoints.toDouble(),
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _controller.forward();
   }
 
   @override
   void didUpdateWidget(covariant _AvailablePointsCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final newTarget = widget.performanceHistory?.cumulativeTotal ?? widget.user?.performanceScore.round() ?? 0;
+    final newTarget =
+        widget.performanceHistory?.cumulativeTotal ??
+        widget.user?.performanceScore.round() ??
+        0;
     if (newTarget != _targetPoints) {
       _targetPoints = newTarget;
-      _animation = Tween<double>(
-        begin: _animation.value,
-        end: _targetPoints.toDouble(),
-      ).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-      );
+      _animation =
+          Tween<double>(
+            begin: _animation.value,
+            end: _targetPoints.toDouble(),
+          ).animate(
+            CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+          );
       _controller.reset();
       _controller.forward();
     }
@@ -228,7 +241,9 @@ class _AvailablePointsCardState extends State<_AvailablePointsCard> with SingleT
         final currentPointsLabel = formatIntegerWithCommas(currentPoints);
         final thisMonthLabel =
             '${formatSignedIntegerWithCommas(thisMonthPoints)} this month';
-        final progress = _targetPoints == 0 ? 1.0 : (_animation.value / _targetPoints).clamp(0.0, 1.0);
+        final progress = _targetPoints == 0
+            ? 1.0
+            : (_animation.value / _targetPoints).clamp(0.0, 1.0);
 
         return Container(
           width: double.infinity,
@@ -237,10 +252,7 @@ class _AvailablePointsCardState extends State<_AvailablePointsCard> with SingleT
           decoration: BoxDecoration(
             color: AppColors.primaryBlue,
             borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: AppColors.primaryBlueDark,
-              width: 0.5,
-            ),
+            border: Border.all(color: AppColors.primaryBlueDark, width: 0.5),
           ),
           child: Stack(
             children: [
@@ -306,11 +318,17 @@ class _AvailablePointsCardState extends State<_AvailablePointsCard> with SingleT
                     ),
                     SizedBox(height: 10.h),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryBlueDark,
                         borderRadius: BorderRadius.circular(20.r),
-                        border: Border.all(color: AppColors.textDarkBlue, width: 0.5),
+                        border: Border.all(
+                          color: AppColors.textDarkBlue,
+                          width: 0.5,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -563,11 +581,8 @@ class _ClaimedRewards extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _data.length,
-            separatorBuilder: (_, __) => Divider(
-              height: 0,
-              thickness: 0.5,
-              color: theme.border,
-            ),
+            separatorBuilder: (_, _) =>
+                Divider(height: 0, thickness: 0.5, color: theme.border),
             itemBuilder: (_, index) {
               final item = _data[index];
               return Padding(

@@ -44,13 +44,13 @@ class HseRiskFormController {
   ];
 
   Map<String, dynamic> toMap() => {
-        'risk_assessment': riskAssessment,
-        'work_at_height': workAtHeight,
-        'safe_isolation': safeIsolation,
-        'client_briefed': clientBriefed,
-        'vulnerable': vulnerable,
-        'risk_note': riskNoteController.text,
-      };
+    'risk_assessment': riskAssessment,
+    'work_at_height': workAtHeight,
+    'safe_isolation': safeIsolation,
+    'client_briefed': clientBriefed,
+    'vulnerable': vulnerable,
+    'risk_note': riskNoteController.text,
+  };
 
   void fromMap(Map<String, dynamic>? data) {
     if (data == null) return;

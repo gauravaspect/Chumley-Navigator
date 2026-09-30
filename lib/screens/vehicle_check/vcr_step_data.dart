@@ -1,10 +1,7 @@
 import 'package:chumley_navigator/models/vehicle_model.dart';
 
 class VcrExamplePhoto {
-  const VcrExamplePhoto({
-    required this.label,
-    required this.imageUrl,
-  });
+  const VcrExamplePhoto({required this.label, required this.imageUrl});
 
   final String label;
   final String imageUrl;
@@ -19,10 +16,7 @@ class VcrCaptureSlotData {
 }
 
 class VcrStepData {
-  const VcrStepData({
-    required this.title,
-    required this.captures,
-  });
+  const VcrStepData({required this.title, required this.captures});
 
   final String title;
   final List<VcrCaptureSlotData> captures;
@@ -37,10 +31,7 @@ class VcrStepData {
 
 /// Route args for the multi-step VCR capture form.
 class VehicleFormArgs {
-  const VehicleFormArgs({
-    required this.vehicle,
-    this.dashboardNotes = '',
-  });
+  const VehicleFormArgs({required this.vehicle, this.dashboardNotes = ''});
 
   final VehicleModel vehicle;
   final String dashboardNotes;

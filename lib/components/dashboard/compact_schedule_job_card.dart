@@ -44,7 +44,9 @@ class CompactScheduleJobCard extends StatelessWidget {
     if (t.contains('bath') || t.contains('fit') || t.contains('install')) {
       return LucideIcons.hardHat;
     }
-    if (t.contains('review') || t.contains('performance') || t.contains('ppm')) {
+    if (t.contains('review') ||
+        t.contains('performance') ||
+        t.contains('ppm')) {
       return LucideIcons.trendingUp;
     }
     return LucideIcons.briefcase;
@@ -56,8 +58,9 @@ class CompactScheduleJobCard extends StatelessWidget {
     final title = jobTitle(appointment);
     final subtitle =
         '${shortSite(appointment)} · ${formatTime(appointment.scheduledStart)}';
-    final status =
-        appointment.status.isNotEmpty ? appointment.status : 'Upcoming';
+    final status = appointment.status.isNotEmpty
+        ? appointment.status
+        : 'Upcoming';
 
     return InkWell(
       onTap: () => JobDetailPage.open(context, appointment),

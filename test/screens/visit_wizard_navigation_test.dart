@@ -8,14 +8,14 @@ void main() {
   Widget buildApp(Widget child) {
     return ScreenUtilInit(
       designSize: const Size(393, 852),
-      builder: (context, _) => MaterialApp(
-        home: child,
-      ),
+      builder: (context, _) => MaterialApp(home: child),
     );
   }
 
   group('VisitWizardScaffold navigation & buttons', () {
-    testWidgets('Step 0 shows "Cancel" label in secondary action', (tester) async {
+    testWidgets('Step 0 shows "Cancel" label in secondary action', (
+      tester,
+    ) async {
       var cancelCalled = false;
       await tester.pumpWidget(
         buildApp(
@@ -45,7 +45,9 @@ void main() {
       expect(cancelCalled, isTrue);
     });
 
-    testWidgets('Step 1..last shows "Back" label in secondary action', (tester) async {
+    testWidgets('Step 1..last shows "Back" label in secondary action', (
+      tester,
+    ) async {
       var backCalled = false;
       await tester.pumpWidget(
         buildApp(
@@ -73,7 +75,9 @@ void main() {
       expect(backCalled, isTrue);
     });
 
-    testWidgets('Last step shows "Submit report" for next label', (tester) async {
+    testWidgets('Last step shows "Submit report" for next label', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         buildApp(
           VisitWizardScaffold(

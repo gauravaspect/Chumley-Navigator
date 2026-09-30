@@ -39,7 +39,12 @@ class LeaderboardShimmer extends StatelessWidget {
               child: ThemedShimmerBox(theme: theme, height: 18.h, radius: 6),
             ),
             SizedBox(width: 80.w),
-            ThemedShimmerBox(theme: theme, width: 64.w, height: 14.h, radius: 6),
+            ThemedShimmerBox(
+              theme: theme,
+              width: 64.w,
+              height: 14.h,
+              radius: 6,
+            ),
           ],
         ),
         SizedBox(height: 10.h),

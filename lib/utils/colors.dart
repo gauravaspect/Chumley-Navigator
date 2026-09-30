@@ -138,10 +138,12 @@ class AppColors {
   static const podiumFirstLightBadgeGreen = Color(0xFF3B6D11);
 
   // Milestone Tiers
-  static const Color tierBronze   = Color(0xFFCD7F32);
-  static const Color tierSilver   = Color(0xFFB0B7C3);
-  static const Color tierGold     = Color(0xFFF59E0B);  // reuse amber
-  static const Color tierPlatinum = Color(0xFF60A5FA);  // blue-300
-  static const Color tierDiamond  = Color(0xFFA78BFA);  // violet-400
-  static const Color tierOneOff   = Color(0xFF34D399);  // emerald (for Welcome Aboard)
+  static const Color tierBronze = Color(0xFFCD7F32);
+  static const Color tierSilver = Color(0xFFB0B7C3);
+  static const Color tierGold = Color(0xFFF59E0B); // reuse amber
+  static const Color tierPlatinum = Color(0xFF60A5FA); // blue-300
+  static const Color tierDiamond = Color(0xFFA78BFA); // violet-400
+  static const Color tierOneOff = Color(
+    0xFF34D399,
+  ); // emerald (for Welcome Aboard)
 }

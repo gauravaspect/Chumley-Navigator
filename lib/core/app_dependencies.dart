@@ -55,8 +55,9 @@ class AppDependencies {
   );
   static final LoginCubit loginCubit = LoginCubit(loginRepository);
 
-  static final DashboardApiService dashboardApiService =
-      DashboardApiService(apiClient);
+  static final DashboardApiService dashboardApiService = DashboardApiService(
+    apiClient,
+  );
   static final DashboardRepository dashboardRepository = DashboardRepository(
     dashboardApiService,
     appointmentsRepository: appointmentsRepository,
@@ -77,38 +78,45 @@ class AppDependencies {
   static final VcrExamplesRepository vcrExamplesRepository =
       VcrExamplesRepository(vcrExamplesApiService);
 
-  static final AbsencesApiService absencesApiService =
-      AbsencesApiService(apiClient);
-  static final AbsencesRepository absencesRepository =
-      AbsencesRepository(absencesApiService);
+  static final AbsencesApiService absencesApiService = AbsencesApiService(
+    apiClient,
+  );
+  static final AbsencesRepository absencesRepository = AbsencesRepository(
+    absencesApiService,
+  );
 
-  static final MilestonesApiService milestonesApiService =
-      MilestonesApiService(apiClient);
-  static final MilestonesRepository milestonesRepository =
-      MilestonesRepository(milestonesApiService);
+  static final MilestonesApiService milestonesApiService = MilestonesApiService(
+    apiClient,
+  );
+  static final MilestonesRepository milestonesRepository = MilestonesRepository(
+    milestonesApiService,
+  );
 
-  static final FixedPriceApiService fixedPriceApiService =
-      FixedPriceApiService(apiClient);
-  static final FixedPriceRepository fixedPriceRepository =
-      FixedPriceRepository(fixedPriceApiService);
+  static final FixedPriceApiService fixedPriceApiService = FixedPriceApiService(
+    apiClient,
+  );
+  static final FixedPriceRepository fixedPriceRepository = FixedPriceRepository(
+    fixedPriceApiService,
+  );
 
   static final AppointmentsApiService appointmentsApiService =
       AppointmentsApiService(apiClient);
   static final AppointmentsRepository appointmentsRepository =
       AppointmentsRepository(appointmentsApiService);
 
-  static final ChumleyAuthProvider chumleyAuthProvider =
-      ChumleyAuthProvider(apiClient);
+  static final ChumleyAuthProvider chumleyAuthProvider = ChumleyAuthProvider(
+    apiClient,
+  );
   static final NavigatorChatApiService navigatorChatApiService =
       NavigatorChatApiService(apiClient);
   static final ChumleyChatApiService chumleyChatApiService =
       ChumleyChatApiService(chumleyAuthProvider);
   static final ChumleyChatRepository chumleyChatRepository =
       ChumleyChatRepository(
-    authProvider: chumleyAuthProvider,
-    navigatorApi: navigatorChatApiService,
-    chumleyApi: chumleyChatApiService,
-  );
+        authProvider: chumleyAuthProvider,
+        navigatorApi: navigatorChatApiService,
+        chumleyApi: chumleyChatApiService,
+      );
 
   static DashboardCubit createDashboardCubit() =>
       DashboardCubit(dashboardRepository);

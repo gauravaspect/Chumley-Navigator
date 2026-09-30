@@ -21,28 +21,26 @@ class DashboardShimmer extends StatelessWidget {
           SizedBox(height: 14.h),
           ThemedShimmerBox(theme: theme, height: 320.h, radius: 20),
           SizedBox(height: 14.h),
-          ThemedShimmerBox(
-            theme: theme,
-            height: 28.h,
-            width: 220.w,
-            radius: 8,
-          ),
+          ThemedShimmerBox(theme: theme, height: 28.h, width: 220.w, radius: 8),
           SizedBox(height: 8.h),
-          ThemedShimmerBox(
-            theme: theme,
-            height: 16.h,
-            width: 280.w,
-            radius: 6,
-          ),
+          ThemedShimmerBox(theme: theme, height: 16.h, width: 280.w, radius: 6),
           SizedBox(height: 20.h),
           Row(
             children: [
               Expanded(
-                child: ThemedShimmerBox(theme: theme, height: 200.h, radius: 18),
+                child: ThemedShimmerBox(
+                  theme: theme,
+                  height: 200.h,
+                  radius: 18,
+                ),
               ),
               SizedBox(width: 12.w),
               Expanded(
-                child: ThemedShimmerBox(theme: theme, height: 200.h, radius: 18),
+                child: ThemedShimmerBox(
+                  theme: theme,
+                  height: 200.h,
+                  radius: 18,
+                ),
               ),
             ],
           ),
@@ -50,11 +48,19 @@ class DashboardShimmer extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: ThemedShimmerBox(theme: theme, height: 200.h, radius: 18),
+                child: ThemedShimmerBox(
+                  theme: theme,
+                  height: 200.h,
+                  radius: 18,
+                ),
               ),
               SizedBox(width: 12.w),
               Expanded(
-                child: ThemedShimmerBox(theme: theme, height: 200.h, radius: 18),
+                child: ThemedShimmerBox(
+                  theme: theme,
+                  height: 200.h,
+                  radius: 18,
+                ),
               ),
             ],
           ),

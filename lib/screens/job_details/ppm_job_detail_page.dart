@@ -25,9 +25,7 @@ class PpmJobDetailPage extends StatefulWidget {
 
   static void open(BuildContext context, PpmJobTask task) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => PpmJobDetailPage(task: task),
-      ),
+      MaterialPageRoute<void>(builder: (_) => PpmJobDetailPage(task: task)),
     );
   }
 
@@ -58,8 +56,7 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
   final _drafts = FormDraftStore();
   final _jobs = JobsRepository();
 
-  String get _saId =>
-      task.id.isNotEmpty ? task.id : task.appointmentNumber;
+  String get _saId => task.id.isNotEmpty ? task.id : task.appointmentNumber;
 
   String get workOrderId => _saId;
 
@@ -130,8 +127,7 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
       ? _allowedNextStatuses.sublist(1)
       : const [];
 
-  String _formatHour(int hour) =>
-      '${hour.toString().padLeft(2, '0')}:00';
+  String _formatHour(int hour) => '${hour.toString().padLeft(2, '0')}:00';
 
   int get _completedCount =>
       (_cp12Completed ? 1 : 0) + (_eicrCompleted ? 1 : 0);
@@ -261,9 +257,9 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
       } catch (e) {
         if (mounted) {
           setState(() => _statusUpdating = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString())),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.toString())));
         }
       }
       return;
@@ -282,9 +278,9 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _statusUpdating = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
   }
@@ -292,11 +288,13 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
-    final hours = '${_formatHour(task.startHour)} – ${_formatHour(task.endHour)}';
+    final hours =
+        '${_formatHour(task.startHour)} – ${_formatHour(task.endHour)}';
 
     return Scaffold(
-      backgroundColor:
-          theme.isDark ? AppColors.darkBase : AppColors.backgroundGray,
+      backgroundColor: theme.isDark
+          ? AppColors.darkBase
+          : AppColors.backgroundGray,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -337,17 +335,28 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
                     // Status Badge Banner
                     Container(
                       width: double.infinity,
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 10.h,
+                      ),
                       margin: EdgeInsets.only(bottom: 12.h),
                       decoration: BoxDecoration(
-                        color: _statusColors[_statusColorIndex].withValues(alpha: 0.12),
+                        color: _statusColors[_statusColorIndex].withValues(
+                          alpha: 0.12,
+                        ),
                         borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: _statusColors[_statusColorIndex].withValues(alpha: 0.35)),
+                        border: Border.all(
+                          color: _statusColors[_statusColorIndex].withValues(
+                            alpha: 0.35,
+                          ),
+                        ),
                       ),
                       child: Row(
                         children: [
                           Icon(
-                            isCompleted ? LucideIcons.badgeCheck : LucideIcons.clock,
+                            isCompleted
+                                ? LucideIcons.badgeCheck
+                                : LucideIcons.clock,
                             size: 18.sp,
                             color: _statusColors[_statusColorIndex],
                           ),
@@ -518,17 +527,27 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
                           _buildLeadButton(
                             theme: theme,
                             title: 'Raise PPM Contract Lead',
-                            subtitle: 'Recurring maintenance for boiler/AC/cylinders',
+                            subtitle:
+                                'Recurring maintenance for boiler/AC/cylinders',
                             icon: LucideIcons.calendarClock,
-                            onTap: () => PpmLeadWizard.show(context, jobId: task.appointmentNumber, postcode: task.postcode),
+                            onTap: () => PpmLeadWizard.show(
+                              context,
+                              jobId: task.appointmentNumber,
+                              postcode: task.postcode,
+                            ),
                           ),
                           Divider(color: theme.border, height: 16.h),
                           _buildLeadButton(
                             theme: theme,
                             title: 'Raise Project Management (PM) Lead',
-                            subtitle: 'Major bathroom/kitchen/boiler refurbishment',
+                            subtitle:
+                                'Major bathroom/kitchen/boiler refurbishment',
                             icon: LucideIcons.layers,
-                            onTap: () => PmLeadWizard.show(context, jobId: task.appointmentNumber, postcode: task.postcode),
+                            onTap: () => PmLeadWizard.show(
+                              context,
+                              jobId: task.appointmentNumber,
+                              postcode: task.postcode,
+                            ),
                           ),
                           Divider(color: theme.border, height: 16.h),
                           _buildLeadButton(
@@ -536,7 +555,11 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
                             title: 'Raise Reactive Attendance',
                             subtitle: 'Dispatched urgent issue to office',
                             icon: LucideIcons.wrench,
-                            onTap: () => ReactiveAttendanceModal.show(context, jobId: task.appointmentNumber, postcode: task.postcode),
+                            onTap: () => ReactiveAttendanceModal.show(
+                              context,
+                              jobId: task.appointmentNumber,
+                              postcode: task.postcode,
+                            ),
                           ),
                         ],
                       ),
@@ -610,12 +633,18 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
                 decoration: BoxDecoration(
                   color: const Color(0xFF22C55E).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.4)),
+                  border: Border.all(
+                    color: const Color(0xFF22C55E).withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(LucideIcons.badgeCheck, color: const Color(0xFF22C55E), size: 20.sp),
+                    Icon(
+                      LucideIcons.badgeCheck,
+                      color: const Color(0xFF22C55E),
+                      size: 20.sp,
+                    ),
                     SizedBox(width: 8.w),
                     Text(
                       'Visit Complete',
@@ -635,25 +664,31 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
                 icon: SaStatus.isOnSiteOrLater(_currentStatus)
                     ? LucideIcons.wrench
                     : LucideIcons.navigation,
-                isEnabled: !_statusUpdating &&
+                isEnabled:
+                    !_statusUpdating &&
                     (_primaryNextStatus != null ||
-                        (SaStatus.isOnSite(_currentStatus) && !_primaryFormDone)),
+                        (SaStatus.isOnSite(_currentStatus) &&
+                            !_primaryFormDone)),
                 onConfirm: () => _advanceStatus(),
               ),
-            if (_skipAheadStatuses.isNotEmpty && !isCompleted && !_loadingDetail) ...[
+            if (_skipAheadStatuses.isNotEmpty &&
+                !isCompleted &&
+                !_loadingDetail) ...[
               SizedBox(height: 10.h),
               Wrap(
                 spacing: 8.w,
                 runSpacing: 8.h,
                 alignment: WrapAlignment.center,
-                children: _skipAheadStatuses.map((status) {
-                  return OutlinedButton(
-                    onPressed: _statusUpdating
-                        ? null
-                        : () => _advanceStatus(status),
-                    child: Text(status),
-                  );
-                }).toList(growable: false),
+                children: _skipAheadStatuses
+                    .map((status) {
+                      return OutlinedButton(
+                        onPressed: _statusUpdating
+                            ? null
+                            : () => _advanceStatus(status),
+                        child: Text(status),
+                      );
+                    })
+                    .toList(growable: false),
               ),
             ],
           ],
@@ -686,9 +721,19 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: theme.text)),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: theme.text,
+                  ),
+                ),
                 SizedBox(height: 2.h),
-                Text(subtitle, style: TextStyle(fontSize: 11.sp, color: theme.textMuted)),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 11.sp, color: theme.textMuted),
+                ),
               ],
             ),
           ),
@@ -729,7 +774,9 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
                 width: 40.w,
                 height: 40.w,
                 decoration: BoxDecoration(
-                  color: completed ? const Color(0xFF22C55E) : accent.withValues(alpha: 0.15),
+                  color: completed
+                      ? const Color(0xFF22C55E)
+                      : accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10.r),
                 ),
                 child: Icon(
@@ -756,7 +803,9 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
                       subtitle,
                       style: TextStyle(
                         fontSize: 11.sp,
-                        color: completed ? const Color(0xFF22C55E) : theme.dashMuted,
+                        color: completed
+                            ? const Color(0xFF22C55E)
+                            : theme.dashMuted,
                       ),
                     ),
                   ],
@@ -809,10 +858,7 @@ class _PpmJobDetailPageState extends State<PpmJobDetailPage> {
                     width: 88.w,
                     child: Text(
                       rows[i].label,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: theme.dashMuted,
-                      ),
+                      style: TextStyle(fontSize: 12.sp, color: theme.dashMuted),
                     ),
                   ),
                   Expanded(

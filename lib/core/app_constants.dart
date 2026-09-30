@@ -31,5 +31,8 @@ class AppConstants {
   );
 
   /// Demo API key for `/api/demo/*` endpoints (investor demo).
-  static const String demoApiKey = 'chumley-demo-h_sgCq3o-w6fp7m0VvNo5FPY';
+  static const String demoApiKey = String.fromEnvironment(
+    'DEMO_API_KEY',
+    defaultValue: 'chumley-demo-h_sgCq3o-w6fp7m0VvNo5FPY',
+  );
 }

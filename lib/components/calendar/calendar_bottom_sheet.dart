@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class DashboardBottomSheet extends StatefulWidget {
@@ -10,17 +11,36 @@ class DashboardBottomSheet extends StatefulWidget {
 }
 
 class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
-
   int _selectedTab = 0; // 0 = Weekly, 1 = Daily
   DateTime _weekStart = _mondayOf(DateTime.now());
   DateTime _selectedDay = DateTime.now();
 
   // ── Static data ────────────────────────────────────────────────────────────
 
-  static const _dayShort  = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  static const _dayFull   = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  static const _monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  static const _dayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const _dayFull = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
+  static const _monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -35,10 +55,14 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
   static String _ordinal(int day) {
     if (day >= 11 && day <= 13) return '${day}th';
     switch (day % 10) {
-      case 1:  return '${day}st';
-      case 2:  return '${day}nd';
-      case 3:  return '${day}rd';
-      default: return '${day}th';
+      case 1:
+        return '${day}st';
+      case 2:
+        return '${day}nd';
+      case 3:
+        return '${day}rd';
+      default:
+        return '${day}th';
     }
   }
 
@@ -51,7 +75,7 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
 
   // Daily: "Saturday, 16 May 2026"
   String get _dayLabel {
-    final name  = _dayFull[_selectedDay.weekday - 1];
+    final name = _dayFull[_selectedDay.weekday - 1];
     final month = _monthNames[_selectedDay.month - 1];
     return '$name, ${_selectedDay.day} $month ${_selectedDay.year}';
   }
@@ -62,29 +86,38 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.surface,
         borderRadius: BorderRadius.only(
-          topLeft:  Radius.circular(24.r),
+          topLeft: Radius.circular(24.r),
           topRight: Radius.circular(24.r),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textDarkBlue.withValues(alpha: 0.45),
-            offset: Offset(0, 20.h),
-            blurRadius: 50.r,
-            spreadRadius: -10.r,
-          ),
-        ],
+        border: Border(
+          top: BorderSide(color: theme.border, width: 0.5),
+          left: BorderSide(color: theme.border, width: 0.5),
+          right: BorderSide(color: theme.border, width: 0.5),
+        ),
+        boxShadow: theme.isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: AppColors.textDarkBlue.withValues(alpha: 0.45),
+                  offset: Offset(0, 20.h),
+                  blurRadius: 50.r,
+                  spreadRadius: -10.r,
+                ),
+              ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _header(),
-          Divider(height: 0, thickness: 0.5, color: AppColors.borderDefault),
-          _controls(),
-          Flexible(child: _body()),
+          _header(theme),
+          Divider(height: 0, thickness: 0.5, color: theme.border),
+          _controls(theme),
+          Flexible(child: _body(theme)),
         ],
       ),
     );
@@ -92,10 +125,13 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
 
   // ── Header ─────────────────────────────────────────────────────────────────
 
-  Widget _header() {
+  Widget _header(DashboardTheme theme) {
     return Padding(
       padding: EdgeInsets.only(
-        left: 24.w, right: 24.w, top: 20.h, bottom: 12.h,
+        left: 24.w,
+        right: 24.w,
+        top: 20.h,
+        bottom: 12.h,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +145,7 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDarkBlue,
+                    color: theme.text,
                     height: 1.2,
                   ),
                 ),
@@ -121,7 +157,7 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
                       : 'Jobs and absences for the selected day.',
                   style: TextStyle(
                     fontSize: 12.5.sp,
-                    color: AppColors.textSecondary,
+                    color: theme.textMuted,
                   ),
                 ),
               ],
@@ -134,16 +170,15 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
               width: 36.w,
               height: 36.w,
               decoration: BoxDecoration(
-                color: AppColors.surfaceLightBlue,
+                color: theme.surfaceDeep,
                 shape: BoxShape.circle,
-                border: Border.all(
-                    color: AppColors.borderDefault, width: 0.5),
+                border: Border.all(color: theme.border, width: 0.5),
               ),
               alignment: Alignment.center,
               child: Icon(
                 Icons.close_rounded,
                 size: 16.sp,
-                color: AppColors.textDarkBlue,
+                color: theme.text,
               ),
             ),
           ),
@@ -154,7 +189,7 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
 
   // ── Tab toggle + navigation ────────────────────────────────────────────────
 
-  Widget _controls() {
+  Widget _controls(DashboardTheme theme) {
     return Padding(
       padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 8.h),
       child: Column(
@@ -164,15 +199,15 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
           Container(
             padding: EdgeInsets.all(4.r),
             decoration: BoxDecoration(
-              color: AppColors.surfaceLightBlue,
-              border: Border.all(color: AppColors.borderDefault, width: 0.5),
+              color: theme.surfaceDeep,
+              border: Border.all(color: theme.border, width: 0.5),
               borderRadius: BorderRadius.circular(999.r),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _tabButton(label: 'Weekly', index: 0),
-                _tabButton(label: 'Daily',  index: 1),
+                _tabButton(theme: theme, label: 'Weekly', index: 0),
+                _tabButton(theme: theme, label: 'Daily', index: 1),
               ],
             ),
           ),
@@ -184,28 +219,42 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _navButton(
+                theme: theme,
                 icon: Icons.chevron_left_rounded,
                 onTap: _isWeekly
-                    ? () => setState(() => _weekStart =
-                    _weekStart.subtract(const Duration(days: 7)))
-                    : () => setState(() => _selectedDay =
-                    _selectedDay.subtract(const Duration(days: 1))),
+                    ? () => setState(
+                        () => _weekStart = _weekStart.subtract(
+                          const Duration(days: 7),
+                        ),
+                      )
+                    : () => setState(
+                        () => _selectedDay = _selectedDay.subtract(
+                          const Duration(days: 1),
+                        ),
+                      ),
               ),
               Text(
                 _isWeekly ? _weekLabel : _dayLabel,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15.sp,
-                  color: AppColors.textDarkBlue,
+                  color: theme.text,
                 ),
               ),
               _navButton(
+                theme: theme,
                 icon: Icons.chevron_right_rounded,
                 onTap: _isWeekly
-                    ? () => setState(() => _weekStart =
-                    _weekStart.add(const Duration(days: 7)))
-                    : () => setState(() => _selectedDay =
-                    _selectedDay.add(const Duration(days: 1))),
+                    ? () => setState(
+                        () => _weekStart = _weekStart.add(
+                          const Duration(days: 7),
+                        ),
+                      )
+                    : () => setState(
+                        () => _selectedDay = _selectedDay.add(
+                          const Duration(days: 1),
+                        ),
+                      ),
               ),
             ],
           ),
@@ -214,7 +263,7 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
     );
   }
 
-  Widget _tabButton({required String label, required int index}) {
+  Widget _tabButton({required DashboardTheme theme, required String label, required int index}) {
     final active = _selectedTab == index;
     return GestureDetector(
       onTap: () => setState(() => _selectedTab = index),
@@ -230,27 +279,29 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
           style: TextStyle(
             fontSize: 12.5.sp,
             fontWeight: FontWeight.bold,
-            color: active ? Colors.white : AppColors.primaryBlue,
+            color: active
+                ? Colors.white
+                : (theme.isDark ? AppColors.accentBlue : AppColors.primaryBlue),
           ),
         ),
       ),
     );
   }
 
-  Widget _navButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _navButton({required DashboardTheme theme, required IconData icon, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
         width: 32.w,
         height: 32.w,
-        child: Icon(icon, size: 22.sp, color: AppColors.textDarkBlue),
+        child: Icon(icon, size: 22.sp, color: theme.text),
       ),
     );
   }
 
   // ── Scrollable body ────────────────────────────────────────────────────────
 
-  Widget _body() {
+  Widget _body(DashboardTheme theme) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 24.h),
@@ -259,7 +310,7 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
         children: [
           _errorBanner(),
           SizedBox(height: 12.h),
-          _isWeekly ? _weeklyContent() : _dailyContent(),
+          _isWeekly ? _weeklyContent(theme) : _dailyContent(theme),
         ],
       ),
     );
@@ -289,23 +340,24 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
 
   // ── Weekly content: list of 7 day rows ────────────────────────────────────
 
-  Widget _weeklyContent() {
+  Widget _weeklyContent(DashboardTheme theme) {
     return Column(
       children: List.generate(7, (i) {
         final day = _weekStart.add(Duration(days: i));
         return Padding(
           padding: EdgeInsets.only(bottom: 12.h),
-          child: _dayRow(day: day),
+          child: _dayRow(theme: theme, day: day),
         );
       }),
     );
   }
 
-  Widget _dayRow({required DateTime day}) {
-    final today     = _isToday(day);
+  Widget _dayRow({required DashboardTheme theme, required DateTime day}) {
+    final today = _isToday(day);
     final shortName = _dayShort[day.weekday - 1];
     final monthName = _monthNames[day.month - 1];
-    final label = '$shortName ${_ordinal(day.day)} $monthName'
+    final label =
+        '$shortName ${_ordinal(day.day)} $monthName'
         '${today ? ' · Today' : ''}';
 
     return Column(
@@ -319,9 +371,7 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.bold,
-                color: today
-                    ? AppColors.accentBlue
-                    : AppColors.textDarkBlue,
+                color: today ? AppColors.accentBlue : theme.text,
               ),
             ),
             Text(
@@ -329,7 +379,7 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
               style: TextStyle(
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
+                color: theme.textMuted,
               ),
             ),
           ],
@@ -339,13 +389,13 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
           decoration: BoxDecoration(
-            color: AppColors.surfaceLightBlue,
-            border: Border.all(color: AppColors.borderDefault, width: 0.5),
+            color: theme.surfaceDeep,
+            border: Border.all(color: theme.border, width: 0.5),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Text(
             'Nothing scheduled.',
-            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12.sp, color: theme.textMuted),
           ),
         ),
       ],
@@ -354,11 +404,11 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
 
   // ── Daily content: appointment card ───────────────────────────────────────
 
-  Widget _dailyContent() {
+  Widget _dailyContent(DashboardTheme theme) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.accentBlue, width: 0.5),
+        color: theme.surface,
+        border: Border.all(color: theme.border, width: 0.5),
         borderRadius: BorderRadius.circular(16.r),
       ),
       clipBehavior: Clip.hardEdge,
@@ -367,9 +417,7 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
           // Blue header
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(
-              horizontal: 14.w, vertical: 16.h,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
             color: AppColors.accentBlue,
             alignment: Alignment.center,
             child: Text(

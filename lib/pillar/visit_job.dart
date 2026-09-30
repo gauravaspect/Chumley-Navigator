@@ -42,11 +42,11 @@ class VisitJob {
   final int? saCount;
 
   FormKind get kind => FormKindResolver.kindOf(
-        jobType: jobType,
-        trade: trade,
-        workType: workType,
-        description: description,
-      );
+    jobType: jobType,
+    trade: trade,
+    workType: workType,
+    description: description,
+  );
 
   String get coercedJobType => JobTypeCoerce.coerce(jobType);
 
@@ -54,12 +54,12 @@ class VisitJob {
     final custName = a.customerName.isNotEmpty
         ? a.customerName
         : (a.customerContactName.isNotEmpty
-            ? a.customerContactName
-            : a.customerEmail);
+              ? a.customerContactName
+              : a.customerEmail);
     final siteAddr = a.siteAddress.isNotEmpty
         ? (a.sitePostcode.isNotEmpty && !a.siteAddress.contains(a.sitePostcode)
-            ? '${a.siteAddress}, ${a.sitePostcode}'
-            : a.siteAddress)
+              ? '${a.siteAddress}, ${a.sitePostcode}'
+              : a.siteAddress)
         : (a.siteName.isNotEmpty ? a.siteName : a.title);
 
     return VisitJob(

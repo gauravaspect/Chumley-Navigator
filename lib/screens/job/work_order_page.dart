@@ -100,71 +100,82 @@ class WorkOrderPage extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 120.h),
           children: [
-          Row(
-            children: [
-              Icon(_kindIcon, color: NavigatorTokens.brandNavy, size: 20.sp),
-              SizedBox(width: 8.w),
-              _chip(chip, NavigatorTokens.infoBg, NavigatorTokens.infoFg),
-              SizedBox(width: 8.w),
-              _chip(
-                jobTypeChip(job),
-                NavigatorTokens.surfaceMuted,
-                NavigatorTokens.textSecondary,
-              ),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            job.trade?.isNotEmpty == true ? job.trade! : (job.description ?? ''),
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w800,
-              color: NavigatorTokens.brandNavy,
+            Row(
+              children: [
+                Icon(_kindIcon, color: NavigatorTokens.brandNavy, size: 20.sp),
+                SizedBox(width: 8.w),
+                _chip(chip, NavigatorTokens.infoBg, NavigatorTokens.infoFg),
+                SizedBox(width: 8.w),
+                _chip(
+                  jobTypeChip(job),
+                  NavigatorTokens.surfaceMuted,
+                  NavigatorTokens.textSecondary,
+                ),
+              ],
             ),
-          ),
-          if (job.siteAddress.isNotEmpty) ...[
-            SizedBox(height: 4.h),
+            SizedBox(height: 8.h),
             Text(
-              job.siteAddress,
-              style: TextStyle(fontSize: 13.sp, color: NavigatorTokens.textSecondary),
-            ),
-          ],
-          if (job.scheduledStart != null) ...[
-            SizedBox(height: 4.h),
-            Text(
-              _window(job.scheduledStart!),
-              style: TextStyle(fontSize: 13.sp, color: NavigatorTokens.textSecondary),
-            ),
-          ],
-          SizedBox(height: 20.h),
-          _ladder(_ladderIndex),
-          if (complete) ...[
-            SizedBox(height: 24.h),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(16.r),
-              decoration: BoxDecoration(
-                color: NavigatorTokens.successBg,
-                borderRadius: BorderRadius.circular(12.r),
+              job.trade?.isNotEmpty == true
+                  ? job.trade!
+                  : (job.description ?? ''),
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w800,
+                color: NavigatorTokens.brandNavy,
               ),
-              child: Text(
-                'Job completed - all forms submitted',
-                textAlign: TextAlign.center,
+            ),
+            if (job.siteAddress.isNotEmpty) ...[
+              SizedBox(height: 4.h),
+              Text(
+                job.siteAddress,
                 style: TextStyle(
-                  color: NavigatorTokens.successFg,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14.sp,
+                  fontSize: 13.sp,
+                  color: NavigatorTokens.textSecondary,
                 ),
               ),
-            ),
-          ],
-          if (statusWriteError != null) ...[
-            SizedBox(height: 12.h),
-            Text(
-              statusWriteError!,
-              style: TextStyle(color: NavigatorTokens.errorFg, fontSize: 12.sp),
-            ),
-          ],
+            ],
+            if (job.scheduledStart != null) ...[
+              SizedBox(height: 4.h),
+              Text(
+                _window(job.scheduledStart!),
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: NavigatorTokens.textSecondary,
+                ),
+              ),
+            ],
+            SizedBox(height: 20.h),
+            _ladder(_ladderIndex),
+            if (complete) ...[
+              SizedBox(height: 24.h),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16.r),
+                decoration: BoxDecoration(
+                  color: NavigatorTokens.successBg,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Text(
+                  'Job completed - all forms submitted',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: NavigatorTokens.successFg,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.sp,
+                  ),
+                ),
+              ),
+            ],
+            if (statusWriteError != null) ...[
+              SizedBox(height: 12.h),
+              Text(
+                statusWriteError!,
+                style: TextStyle(
+                  color: NavigatorTokens.errorFg,
+                  fontSize: 12.sp,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -211,13 +222,23 @@ class WorkOrderPage extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: fg, fontSize: 11.sp, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: fg,
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
 
   Widget _ladder(int active) {
-    const labels = ['Scheduled', 'Dispatched', 'In transit', 'On site', 'Complete'];
+    const labels = [
+      'Scheduled',
+      'Dispatched',
+      'In transit',
+      'On site',
+      'Complete',
+    ];
     return Row(
       children: List.generate(5, (i) {
         final done = i < active;
@@ -241,7 +262,9 @@ class WorkOrderPage extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 9.sp,
-                  color: current ? NavigatorTokens.brandNavy : NavigatorTokens.textSecondary,
+                  color: current
+                      ? NavigatorTokens.brandNavy
+                      : NavigatorTokens.textSecondary,
                 ),
               ),
             ],

@@ -218,59 +218,54 @@ class FixedPriceSubmitPayload extends Equatable {
 
   /// Audit / Navigator-style payload documented in [fixed_price_payload.md].
   Map<String, dynamic> toJson() => {
-        'work_order_id': workOrderId,
-        if (sourceWorkOrderId != null) 'source_work_order_id': sourceWorkOrderId,
-        'customer_email': customerEmail,
-        'earliest_requested_date': earliestRequestedDate,
-        'job_type': jobType,
-        'status': status,
-        'trade_id': tradeId,
-        'category_id': categoryId,
-        'work_type_id': workTypeId,
-        'scope_of_work': scopeOfWork,
-        'additional_scope_2': additionalScope2,
-        'additional_scope_3': additionalScope3,
-        if (durationHours != null) 'duration_hours': durationHours,
-        'collection_fee_applicable': collectionFeeApplicable,
-        'list_price_service_code': listPriceServiceCode,
-        'operative_materials': operativeMaterials.toJson(),
-        'charge_drainage_patches': chargeDrainagePatches,
-        'aspect_materials': aspectMaterials.toJson(),
-        'ulez_charge_applicable': ulezChargeApplicable,
-        'labour_rate_level': labourRateLevel,
-        'zonal_discount_percentage': zonalDiscountPercentage,
-        'other_discounts': otherDiscounts.toJson(),
-        'customer_confirmation_choice': customerConfirmationChoice,
-        'generate_deposit_invoice': generateDepositInvoice,
-        'work_commencing_immediately': workCommencingImmediately,
-        'payment_link_sent': paymentLinkSent,
-        'pricing_summary': pricingSummary.toJson(),
-      };
+    'work_order_id': workOrderId,
+    if (sourceWorkOrderId != null) 'source_work_order_id': sourceWorkOrderId,
+    'customer_email': customerEmail,
+    'earliest_requested_date': earliestRequestedDate,
+    'job_type': jobType,
+    'status': status,
+    'trade_id': tradeId,
+    'category_id': categoryId,
+    'work_type_id': workTypeId,
+    'scope_of_work': scopeOfWork,
+    'additional_scope_2': additionalScope2,
+    'additional_scope_3': additionalScope3,
+    if (durationHours != null) 'duration_hours': durationHours,
+    'collection_fee_applicable': collectionFeeApplicable,
+    'list_price_service_code': listPriceServiceCode,
+    'operative_materials': operativeMaterials.toJson(),
+    'charge_drainage_patches': chargeDrainagePatches,
+    'aspect_materials': aspectMaterials.toJson(),
+    'ulez_charge_applicable': ulezChargeApplicable,
+    'labour_rate_level': labourRateLevel,
+    'zonal_discount_percentage': zonalDiscountPercentage,
+    'other_discounts': otherDiscounts.toJson(),
+    'customer_confirmation_choice': customerConfirmationChoice,
+    'generate_deposit_invoice': generateDepositInvoice,
+    'work_commencing_immediately': workCommencingImmediately,
+    'payment_link_sent': paymentLinkSent,
+    'pricing_summary': pricingSummary.toJson(),
+  };
 
   /// Salesforce-validated submission shape.
   Map<String, dynamic> toSalesforceJson({
     required FixedPriceSalesforceContext context,
     FixedPriceZonedRates zonedRates = defaultZonedRates,
-  }) =>
-      toSubmitJson(context: context, zonedRates: zonedRates);
+  }) => toSubmitJson(context: context, zonedRates: zonedRates);
 
   /// POST /api/work-orders submission body.
   Map<String, dynamic> toSubmitJson({
     required FixedPriceSalesforceContext context,
     FixedPriceZonedRates zonedRates = defaultZonedRates,
   }) {
-    final breakdown = buildEstimateBreakdown(
-      context,
-      zonedRates: zonedRates,
-    );
+    final breakdown = buildEstimateBreakdown(context, zonedRates: zonedRates);
 
     return {
       'source_work_order_id': sourceWorkOrderId ?? workOrderId,
       'work_type_id': workTypeId,
       if (durationHours != null) 'duration_hours': durationHours,
       'scope_of_works': mergedScopeOfWorks,
-      'drainage_patches':
-          chargeDrainagePatches ? drainagePatchesFee : 0.0,
+      'drainage_patches': chargeDrainagePatches ? drainagePatchesFee : 0.0,
       'materials_operative': operativeMaterials.cost,
       'materials_aspect': aspectMaterials.cost,
       'customer_decision': _customerDecisionForSalesforce(),
@@ -375,49 +370,43 @@ class FixedPriceSubmitPayload extends Equatable {
 
   @override
   List<Object?> get props => [
-        workOrderId,
-        sourceWorkOrderId,
-        customerEmail,
-        earliestRequestedDate,
-        jobType,
-        status,
-        tradeId,
-        categoryId,
-        workTypeId,
-        scopeOfWork,
-        additionalScope2,
-        additionalScope3,
-        collectionFeeApplicable,
-        listPriceServiceCode,
-        operativeMaterials,
-        chargeDrainagePatches,
-        aspectMaterials,
-        ulezChargeApplicable,
-        labourRateLevel,
-        zonalDiscountPercentage,
-        otherDiscounts,
-        customerConfirmationChoice,
-        durationHours,
-        generateDepositInvoice,
-        workCommencingImmediately,
-        paymentLinkSent,
-        pricingSummary,
-      ];
+    workOrderId,
+    sourceWorkOrderId,
+    customerEmail,
+    earliestRequestedDate,
+    jobType,
+    status,
+    tradeId,
+    categoryId,
+    workTypeId,
+    scopeOfWork,
+    additionalScope2,
+    additionalScope3,
+    collectionFeeApplicable,
+    listPriceServiceCode,
+    operativeMaterials,
+    chargeDrainagePatches,
+    aspectMaterials,
+    ulezChargeApplicable,
+    labourRateLevel,
+    zonalDiscountPercentage,
+    otherDiscounts,
+    customerConfirmationChoice,
+    durationHours,
+    generateDepositInvoice,
+    workCommencingImmediately,
+    paymentLinkSent,
+    pricingSummary,
+  ];
 }
 
 class FixedPriceMaterialsLine extends Equatable {
-  const FixedPriceMaterialsLine({
-    this.cost = 0,
-    this.description = '',
-  });
+  const FixedPriceMaterialsLine({this.cost = 0, this.description = ''});
 
   final double cost;
   final String description;
 
-  Map<String, dynamic> toJson() => {
-        'cost': cost,
-        'description': description,
-      };
+  Map<String, dynamic> toJson() => {'cost': cost, 'description': description};
 
   @override
   List<Object?> get props => [cost, description];
@@ -433,15 +422,15 @@ class FixedPriceOtherDiscounts extends Equatable {
   final double jobDurationDiscountPercentage;
 
   Map<String, dynamic> toJson() => {
-        'dog_discount_percentage': dogDiscountPercentage,
-        'job_duration_discount_percentage': jobDurationDiscountPercentage,
-      };
+    'dog_discount_percentage': dogDiscountPercentage,
+    'job_duration_discount_percentage': jobDurationDiscountPercentage,
+  };
 
   @override
   List<Object?> get props => [
-        dogDiscountPercentage,
-        jobDurationDiscountPercentage,
-      ];
+    dogDiscountPercentage,
+    jobDurationDiscountPercentage,
+  ];
 }
 
 class FixedPricePricingSummary extends Equatable {
@@ -470,31 +459,31 @@ class FixedPricePricingSummary extends Equatable {
   final double depositRequired;
 
   Map<String, dynamic> toJson() => {
-        'list_price_service_cost': listPriceServiceCost,
-        'materials_charge': materialsCharge,
-        'attendance_fee': attendanceFee,
-        'ulez_charge': ulezCharge,
-        'collection_fee': collectionFee,
-        'drainage_patches_fee': drainagePatchesFee,
-        'subtotal': subtotal,
-        'vat_amount': vatAmount,
-        'total_incl_vat': totalInclVat,
-        'deposit_required': depositRequired,
-      };
+    'list_price_service_cost': listPriceServiceCost,
+    'materials_charge': materialsCharge,
+    'attendance_fee': attendanceFee,
+    'ulez_charge': ulezCharge,
+    'collection_fee': collectionFee,
+    'drainage_patches_fee': drainagePatchesFee,
+    'subtotal': subtotal,
+    'vat_amount': vatAmount,
+    'total_incl_vat': totalInclVat,
+    'deposit_required': depositRequired,
+  };
 
   @override
   List<Object?> get props => [
-        listPriceServiceCost,
-        materialsCharge,
-        attendanceFee,
-        ulezCharge,
-        collectionFee,
-        drainagePatchesFee,
-        subtotal,
-        vatAmount,
-        totalInclVat,
-        depositRequired,
-      ];
+    listPriceServiceCost,
+    materialsCharge,
+    attendanceFee,
+    ulezCharge,
+    collectionFee,
+    drainagePatchesFee,
+    subtotal,
+    vatAmount,
+    totalInclVat,
+    depositRequired,
+  ];
 }
 
 /// Resolved Salesforce ids and commercial terms (usually from work order / account).
@@ -517,13 +506,13 @@ class FixedPriceSalesforceContext extends Equatable {
 
   @override
   List<Object?> get props => [
-        siteId,
-        accountId,
-        contactId,
-        resolvedServiceFeePct,
-        resolvedMarkupPct,
-        operativeSharePct,
-      ];
+    siteId,
+    accountId,
+    contactId,
+    resolvedServiceFeePct,
+    resolvedMarkupPct,
+    operativeSharePct,
+  ];
 }
 
 class FixedPriceZonedRates extends Equatable {
@@ -537,11 +526,7 @@ class FixedPriceZonedRates extends Equatable {
   final double zone2;
   final double zone3;
 
-  Map<String, dynamic> toJson() => {
-        '1': zone1,
-        '2': zone2,
-        '3': zone3,
-      };
+  Map<String, dynamic> toJson() => {'1': zone1, '2': zone2, '3': zone3};
 
   @override
   List<Object?> get props => [zone1, zone2, zone3];
@@ -559,10 +544,10 @@ class FixedPriceEstimate extends Equatable {
   final FixedPriceEstimateBreakdown breakdown;
 
   Map<String, dynamic> toJson() => {
-        'context': context.toJson(),
-        'rates': rates.toJson(),
-        'breakdown': breakdown.toJson(),
-      };
+    'context': context.toJson(),
+    'rates': rates.toJson(),
+    'breakdown': breakdown.toJson(),
+  };
 
   @override
   List<Object?> get props => [context, rates, breakdown];
@@ -584,21 +569,21 @@ class FixedPriceEstimateContext extends Equatable {
   final double resolvedMarkupPct;
 
   Map<String, dynamic> toJson() => {
-        'site_id': siteId,
-        'account_id': accountId,
-        'contact_id': contactId,
-        'resolved_service_fee_pct': resolvedServiceFeePct,
-        'resolved_markup_pct': resolvedMarkupPct,
-      };
+    'site_id': siteId,
+    'account_id': accountId,
+    'contact_id': contactId,
+    'resolved_service_fee_pct': resolvedServiceFeePct,
+    'resolved_markup_pct': resolvedMarkupPct,
+  };
 
   @override
   List<Object?> get props => [
-        siteId,
-        accountId,
-        contactId,
-        resolvedServiceFeePct,
-        resolvedMarkupPct,
-      ];
+    siteId,
+    accountId,
+    contactId,
+    resolvedServiceFeePct,
+    resolvedMarkupPct,
+  ];
 }
 
 class FixedPriceEstimateRates extends Equatable {
@@ -611,9 +596,9 @@ class FixedPriceEstimateRates extends Equatable {
   final FixedPriceZonedRates zonedRates;
 
   Map<String, dynamic> toJson() => {
-        'operative_share_pct': operativeSharePct,
-        'zoned_rates': zonedRates.toJson(),
-      };
+    'operative_share_pct': operativeSharePct,
+    'zoned_rates': zonedRates.toJson(),
+  };
 
   @override
   List<Object?> get props => [operativeSharePct, zonedRates];
@@ -645,29 +630,29 @@ class FixedPriceEstimateBreakdown extends Equatable {
   final double deposit;
 
   Map<String, dynamic> toJson() => {
-        'labour': labour,
-        'materials': materials,
-        'list_price': listPrice,
-        'collection_fee': collectionFee,
-        'ulez': ulez,
-        'service_fee': serviceFee,
-        'subtotal': subtotal,
-        'vat': vat,
-        'total': total,
-        'deposit': deposit,
-      };
+    'labour': labour,
+    'materials': materials,
+    'list_price': listPrice,
+    'collection_fee': collectionFee,
+    'ulez': ulez,
+    'service_fee': serviceFee,
+    'subtotal': subtotal,
+    'vat': vat,
+    'total': total,
+    'deposit': deposit,
+  };
 
   @override
   List<Object?> get props => [
-        labour,
-        materials,
-        listPrice,
-        collectionFee,
-        ulez,
-        serviceFee,
-        subtotal,
-        vat,
-        total,
-        deposit,
-      ];
+    labour,
+    materials,
+    listPrice,
+    collectionFee,
+    ulez,
+    serviceFee,
+    subtotal,
+    vat,
+    total,
+    deposit,
+  ];
 }

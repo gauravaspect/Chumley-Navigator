@@ -19,10 +19,11 @@ class MilestoneBadge {
   final MilestoneCategory category;
   final BadgeTier tier;
   final String badgeName;
-  final int threshold;       // numeric value to reach this tier
-  final String unit;         // display unit string, e.g. "months", "reviews", "SAs"
-  final bool _unlocked;       // true = engineer has reached/passed threshold
-  final int? _currentValue;   // engineer's current value for this metric (nullable)
+  final int threshold; // numeric value to reach this tier
+  final String unit; // display unit string, e.g. "months", "reviews", "SAs"
+  final bool _unlocked; // true = engineer has reached/passed threshold
+  final int?
+  _currentValue; // engineer's current value for this metric (nullable)
 
   const MilestoneBadge({
     required this.category,
@@ -53,5 +54,6 @@ class MilestoneBadge {
     if (currentValue == null || threshold == 0) return 0.0;
     return (currentValue! / threshold).clamp(0.0, 1.0);
   }
+
   set progress(double value) => _progressOverrides[id] = value;
 }

@@ -1,17 +1,16 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/log.dart';
 import 'package:chumley_navigator/pillar/jobs_repository.dart';
+import 'package:chumley_navigator/screens/forms/vent_hygiene/models/sub_operative_controllers.dart';
+import 'package:chumley_navigator/screens/forms/vent_hygiene/steps/vent_information_step.dart';
 import 'package:chumley_navigator/screens/forms/widgets/hse_risk_section.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Vent Hygiene form — Information tab with costs, sub-operatives, and certificate.
 class VentHygieneFormPage extends StatefulWidget {
@@ -32,65 +31,7 @@ class VentHygieneFormPage extends StatefulWidget {
   State<VentHygieneFormPage> createState() => _VentHygieneFormPageState();
 }
 
-class _SubOperativeControllers {
-  _SubOperativeControllers()
-      : name = TextEditingController(),
-        travelHours = TextEditingController(),
-        totalCost = TextEditingController();
-
-  final TextEditingController name;
-  final TextEditingController travelHours;
-  final TextEditingController totalCost;
-
-  void dispose() {
-    name.dispose();
-    travelHours.dispose();
-    totalCost.dispose();
-  }
-
-  void clear() {
-    name.clear();
-    travelHours.clear();
-    totalCost.clear();
-  }
-}
-
 class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
-  static const _currencyOptions = ['GBP', 'EUR', 'USD'];
-  static const _subOperativeCounts = ['None', '1', '2', '3', '4', '5', '6', '7'];
-
-  static const _serviceAppointments = [
-    'SA-10021 · 12 High Street',
-    'SA-10045 · 4 Station Road',
-    'SA-10088 · Flat 2B Oak Court',
-    'SA-10102 · 19 Mill Lane',
-  ];
-
-  static const _people = [
-    'Alex Morgan',
-    'Jordan Lee',
-    'Sam Patel',
-    'Taylor Brooks',
-    'Casey Nguyen',
-  ];
-
-  static const _months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
-  static const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
   final _scrollController = ScrollController();
   final _collapseProgress = ValueNotifier(0.0);
 
@@ -116,7 +57,7 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
   String? _dateTimeError;
 
   final _hse = HseRiskFormController();
-  final List<_SubOperativeControllers> _subOperatives = [];
+  final List<SubOperativeControllers> _subOperatives = [];
 
   final _jobs = JobsRepository();
 
@@ -163,7 +104,8 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
             _travelHoursController.text = answers['travel_hours'].toString();
           }
           if (answers['lead_engineer_cost'] != null) {
-            _leadEngineerCostController.text = answers['lead_engineer_cost'].toString();
+            _leadEngineerCostController.text = answers['lead_engineer_cost']
+                .toString();
           }
           if (answers['hours_worked'] != null) {
             _hoursWorkedController.text = answers['hours_worked'].toString();
@@ -172,10 +114,12 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
             _scopeOfWorkController.text = answers['scope_of_work'].toString();
           }
           if (answers['certificate_desc'] != null) {
-            _certificateDescController.text = answers['certificate_desc'].toString();
+            _certificateDescController.text = answers['certificate_desc']
+                .toString();
           }
           if (answers['pre_clean_pdf_url'] != null) {
-            _preCleanPdfUrlController.text = answers['pre_clean_pdf_url'].toString();
+            _preCleanPdfUrlController.text = answers['pre_clean_pdf_url']
+                .toString();
           }
           if (answers['service_appointment'] != null) {
             _selectedAppointment = answers['service_appointment'] as String?;
@@ -190,7 +134,9 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
             _subOperativeCount = answers['sub_operative_count'].toString();
           }
           if (answers['last_service_clean'] != null) {
-            _lastServiceClean = DateTime.tryParse(answers['last_service_clean'].toString());
+            _lastServiceClean = DateTime.tryParse(
+              answers['last_service_clean'].toString(),
+            );
           }
           if (answers['date_time'] != null) {
             _dateTime = DateTime.tryParse(answers['date_time'].toString());
@@ -202,8 +148,10 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
               final s = subs[i];
               if (s is Map) {
                 _subOperatives[i].name.text = s['name']?.toString() ?? '';
-                _subOperatives[i].travelHours.text = s['travel_hours']?.toString() ?? '';
-                _subOperatives[i].totalCost.text = s['total_cost']?.toString() ?? '';
+                _subOperatives[i].travelHours.text =
+                    s['travel_hours']?.toString() ?? '';
+                _subOperatives[i].totalCost.text =
+                    s['total_cost']?.toString() ?? '';
               }
             }
           }
@@ -214,32 +162,37 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
         });
       }
     } catch (e) {
-      Log('Failed to restore draft for Vent Hygiene form: $e', name: 'VentHygieneFormPage');
+      Log(
+        'Failed to restore draft for Vent Hygiene form: $e',
+        name: 'VentHygieneFormPage',
+      );
     }
   }
 
   Map<String, dynamic> _buildAnswersMap() => {
-        'service_appointment': _selectedAppointment,
-        'operative': _selectedOperative,
-        'currency': _currency,
-        'travel_hours': _travelHoursController.text.trim(),
-        'lead_engineer_cost': _leadEngineerCostController.text.trim(),
-        'hours_worked': _hoursWorkedController.text.trim(),
-        'scope_of_work': _scopeOfWorkController.text.trim(),
-        'certificate_desc': _certificateDescController.text.trim(),
-        'pre_clean_pdf_url': _preCleanPdfUrlController.text.trim(),
-        'sub_operative_count': _subOperativeCount,
-        'last_service_clean': _lastServiceClean?.toIso8601String(),
-        'date_time': _dateTime?.toIso8601String(),
-        'sub_operatives': _subOperatives
-            .map((s) => {
-                  'name': s.name.text.trim(),
-                  'travel_hours': s.travelHours.text.trim(),
-                  'total_cost': s.totalCost.text.trim(),
-                })
-            .toList(),
-        'hse': _hse.toMap(),
-      };
+    'service_appointment': _selectedAppointment,
+    'operative': _selectedOperative,
+    'currency': _currency,
+    'travel_hours': _travelHoursController.text.trim(),
+    'lead_engineer_cost': _leadEngineerCostController.text.trim(),
+    'hours_worked': _hoursWorkedController.text.trim(),
+    'scope_of_work': _scopeOfWorkController.text.trim(),
+    'certificate_desc': _certificateDescController.text.trim(),
+    'pre_clean_pdf_url': _preCleanPdfUrlController.text.trim(),
+    'sub_operative_count': _subOperativeCount,
+    'last_service_clean': _lastServiceClean?.toIso8601String(),
+    'date_time': _dateTime?.toIso8601String(),
+    'sub_operatives': _subOperatives
+        .map(
+          (s) => {
+            'name': s.name.text.trim(),
+            'travel_hours': s.travelHours.text.trim(),
+            'total_cost': s.totalCost.text.trim(),
+          },
+        )
+        .toList(),
+    'hse': _hse.toMap(),
+  };
 
   @override
   void dispose() {
@@ -278,21 +231,9 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
     return value.isBefore(now.subtract(const Duration(seconds: 30)));
   }
 
-  String _formatDate(DateTime dt) {
-    final weekday = _weekdays[dt.weekday - 1];
-    final month = _months[dt.month - 1];
-    return '$weekday, ${dt.day} $month ${dt.year}';
-  }
-
-  String _formatTime(DateTime dt) {
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
-
   void _syncSubOperativeControllers(int count) {
     while (_subOperatives.length < count) {
-      _subOperatives.add(_SubOperativeControllers());
+      _subOperatives.add(SubOperativeControllers());
     }
     while (_subOperatives.length > count) {
       _subOperatives.removeLast().dispose();
@@ -585,7 +526,6 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
     final answers = _buildAnswersMap();
 
     if (andNew) {
-      // Save Draft mode
       if (saId.isNotEmpty) {
         await _jobs.saveFormDraft(
           saId: saId,
@@ -606,7 +546,6 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
       );
       _resetForm();
     } else {
-      // Submit mode
       if (!_validateForSave()) return;
       if (saId.isNotEmpty) {
         try {
@@ -619,7 +558,10 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
             photoSlots: const {},
           );
         } catch (e) {
-          Log('Submit vent hygiene form failed: $e', name: 'VentHygieneFormPage');
+          Log(
+            'Submit vent hygiene form failed: $e',
+            name: 'VentHygieneFormPage',
+          );
         }
       }
       if (!mounted) return;
@@ -732,7 +674,49 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
                               ),
                             ),
                             SizedBox(height: 16.h),
-                            ..._buildInformationFields(theme),
+                            VentInformationStep(
+                              theme: theme,
+                              currency: _currency,
+                              workOrderDisplay: _workOrderDisplay,
+                              selectedAppointment: _selectedAppointment,
+                              appointmentSearchController:
+                                  _appointmentSearchController,
+                              lastServiceClean: _lastServiceClean,
+                              selectedOperative: _selectedOperative,
+                              operativeSearchController:
+                                  _operativeSearchController,
+                              travelHoursController: _travelHoursController,
+                              dateTime: _dateTime,
+                              dateTimeError: _dateTimeError,
+                              leadEngineerCostController:
+                                  _leadEngineerCostController,
+                              hoursWorkedController: _hoursWorkedController,
+                              scopeOfWorkController: _scopeOfWorkController,
+                              subOperativeCount: _subOperativeCount,
+                              subOperatives: _subOperatives,
+                              certificateDescController:
+                                  _certificateDescController,
+                              preCleanPdfUrlController:
+                                  _preCleanPdfUrlController,
+                              onCurrencyChanged: (v) =>
+                                  setState(() => _currency = v),
+                              onAppointmentChanged: (v) =>
+                                  setState(() => _selectedAppointment = v),
+                              onPickLastServiceClean: _pickLastServiceClean,
+                              onOperativeChanged: (v) =>
+                                  setState(() => _selectedOperative = v),
+                              onPickDate: _pickDate,
+                              onPickTime: _pickTime,
+                              onSubOperativeCountChanged: (v) {
+                                if (v == null) return;
+                                setState(() {
+                                  _subOperativeCount = v;
+                                  _syncSubOperativeControllers(
+                                    _subOperativeCountValue,
+                                  );
+                                });
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -776,258 +760,6 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
           ),
         );
       },
-    );
-  }
-
-  List<Widget> _buildInformationFields(DashboardTheme theme) {
-    final dateLabel =
-        _dateTime == null ? 'Select date' : _formatDate(_dateTime!);
-    final timeLabel =
-        _dateTime == null ? 'Select time' : _formatTime(_dateTime!);
-    final lastCleanLabel = _lastServiceClean == null
-        ? 'Select date'
-        : _formatDate(_lastServiceClean!);
-
-    return [
-      _labeledField(
-        theme: theme,
-        label: 'Currency',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _currency,
-          items: _currencyOptions,
-          hint: 'Select currency',
-          onChanged: (v) => setState(() => _currency = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Work Order',
-        child: _readOnlyField(theme: theme, value: _workOrderDisplay),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Service Appointment',
-        child: _searchableDropdown(
-          theme: theme,
-          value: _selectedAppointment,
-          items: _serviceAppointments,
-          hint: 'Search Service Appointments',
-          searchController: _appointmentSearchController,
-          onChanged: (v) => setState(() => _selectedAppointment = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Last Service Clean',
-        child: _pickerButton(
-          theme: theme,
-          icon: LucideIcons.calendar,
-          label: lastCleanLabel,
-          onTap: _pickLastServiceClean,
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Operative Name',
-        child: _searchableDropdown(
-          theme: theme,
-          value: _selectedOperative,
-          items: _people,
-          hint: 'Search People',
-          searchController: _operativeSearchController,
-          onChanged: (v) => setState(() => _selectedOperative = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Time Travel to site (Hours)',
-        child: _numberField(
-          theme: theme,
-          controller: _travelHoursController,
-          hint: 'e.g. 1.5',
-          allowDecimal: true,
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Date / Time',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: _pickerButton(
-                    theme: theme,
-                    icon: LucideIcons.calendar,
-                    label: dateLabel,
-                    onTap: _pickDate,
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: _pickerButton(
-                    theme: theme,
-                    icon: LucideIcons.clock,
-                    label: timeLabel,
-                    onTap: _pickTime,
-                  ),
-                ),
-              ],
-            ),
-            if (_dateTimeError != null) ...[
-              SizedBox(height: 8.h),
-              Text(
-                _dateTimeError!,
-                style: TextStyle(fontSize: 12.sp, color: AppColors.errorText),
-              ),
-            ],
-          ],
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Total Cost of Lead Engineer',
-        child: _numberField(
-          theme: theme,
-          controller: _leadEngineerCostController,
-          hint: '0.00',
-          allowDecimal: true,
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'How many hours did you work',
-        child: _numberField(
-          theme: theme,
-          controller: _hoursWorkedController,
-          hint: 'e.g. 4',
-          allowDecimal: true,
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Scope of Work',
-        child: _expandableField(
-          theme: theme,
-          controller: _scopeOfWorkController,
-          hint: 'Describe the scope of work…',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'How many sub operatives are there?',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _subOperativeCount,
-          items: _subOperativeCounts,
-          hint: 'Select count',
-          onChanged: (v) {
-            if (v == null) return;
-            setState(() {
-              _subOperativeCount = v;
-              _syncSubOperativeControllers(_subOperativeCountValue);
-            });
-          },
-        ),
-      ),
-      if (_subOperatives.isNotEmpty) ...[
-        SizedBox(height: 14.h),
-        for (var i = 0; i < _subOperatives.length; i++) ...[
-          _buildSubOperativeCard(theme, i),
-          if (i < _subOperatives.length - 1) SizedBox(height: 10.h),
-        ],
-      ],
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Description of certificate',
-        child: _expandableField(
-          theme: theme,
-          controller: _certificateDescController,
-          hint: 'Describe the certificate…',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Pre-Clean Images PDF URL',
-        child: _textField(
-          theme: theme,
-          controller: _preCleanPdfUrlController,
-          hint: 'https://…',
-          keyboardType: TextInputType.url,
-        ),
-      ),
-    ];
-  }
-
-  Widget _buildSubOperativeCard(DashboardTheme theme, int index) {
-    final c = _subOperatives[index];
-    final n = index + 1;
-    return Container(
-      padding: EdgeInsets.all(12.r),
-      decoration: BoxDecoration(
-        color: theme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: theme.border, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Sub-operative $n',
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w700,
-              color: theme.dashTitle,
-            ),
-          ),
-          SizedBox(height: 10.h),
-          _labeledField(
-            theme: theme,
-            label: 'Sub-operative $n',
-            child: _textField(
-              theme: theme,
-              controller: c.name,
-              hint: 'Name',
-            ),
-          ),
-          SizedBox(height: 10.h),
-          _labeledField(
-            theme: theme,
-            label: 'Time Travel to Site (Hours)',
-            child: _numberField(
-              theme: theme,
-              controller: c.travelHours,
-              hint: 'e.g. 1.5',
-              allowDecimal: true,
-            ),
-          ),
-          SizedBox(height: 10.h),
-          _labeledField(
-            theme: theme,
-            label: 'Total Cost of Operative',
-            child: _numberField(
-              theme: theme,
-              controller: c.totalCost,
-              hint: '0.00',
-              allowDecimal: true,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1092,271 +824,6 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _labeledField({
-    required DashboardTheme theme,
-    required String label,
-    required Widget child,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: theme.text,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        child,
-      ],
-    );
-  }
-
-  InputDecoration _inputDecoration(DashboardTheme theme, {String? hint}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(fontSize: 13.sp, color: theme.textMuted),
-      filled: true,
-      fillColor: theme.surfaceDeep,
-      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: theme.border, width: 0.5),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: theme.border, width: 0.5),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: theme.accent, width: 0.5),
-      ),
-    );
-  }
-
-  Widget _textField({
-    required DashboardTheme theme,
-    required TextEditingController controller,
-    String? hint,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      inputFormatters: inputFormatters,
-      style: TextStyle(fontSize: 13.sp, color: theme.text),
-      decoration: _inputDecoration(theme, hint: hint),
-    );
-  }
-
-  Widget _numberField({
-    required DashboardTheme theme,
-    required TextEditingController controller,
-    String? hint,
-    bool allowDecimal = false,
-  }) {
-    return _textField(
-      theme: theme,
-      controller: controller,
-      hint: hint,
-      keyboardType: TextInputType.numberWithOptions(decimal: allowDecimal),
-      inputFormatters: [
-        if (allowDecimal)
-          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
-        else
-          FilteringTextInputFormatter.digitsOnly,
-      ],
-    );
-  }
-
-  Widget _expandableField({
-    required DashboardTheme theme,
-    required TextEditingController controller,
-    String? hint,
-  }) {
-    return TextField(
-      controller: controller,
-      minLines: 3,
-      maxLines: 8,
-      style: TextStyle(fontSize: 13.sp, color: theme.text, height: 1.4),
-      decoration: _inputDecoration(theme, hint: hint),
-    );
-  }
-
-  Widget _readOnlyField({
-    required DashboardTheme theme,
-    required String value,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
-      decoration: BoxDecoration(
-        color: theme.surfaceDeep,
-        borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: theme.border, width: 0.5),
-      ),
-      child: Text(
-        value,
-        style: TextStyle(
-          fontSize: 13.sp,
-          color: theme.textMuted,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  Widget _pickerButton({
-    required DashboardTheme theme,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: theme.surfaceDeep,
-      borderRadius: BorderRadius.circular(10.r),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10.r),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(color: theme.border, width: 0.5),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 16.sp, color: theme.textMuted),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(fontSize: 13.sp, color: theme.text),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _simpleDropdown({
-    required DashboardTheme theme,
-    required String? value,
-    required List<String> items,
-    required String hint,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonFormField2<String>(
-      value: value,
-      isExpanded: true,
-      decoration: _inputDecoration(theme),
-      hint: Text(hint, style: TextStyle(fontSize: 13.sp, color: theme.textMuted)),
-      iconStyleData: IconStyleData(
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: theme.textMuted,
-          size: 20.sp,
-        ),
-      ),
-      dropdownStyleData: DropdownStyleData(
-        decoration: BoxDecoration(
-          color: theme.surface,
-          border: Border.all(color: theme.border, width: 0.5),
-          borderRadius: BorderRadius.circular(10.r),
-        ),
-      ),
-      style: TextStyle(fontSize: 13.sp, color: theme.text),
-      items: items
-          .map(
-            (item) => DropdownMenuItem<String>(
-              value: item,
-              child: Text(item),
-            ),
-          )
-          .toList(),
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _searchableDropdown({
-    required DashboardTheme theme,
-    required String? value,
-    required List<String> items,
-    required String hint,
-    required TextEditingController searchController,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonFormField2<String>(
-      value: value,
-      isExpanded: true,
-      decoration: _inputDecoration(theme),
-      hint: Text(hint, style: TextStyle(fontSize: 13.sp, color: theme.textMuted)),
-      iconStyleData: IconStyleData(
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: theme.textMuted,
-          size: 20.sp,
-        ),
-      ),
-      dropdownStyleData: DropdownStyleData(
-        maxHeight: 280.h,
-        decoration: BoxDecoration(
-          color: theme.surface,
-          border: Border.all(color: theme.border, width: 0.5),
-          borderRadius: BorderRadius.circular(10.r),
-        ),
-      ),
-      style: TextStyle(fontSize: 13.sp, color: theme.text),
-      items: items
-          .map(
-            (item) => DropdownMenuItem<String>(
-              value: item,
-              child: Text(item, overflow: TextOverflow.ellipsis),
-            ),
-          )
-          .toList(),
-      onChanged: onChanged,
-      dropdownSearchData: DropdownSearchData(
-        searchController: searchController,
-        searchInnerWidgetHeight: 50.h,
-        searchInnerWidget: Container(
-          height: 50.h,
-          padding: EdgeInsets.fromLTRB(8.w, 8.h, 8.w, 4.h),
-          child: TextFormField(
-            expands: true,
-            maxLines: null,
-            controller: searchController,
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 10.w,
-                vertical: 8.h,
-              ),
-              hintText: hint,
-              hintStyle: TextStyle(fontSize: 12.sp, color: theme.textMuted),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-            ),
-          ),
-        ),
-        searchMatchFn: (item, searchValue) {
-          final text = item.value?.toString().toLowerCase() ?? '';
-          return text.contains(searchValue.toLowerCase());
-        },
-      ),
-      onMenuStateChange: (isOpen) {
-        if (!isOpen) searchController.clear();
-      },
     );
   }
 }

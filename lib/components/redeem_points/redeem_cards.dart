@@ -112,7 +112,6 @@ class RewardsJourneyList extends StatefulWidget {
 }
 
 class _RewardsJourneyListState extends State<RewardsJourneyList> {
-
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -160,7 +159,9 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
                 final double spacing = 12.h;
                 final double pinSpacing = 36.h;
                 final double listTopOffset = 269.h;
-                final double totalHeight = _rewards.length * cardHeight + (_rewards.length - 1) * spacing;
+                final double totalHeight =
+                    _rewards.length * cardHeight +
+                    (_rewards.length - 1) * spacing;
 
                 return SizedBox(
                   height: totalHeight,
@@ -168,14 +169,26 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
                     clipBehavior: Clip.none,
                     children: List.generate(_rewards.length, (i) {
                       final double normalTop = i * (cardHeight + spacing);
-                      final double viewportTopNormal = listTopOffset + normalTop - scrollOffset;
+                      final double viewportTopNormal =
+                          listTopOffset + normalTop - scrollOffset;
 
                       final double pinnedViewportTop = i * pinSpacing;
-                      final double limitViewportTop = listTopOffset + totalHeight - cardHeight - scrollOffset;
-                      final double clampedViewportTop = pinnedViewportTop < limitViewportTop ? pinnedViewportTop : limitViewportTop;
+                      final double limitViewportTop =
+                          listTopOffset +
+                          totalHeight -
+                          cardHeight -
+                          scrollOffset;
+                      final double clampedViewportTop =
+                          pinnedViewportTop < limitViewportTop
+                          ? pinnedViewportTop
+                          : limitViewportTop;
 
-                      final double finalViewportTop = viewportTopNormal > clampedViewportTop ? viewportTopNormal : clampedViewportTop;
-                      final double finalLocalTop = finalViewportTop - listTopOffset + scrollOffset;
+                      final double finalViewportTop =
+                          viewportTopNormal > clampedViewportTop
+                          ? viewportTopNormal
+                          : clampedViewportTop;
+                      final double finalLocalTop =
+                          finalViewportTop - listTopOffset + scrollOffset;
 
                       return Positioned(
                         top: finalLocalTop,
@@ -212,7 +225,9 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: theme.isDark ? Colors.black.withOpacity(0.25) : Colors.black.withOpacity(0.06),
+            color: theme.isDark
+                ? Colors.black.withValues(alpha: 0.25)
+                : Colors.black.withValues(alpha: 0.06),
             blurRadius: 12.r,
             offset: Offset(0, 4.h),
           ),
@@ -277,10 +292,7 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
                   ),
                   Text(
                     'pts',
-                    style: TextStyle(
-                      fontSize: 9.sp,
-                      color: theme.textMuted,
-                    ),
+                    style: TextStyle(fontSize: 9.sp, color: theme.textMuted),
                   ),
                 ],
               ),
@@ -326,10 +338,10 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.white.withOpacity(0.18),
+                        Colors.white.withValues(alpha: 0.18),
                         Colors.transparent,
                         Colors.transparent,
-                        Colors.black.withOpacity(0.10),
+                        Colors.black.withValues(alpha: 0.10),
                       ],
                       stops: const [0.0, 0.45, 0.70, 1.0],
                     ),
@@ -351,7 +363,10 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [AppColors.cardShineStart, AppColors.cardShineEnd],
+                        colors: [
+                          AppColors.cardShineStart,
+                          AppColors.cardShineEnd,
+                        ],
                       ),
                     ),
                   ),
@@ -384,7 +399,7 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
                             'GIFT CARD',
                             style: TextStyle(
                               fontSize: 9.sp,
-                              color: Colors.white.withOpacity(0.70),
+                              color: Colors.white.withValues(alpha: 0.70),
                               letterSpacing: 0.9,
                             ),
                           ),
@@ -415,10 +430,26 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
         opacity: 0.75,
         child: ColorFiltered(
           colorFilter: const ColorFilter.matrix([
-            0.4441, 0.5001, 0.0505, 0, 0,
-            0.1486, 0.7510, 0.0761, 0, 0,
-            0.1486, 0.5001, 0.2360, 0, 0,
-            0,      0,      0,      1, 0,
+            0.4441,
+            0.5001,
+            0.0505,
+            0,
+            0,
+            0.1486,
+            0.7510,
+            0.0761,
+            0,
+            0,
+            0.1486,
+            0.5001,
+            0.2360,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
           ]),
           child: card,
         ),
@@ -448,7 +479,11 @@ class _RewardsJourneyListState extends State<RewardsJourneyList> {
     return _badge(
       bgColor: AppColors.pendingBackground,
       borderColor: AppColors.pendingText.withValues(alpha: 0.25),
-      icon: Icon(Icons.access_time_rounded, size: 11.sp, color: AppColors.pendingText),
+      icon: Icon(
+        Icons.access_time_rounded,
+        size: 11.sp,
+        color: AppColors.pendingText,
+      ),
       label: '${item.ptsToGo} pts to go',
       labelColor: AppColors.pendingText,
     );

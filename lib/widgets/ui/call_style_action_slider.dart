@@ -132,15 +132,16 @@ class _CallStyleActionSliderState extends State<CallStyleActionSlider>
                                     _dragOffset = 0.0;
                                   });
                                 } else {
-                                  _springAnimation = Tween<double>(
-                                    begin: _dragOffset,
-                                    end: 0.0,
-                                  ).animate(
-                                    CurvedAnimation(
-                                      parent: _animationController,
-                                      curve: Curves.easeOutBack,
-                                    ),
-                                  );
+                                  _springAnimation =
+                                      Tween<double>(
+                                        begin: _dragOffset,
+                                        end: 0.0,
+                                      ).animate(
+                                        CurvedAnimation(
+                                          parent: _animationController,
+                                          curve: Curves.easeOutBack,
+                                        ),
+                                      );
                                   _animationController.forward(from: 0.0);
                                 }
                               }
@@ -153,7 +154,9 @@ class _CallStyleActionSliderState extends State<CallStyleActionSlider>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: widget.backgroundColor.withValues(alpha: 0.4),
+                                color: widget.backgroundColor.withValues(
+                                  alpha: 0.4,
+                                ),
                                 blurRadius: 8.r,
                                 offset: Offset(0, 2.h),
                               ),

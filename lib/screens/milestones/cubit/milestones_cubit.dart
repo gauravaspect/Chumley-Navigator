@@ -18,10 +18,12 @@ class MilestonesCubit extends Cubit<MilestonesState> {
     } on MilestonesApiException catch (e) {
       emit(MilestonesError(message: e.message, cachedMilestones: cached));
     } catch (_) {
-      emit(MilestonesError(
-        message: 'Unable to load milestones. Please try again.',
-        cachedMilestones: cached,
-      ));
+      emit(
+        MilestonesError(
+          message: 'Unable to load milestones. Please try again.',
+          cachedMilestones: cached,
+        ),
+      );
     }
   }
 

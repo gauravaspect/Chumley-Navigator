@@ -68,7 +68,10 @@ class VisitWizardScaffold extends StatelessWidget {
               if (subtitle != null && subtitle!.isNotEmpty)
                 Padding(
                   padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 0),
-                  child: Text(subtitle!, style: NavigatorTokens.captionStyle(13.sp)),
+                  child: Text(
+                    subtitle!,
+                    style: NavigatorTokens.captionStyle(13.sp),
+                  ),
                 ),
               SizedBox(height: 12.h),
               Expanded(
@@ -115,7 +118,9 @@ class _TopBar extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: NavigatorTokens.surfaceChrome,
-        border: Border(bottom: BorderSide(color: NavigatorTokens.borderHairline)),
+        border: Border(
+          bottom: BorderSide(color: NavigatorTokens.borderHairline),
+        ),
       ),
       padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 12.h),
       child: Column(
@@ -124,7 +129,11 @@ class _TopBar extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: onBack,
-                icon: Icon(LucideIcons.chevronLeft, color: NavigatorTokens.textPrimary, size: 22.sp),
+                icon: Icon(
+                  LucideIcons.chevronLeft,
+                  color: NavigatorTokens.textPrimary,
+                  size: 22.sp,
+                ),
               ),
               Expanded(
                 child: Text(
@@ -200,7 +209,9 @@ class _ActionBar extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 16.h),
       decoration: BoxDecoration(
         color: NavigatorTokens.surfaceCard,
-        border: const Border(top: BorderSide(color: NavigatorTokens.borderHairline)),
+        border: const Border(
+          top: BorderSide(color: NavigatorTokens.borderHairline),
+        ),
         boxShadow: NavigatorTokens.actionBarShadows,
       ),
       child: Column(

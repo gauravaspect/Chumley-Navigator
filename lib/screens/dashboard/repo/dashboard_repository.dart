@@ -52,7 +52,9 @@ class DashboardRepository {
   }
 
   /// All engineer appointments (every status) via GET /api/engineer/appointments.
-  Future<List<Appointment>> fetchAppointments({UserModel? profileFallback}) async {
+  Future<List<Appointment>> fetchAppointments({
+    UserModel? profileFallback,
+  }) async {
     final repo = _appointmentsRepository;
     if (repo != null) {
       try {

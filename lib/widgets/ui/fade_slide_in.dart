@@ -56,10 +56,7 @@ class _FadeSlideInState extends State<FadeSlideIn>
       animation: _controller,
       builder: (context, child) => Opacity(
         opacity: _opacity.value,
-        child: Transform.translate(
-          offset: _offset.value,
-          child: child,
-        ),
+        child: Transform.translate(offset: _offset.value, child: child),
       ),
       child: widget.child,
     );

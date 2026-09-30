@@ -56,34 +56,35 @@ class VcrCaptureSlot extends StatelessWidget {
                         ),
                       )
                     : imageFile != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(10.r),
-                            child: Image.file(
-                              imageFile!,
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.photo_camera_outlined,
-                                size: 22.sp,
-                                color: AppColors.primaryBlue,
-                              ),
-                              SizedBox(height: 6.h),
-                              Text(
-                                'Upload',
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primaryBlue,
-                                ),
-                              ),
-                            ],
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(10.r),
+                        child: Image.file(
+                          imageFile!,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          cacheWidth: 300,
+                        ),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.photo_camera_outlined,
+                            size: 22.sp,
+                            color: AppColors.primaryBlue,
                           ),
+                          SizedBox(height: 6.h),
+                          Text(
+                            'Upload',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
           ),

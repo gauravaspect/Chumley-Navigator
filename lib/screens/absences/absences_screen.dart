@@ -168,9 +168,9 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
 
           return Theme(
             data: Theme.of(context).copyWith(
-              colorScheme: Theme.of(context).colorScheme.copyWith(
-                    primary: theme.dashPrimary,
-                  ),
+              colorScheme: Theme.of(
+                context,
+              ).colorScheme.copyWith(primary: theme.dashPrimary),
             ),
             child: BlocConsumer<AbsencesCubit, AbsencesState>(
               listener: (context, state) {
@@ -224,7 +224,8 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
               builder: (context, state) {
                 final response = state.responseOrNull;
                 final absences = response?.absences ?? const <AbsenceItem>[];
-                final showShimmer = state is AbsencesInitial ||
+                final showShimmer =
+                    state is AbsencesInitial ||
                     (state is AbsencesLoading && absences.isEmpty);
                 final loadFailed = state is AbsencesError && response == null;
                 final isSubmitting =
@@ -253,15 +254,13 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                 }
 
                 final records = absences.map((item) {
-                  final approved = item.approved == true ||
+                  final approved =
+                      item.approved == true ||
                       item.status.toLowerCase() == 'approved';
                   return MyAbsenceRecord(
                     reason: _reasonTitle(item),
                     subtitle: _submittedLabel(item),
-                    status: absenceStatusLabel(
-                      item.status,
-                      approved: approved,
-                    ),
+                    status: absenceStatusLabel(item.status, approved: approved),
                     statusColor: absenceStatusFg(
                       item.status,
                       approved: approved,
@@ -308,8 +307,7 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                           physics: const AlwaysScrollableScrollPhysics(
                             parent: BouncingScrollPhysics(),
                           ),
-                          padding:
-                              EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 100.h),
+                          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 100.h),
                           children: [
                             Text(
                               'Absence',
@@ -350,8 +348,7 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                               child: AbsenceFormCard(
                                 padding: EdgeInsets.all(18.r),
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       'Duration',
@@ -370,7 +367,8 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                                             label: 'Start time',
                                             time: _startTime,
                                             enabled: !_wholeDay,
-                                            hasError: _showErrors &&
+                                            hasError:
+                                                _showErrors &&
                                                 !_wholeDay &&
                                                 (_startTime == null ||
                                                     !_isTimeValid()),
@@ -384,7 +382,8 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                                             label: 'End time',
                                             time: _endTime,
                                             enabled: !_wholeDay,
-                                            hasError: _showErrors &&
+                                            hasError:
+                                                _showErrors &&
                                                 !_wholeDay &&
                                                 (_endTime == null ||
                                                     !_isTimeValid()),
@@ -479,30 +478,34 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                                       decoration: InputDecoration(
                                         filled: true,
                                         fillColor: fieldFill,
-                                        contentPadding:
-                                            EdgeInsets.symmetric(
+                                        contentPadding: EdgeInsets.symmetric(
                                           horizontal: 14.w,
                                           vertical: 4.h,
                                         ),
                                         border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12.r),
-                                          borderSide:
-                                              BorderSide(color: hairline),
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: hairline,
+                                          ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12.r),
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
                                           borderSide: BorderSide(
-                                            color: _showErrors &&
+                                            color:
+                                                _showErrors &&
                                                     _selectedReason == null
                                                 ? Colors.red
                                                 : hairline,
                                           ),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12.r),
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
                                           borderSide: BorderSide(
                                             color: theme.dashPrimary,
                                             width: 1.25,
@@ -526,10 +529,10 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                                       dropdownStyleData: DropdownStyleData(
                                         decoration: BoxDecoration(
                                           color: theme.dashCardBg,
-                                          borderRadius:
-                                              BorderRadius.circular(12.r),
-                                          border:
-                                              Border.all(color: hairline),
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
+                                          border: Border.all(color: hairline),
                                         ),
                                       ),
                                       menuItemStyleData: MenuItemStyleData(
@@ -545,16 +548,14 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                                       ),
                                       items: _absenceReasons
                                           .map(
-                                            (cat) =>
-                                                DropdownMenuItem<String>(
+                                            (cat) => DropdownMenuItem<String>(
                                               value: cat,
                                               child: Text(cat),
                                             ),
                                           )
                                           .toList(),
-                                      onChanged: (val) => setState(
-                                        () => _selectedReason = val,
-                                      ),
+                                      onChanged: (val) =>
+                                          setState(() => _selectedReason = val),
                                     ),
                                     if (_showErrors &&
                                         _selectedReason == null) ...[
@@ -586,27 +587,24 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                                       curve: Curves.easeOutCubic,
                                       decoration: BoxDecoration(
                                         color: fieldFill,
-                                        borderRadius:
-                                            BorderRadius.circular(12.r),
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
                                         border: Border.all(
                                           color: _descriptionFocused
                                               ? theme.dashPrimary
                                               : hairline,
-                                          width: _descriptionFocused
-                                              ? 1.25
-                                              : 1,
+                                          width: _descriptionFocused ? 1.25 : 1,
                                         ),
                                       ),
                                       child: TextField(
                                         controller: _descriptionController,
                                         maxLines: 3,
                                         onTap: () => setState(
-                                          () =>
-                                              _descriptionFocused = true,
+                                          () => _descriptionFocused = true,
                                         ),
                                         onTapOutside: (_) => setState(
-                                          () =>
-                                              _descriptionFocused = false,
+                                          () => _descriptionFocused = false,
                                         ),
                                         style: TextStyle(
                                           fontSize: 14.sp,
@@ -614,15 +612,13 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                                           color: theme.dashHeading,
                                         ),
                                         decoration: InputDecoration(
-                                          hintText:
-                                              'Add a note (optional)…',
+                                          hintText: 'Add a note (optional)…',
                                           hintStyle: TextStyle(
                                             fontSize: 14.sp,
                                             color: const Color(0xFF8A99B0),
                                           ),
                                           border: InputBorder.none,
-                                          contentPadding:
-                                              EdgeInsets.fromLTRB(
+                                          contentPadding: EdgeInsets.fromLTRB(
                                             14.w,
                                             13.h,
                                             14.w,
@@ -659,8 +655,7 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                                           alignment: Alignment.center,
                                           decoration: BoxDecoration(
                                             color: AppColors.accentLime,
-                                            borderRadius:
-                                                BorderRadius.circular(
+                                            borderRadius: BorderRadius.circular(
                                               14.r,
                                             ),
                                           ),
@@ -671,7 +666,7 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                                             style: TextStyle(
                                               fontSize: 15.sp,
                                               fontWeight: FontWeight.w700,
-                                              color: theme.dashHeading,
+                                              color: AppColors.textDarkBlue,
                                             ),
                                           ),
                                         ),

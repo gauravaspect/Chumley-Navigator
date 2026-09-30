@@ -1,11 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 class ChumleyChatUser extends Equatable {
-  const ChumleyChatUser({
-    this.email = '',
-    this.name = '',
-    this.pillar = '',
-  });
+  const ChumleyChatUser({this.email = '', this.name = '', this.pillar = ''});
 
   final String email;
   final String name;
@@ -65,8 +61,8 @@ class ChatConversation extends Equatable {
         (json['last_message_at'] ?? '').toString(),
       ),
       lastMessagePreview: (json['last_message_preview'] ?? '').toString(),
-      lastMessageAuthorEmail:
-          (json['last_message_author_email'] ?? '').toString(),
+      lastMessageAuthorEmail: (json['last_message_author_email'] ?? '')
+          .toString(),
       unreadCount: _readInt(json['unread_count']),
     );
   }
@@ -78,24 +74,26 @@ class ChatConversation extends Equatable {
         .toList();
     if (others.isEmpty) return name?.trim().isNotEmpty == true ? name! : 'Chat';
     return others
-        .map((e) => participantNames[e]?.trim().isNotEmpty == true
-            ? participantNames[e]!
-            : e)
+        .map(
+          (e) => participantNames[e]?.trim().isNotEmpty == true
+              ? participantNames[e]!
+              : e,
+        )
         .join(', ');
   }
 
   @override
   List<Object?> get props => [
-        id,
-        participants,
-        participantNames,
-        isGroup,
-        name,
-        lastMessageAt,
-        lastMessagePreview,
-        lastMessageAuthorEmail,
-        unreadCount,
-      ];
+    id,
+    participants,
+    participantNames,
+    isGroup,
+    name,
+    lastMessageAt,
+    lastMessagePreview,
+    lastMessageAuthorEmail,
+    unreadCount,
+  ];
 }
 
 class ChatMessageContext extends Equatable {
@@ -122,11 +120,11 @@ class ChatMessageContext extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
-        'type': type,
-        'label': label,
-        'url': url,
-        'sensitive': sensitive,
-      };
+    'type': type,
+    'label': label,
+    'url': url,
+    'sensitive': sensitive,
+  };
 
   @override
   List<Object?> get props => [type, label, url, sensitive];
@@ -173,11 +171,7 @@ class ChatMessage extends Equatable {
     );
   }
 
-  ChatMessage copyWith({
-    String? id,
-    bool? pending,
-    bool? failed,
-  }) {
+  ChatMessage copyWith({String? id, bool? pending, bool? failed}) {
     return ChatMessage(
       id: id ?? this.id,
       conversationId: conversationId,
@@ -194,17 +188,17 @@ class ChatMessage extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        conversationId,
-        text,
-        authorEmail,
-        authorName,
-        createdAt,
-        clientId,
-        context,
-        pending,
-        failed,
-      ];
+    id,
+    conversationId,
+    text,
+    authorEmail,
+    authorName,
+    createdAt,
+    clientId,
+    context,
+    pending,
+    failed,
+  ];
 }
 
 List<String> _stringList(dynamic value) {

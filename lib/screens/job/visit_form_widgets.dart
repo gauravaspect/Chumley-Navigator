@@ -1,4 +1,6 @@
 import 'package:chumley_navigator/theme/navigator_tokens.dart';
+import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -16,6 +18,8 @@ class VisitStepPills extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Row(
       children: List.generate(stepCount, (i) {
         final active = i == stepIndex;
@@ -31,8 +35,8 @@ class VisitStepPills extends StatelessWidget {
                 height: 4.h,
                 decoration: BoxDecoration(
                   color: active || done
-                      ? NavigatorTokens.brandNavy
-                      : NavigatorTokens.brandNavyTint,
+                      ? (theme.isDark ? AppColors.accentBlue : NavigatorTokens.brandNavy)
+                      : (theme.isDark ? theme.border : NavigatorTokens.brandNavyTint),
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -51,29 +55,45 @@ class VisitFormCaption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h),
       child: Text(
         text,
-        style: NavigatorTokens.captionStyle(12.sp),
+        style: TextStyle(
+          fontSize: 12.sp,
+          color: theme.textMuted,
+          height: 1.35,
+        ),
       ),
     );
   }
 }
 
 class VisitFieldLabel extends StatelessWidget {
-  const VisitFieldLabel({super.key, required this.label, this.requiredField = false});
+  const VisitFieldLabel({
+    super.key,
+    required this.label,
+    this.requiredField = false,
+  });
 
   final String label;
   final bool requiredField;
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
       child: Text(
         requiredField ? '$label *' : label,
-        style: NavigatorTokens.fieldLabelStyle(12.sp),
+        style: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w700,
+          color: theme.text,
+        ),
       ),
     );
   }
@@ -86,13 +106,16 @@ class VisitFormCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: NavigatorTokens.surfaceCard,
+        color: theme.surface,
         borderRadius: NavigatorTokens.cardRadius,
-        boxShadow: NavigatorTokens.cardShadows,
+        border: Border.all(color: theme.border, width: 0.5),
+        boxShadow: theme.isDark ? null : NavigatorTokens.cardShadows,
       ),
       child: child,
     );
@@ -117,6 +140,8 @@ class VisitChoiceChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Padding(
       padding: EdgeInsets.only(bottom: 20.h),
       child: Column(
@@ -135,16 +160,19 @@ class VisitChoiceChips extends StatelessWidget {
                   borderRadius: NavigatorTokens.fieldRadius,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 12.h,
+                    ),
                     decoration: BoxDecoration(
                       color: selected
-                          ? NavigatorTokens.brandNavy
-                          : NavigatorTokens.brandNavySoft,
+                          ? (theme.isDark ? AppColors.accentBlue : NavigatorTokens.brandNavy)
+                          : theme.surfaceDeep,
                       borderRadius: NavigatorTokens.fieldRadius,
                       border: Border.all(
                         color: selected
-                            ? NavigatorTokens.brandNavy
-                            : NavigatorTokens.brandNavySoft,
+                            ? (theme.isDark ? AppColors.accentBlue : NavigatorTokens.brandNavy)
+                            : theme.border,
                       ),
                     ),
                     child: Text(
@@ -153,8 +181,8 @@ class VisitChoiceChips extends StatelessWidget {
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
                         color: selected
-                            ? NavigatorTokens.textInverse
-                            : NavigatorTokens.brandNavy,
+                            ? Colors.white
+                            : theme.text,
                       ),
                     ),
                   ),
@@ -186,6 +214,8 @@ class VisitTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Padding(
       padding: EdgeInsets.only(bottom: 20.h),
       child: Column(
@@ -199,29 +229,35 @@ class VisitTextField extends StatelessWidget {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,
-              color: NavigatorTokens.textPrimary,
+              color: theme.text,
             ),
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
-                color: NavigatorTokens.textTertiary,
+                color: theme.textMuted,
               ),
               filled: true,
-              fillColor: NavigatorTokens.brandNavySoft,
-              contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+              fillColor: theme.surfaceDeep,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 14.w,
+                vertical: 14.h,
+              ),
               border: OutlineInputBorder(
                 borderRadius: NavigatorTokens.fieldRadius,
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(color: theme.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: NavigatorTokens.fieldRadius,
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(color: theme.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: NavigatorTokens.fieldRadius,
-                borderSide: const BorderSide(color: NavigatorTokens.brandNavy, width: 1.5),
+                borderSide: BorderSide(
+                  color: theme.isDark ? AppColors.accentBlue : NavigatorTokens.brandNavy,
+                  width: 1.5,
+                ),
               ),
             ),
             onChanged: onChanged,
@@ -239,21 +275,25 @@ class VisitInfoBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(12.w),
       margin: EdgeInsets.only(bottom: 16.h),
       decoration: BoxDecoration(
-        color: NavigatorTokens.infoBg,
+        color: theme.isDark ? theme.surfaceDeep : NavigatorTokens.infoBg,
         borderRadius: NavigatorTokens.fieldRadius,
-        border: Border.all(color: NavigatorTokens.brandNavyTint),
+        border: Border.all(
+          color: theme.isDark ? theme.border : NavigatorTokens.brandNavyTint,
+        ),
       ),
       child: Text(
         text,
         style: TextStyle(
           fontSize: 12.sp,
           height: 1.4,
-          color: NavigatorTokens.brandNavy,
+          color: theme.isDark ? theme.text : NavigatorTokens.brandNavy,
         ),
       ),
     );

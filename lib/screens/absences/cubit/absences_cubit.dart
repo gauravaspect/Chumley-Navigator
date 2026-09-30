@@ -17,15 +17,16 @@ class AbsencesCubit extends Cubit<AbsencesState> {
       final response = await _repository.listMyAbsences();
       emit(AbsencesLoaded(response: response));
     } on AbsenceApiException catch (e) {
-      emit(AbsencesError(
-        message: e.message,
-        cachedAbsences: cached?.toResponse(),
-      ));
+      emit(
+        AbsencesError(message: e.message, cachedAbsences: cached?.toResponse()),
+      );
     } catch (_) {
-      emit(AbsencesError(
-        message: 'Unable to load absences. Please try again.',
-        cachedAbsences: cached?.toResponse(),
-      ));
+      emit(
+        AbsencesError(
+          message: 'Unable to load absences. Please try again.',
+          cachedAbsences: cached?.toResponse(),
+        ),
+      );
     }
   }
 
@@ -46,10 +47,7 @@ class AbsencesCubit extends Cubit<AbsencesState> {
     if (previousResponse == null) return;
 
     // Transition to loaded with submitting = true
-    emit(AbsencesLoaded(
-      response: previousResponse,
-      isSubmitting: true,
-    ));
+    emit(AbsencesLoaded(response: previousResponse, isSubmitting: true));
 
     final startStr = _formatDateTime(
       startDate,
@@ -70,25 +68,31 @@ class AbsencesCubit extends Cubit<AbsencesState> {
         end: endStr,
       );
 
-      emit(AbsencesLoaded(
-        response: previousResponse,
-        isSubmitting: false,
-        submitSuccess: true,
-      ));
+      emit(
+        AbsencesLoaded(
+          response: previousResponse,
+          isSubmitting: false,
+          submitSuccess: true,
+        ),
+      );
       // Reload the absences list from server to get updated data
       await load();
     } on AbsenceApiException catch (e) {
-      emit(AbsencesLoaded(
-        response: previousResponse,
-        isSubmitting: false,
-        submitError: e.message,
-      ));
+      emit(
+        AbsencesLoaded(
+          response: previousResponse,
+          isSubmitting: false,
+          submitError: e.message,
+        ),
+      );
     } catch (_) {
-      emit(AbsencesLoaded(
-        response: previousResponse,
-        isSubmitting: false,
-        submitError: 'Unable to submit absence. Please try again.',
-      ));
+      emit(
+        AbsencesLoaded(
+          response: previousResponse,
+          isSubmitting: false,
+          submitError: 'Unable to submit absence. Please try again.',
+        ),
+      );
     }
   }
 
@@ -99,12 +103,18 @@ class AbsencesCubit extends Cubit<AbsencesState> {
     }
   }
 
-  String _formatDateTime(DateTime date, TimeOfDay? time, {required bool isEnd}) {
+  String _formatDateTime(
+    DateTime date,
+    TimeOfDay? time, {
+    required bool isEnd,
+  }) {
     final year = date.year.toString().padLeft(4, '0');
     final month = date.month.toString().padLeft(2, '0');
     final day = date.day.toString().padLeft(2, '0');
     if (time == null) {
-      return isEnd ? '$year-$month-${day}T23:59:59Z' : '$year-$month-${day}T00:00:00Z';
+      return isEnd
+          ? '$year-$month-${day}T23:59:59Z'
+          : '$year-$month-${day}T00:00:00Z';
     }
     final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');

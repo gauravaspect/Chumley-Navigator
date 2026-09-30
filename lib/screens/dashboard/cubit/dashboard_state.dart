@@ -28,8 +28,12 @@ class DashboardLoading extends DashboardState {
   final List<Appointment> cachedAppointments;
 
   @override
-  List<Object?> get props =>
-      [cachedUser, cachedPoints, cachedPpmTasks, cachedAppointments];
+  List<Object?> get props => [
+    cachedUser,
+    cachedPoints,
+    cachedPpmTasks,
+    cachedAppointments,
+  ];
 }
 
 class DashboardLoaded extends DashboardState {
@@ -65,8 +69,13 @@ class DashboardError extends DashboardState {
   final List<Appointment> cachedAppointments;
 
   @override
-  List<Object?> get props =>
-      [message, cachedUser, cachedPoints, cachedPpmTasks, cachedAppointments];
+  List<Object?> get props => [
+    message,
+    cachedUser,
+    cachedPoints,
+    cachedPpmTasks,
+    cachedAppointments,
+  ];
 }
 
 extension DashboardStateX on DashboardState {

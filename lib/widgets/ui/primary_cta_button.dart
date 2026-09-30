@@ -39,23 +39,31 @@ class PrimaryCtaButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(radius),
           boxShadow: ElevatedSurface.softShadows(elevation: 0.85),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16.sp,
-                letterSpacing: 0.15,
-                color: AppColors.highlightYellow,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10.w),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16.sp,
+                      letterSpacing: 0.15,
+                      color: AppColors.highlightYellow,
+                    ),
+                  ),
+                ),
               ),
-            ),
-            if (icon != null) ...[
-              SizedBox(width: 8.w),
-              Icon(icon, size: 20.sp, color: AppColors.highlightYellow),
+              if (icon != null) ...[
+                SizedBox(width: 8.w),
+                Icon(icon, size: 20.sp, color: AppColors.highlightYellow),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

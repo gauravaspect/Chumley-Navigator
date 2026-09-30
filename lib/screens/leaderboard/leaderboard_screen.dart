@@ -104,9 +104,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   int _deltaFor(int rank) => (rank % 3) + 1;
 
   Future<void> _pickPeriod() async {
+    final theme = DashboardTheme.of(context);
     final selected = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
@@ -116,11 +117,39 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                margin: EdgeInsets.only(top: 8.h, bottom: 8.h),
+                width: 36.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: theme.border,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
               for (final option in options)
                 ListTile(
-                  title: Text(option),
+                  title: Text(
+                    option,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: option == _period
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: option == _period
+                          ? (theme.isDark
+                              ? AppColors.accentBlue
+                              : AppColors.primaryBlue)
+                          : theme.dashTitle,
+                    ),
+                  ),
                   trailing: option == _period
-                      ? Icon(LucideIcons.check, color: AppColors.primaryBlue)
+                      ? Icon(
+                          LucideIcons.check,
+                          color: theme.isDark
+                              ? AppColors.accentBlue
+                              : AppColors.primaryBlue,
+                          size: 20.sp,
+                        )
                       : null,
                   onTap: () => Navigator.pop(context, option),
                 ),
@@ -653,7 +682,7 @@ class _PodiumPerson extends StatelessWidget {
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.w800,
-              color: theme.dashTitle,
+              color: elevated ? AppColors.textDarkBlue : theme.dashTitle,
             ),
           ),
         ),

@@ -27,10 +27,12 @@ class FixedPriceCubit extends Cubit<FixedPriceState> {
       final trades = await _repository.fetchFixedPriceTrades();
       emit(FixedPriceLoaded(trades: trades));
     } catch (error) {
-      emit(FixedPriceError(
-        message: error.toString(),
-        cachedTrades: cached.isNotEmpty ? cached : state.trades,
-      ));
+      emit(
+        FixedPriceError(
+          message: error.toString(),
+          cachedTrades: cached.isNotEmpty ? cached : state.trades,
+        ),
+      );
     }
   }
 
@@ -44,18 +46,22 @@ class FixedPriceCubit extends Cubit<FixedPriceState> {
       final categories = await _repository.fetchFixedPriceCategories(tradeId);
       final latestState = state;
       if (latestState is FixedPriceLoaded) {
-        emit(latestState.copyWith(
-          categories: categories,
-          loadingCategories: false,
-        ));
+        emit(
+          latestState.copyWith(
+            categories: categories,
+            loadingCategories: false,
+          ),
+        );
       }
     } catch (error) {
       final latestState = state;
       if (latestState is FixedPriceLoaded) {
-        emit(latestState.copyWith(
-          loadingCategories: false,
-          categoryError: error.toString(),
-        ));
+        emit(
+          latestState.copyWith(
+            loadingCategories: false,
+            categoryError: error.toString(),
+          ),
+        );
       }
     }
   }
@@ -70,18 +76,19 @@ class FixedPriceCubit extends Cubit<FixedPriceState> {
       final workTypes = await _repository.fetchFixedPriceWorkTypes(groupId);
       final latestState = state;
       if (latestState is FixedPriceLoaded) {
-        emit(latestState.copyWith(
-          workTypes: workTypes,
-          loadingWorkTypes: false,
-        ));
+        emit(
+          latestState.copyWith(workTypes: workTypes, loadingWorkTypes: false),
+        );
       }
     } catch (error) {
       final latestState = state;
       if (latestState is FixedPriceLoaded) {
-        emit(latestState.copyWith(
-          loadingWorkTypes: false,
-          workTypeError: error.toString(),
-        ));
+        emit(
+          latestState.copyWith(
+            loadingWorkTypes: false,
+            workTypeError: error.toString(),
+          ),
+        );
       }
     }
   }
@@ -109,10 +116,12 @@ class FixedPriceCubit extends Cubit<FixedPriceState> {
     } catch (error) {
       final latestState = state;
       if (latestState is FixedPriceLoaded) {
-        emit(latestState.copyWith(
-          isSubmitting: false,
-          submitError: error.toString(),
-        ));
+        emit(
+          latestState.copyWith(
+            isSubmitting: false,
+            submitError: error.toString(),
+          ),
+        );
       }
       rethrow;
     }

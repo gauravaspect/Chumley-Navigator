@@ -50,18 +50,15 @@ class AbsencesLoaded extends AbsencesState {
 
   @override
   List<Object?> get props => [
-        response,
-        isSubmitting,
-        submitError,
-        submitSuccess,
-      ];
+    response,
+    isSubmitting,
+    submitError,
+    submitSuccess,
+  ];
 }
 
 class AbsencesError extends AbsencesState {
-  const AbsencesError({
-    required this.message,
-    this.cachedAbsences,
-  });
+  const AbsencesError({required this.message, this.cachedAbsences});
 
   final String message;
   final ListMyAbsenceResponse? cachedAbsences;
@@ -72,9 +69,9 @@ class AbsencesError extends AbsencesState {
 
 extension AbsencesStateX on AbsencesState {
   ListMyAbsenceResponse? get responseOrNull => switch (this) {
-        AbsencesLoaded(:final response) => response,
-        AbsencesLoading(:final cachedAbsences) => cachedAbsences,
-        AbsencesError(:final cachedAbsences) => cachedAbsences,
-        _ => null,
-      };
+    AbsencesLoaded(:final response) => response,
+    AbsencesLoading(:final cachedAbsences) => cachedAbsences,
+    AbsencesError(:final cachedAbsences) => cachedAbsences,
+    _ => null,
+  };
 }

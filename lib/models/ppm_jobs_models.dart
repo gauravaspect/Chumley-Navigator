@@ -1,10 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 class PpmJobsResponse extends Equatable {
-  const PpmJobsResponse({
-    this.success = false,
-    this.tasks = const [],
-  });
+  const PpmJobsResponse({this.success = false, this.tasks = const []});
 
   final bool success;
   final List<PpmJobTask> tasks;
@@ -15,16 +12,12 @@ class PpmJobsResponse extends Equatable {
         ? rawTasks
               .whereType<Map>()
               .map(
-                (item) =>
-                    PpmJobTask.fromJson(Map<String, dynamic>.from(item)),
+                (item) => PpmJobTask.fromJson(Map<String, dynamic>.from(item)),
               )
               .toList(growable: false)
         : const <PpmJobTask>[];
 
-    return PpmJobsResponse(
-      success: json['success'] == true,
-      tasks: tasks,
-    );
+    return PpmJobsResponse(success: json['success'] == true, tasks: tasks);
   }
 
   Map<String, dynamic> toJson() => {
@@ -78,8 +71,7 @@ class PpmJobTask extends Equatable {
       workTypeName: (json['WorkType_Name'] ?? '').toString(),
       postcode: (json['Postcode__c'] ?? '').toString(),
       endHour: _readInt(json['end_hour']),
-      allocatedEngineerName:
-          (json['Allocated_Engineer_Name'] ?? '').toString(),
+      allocatedEngineerName: (json['Allocated_Engineer_Name'] ?? '').toString(),
       startHour: _readInt(json['start_hour']),
       jobType: (json['Job_Type__c'] ?? '').toString(),
       appointmentNumber: (json['AppointmentNumber'] ?? '').toString(),

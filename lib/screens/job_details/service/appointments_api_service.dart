@@ -21,7 +21,9 @@ class AppointmentsApiService {
     }
 
     try {
-      final response = await _apiClient.get(ApiEndpoints.engineerAppointment(id));
+      final response = await _apiClient.get(
+        ApiEndpoints.engineerAppointment(id),
+      );
       final body = ApiResponseHelper.toMap(response.data);
       if (body['success'] == false) {
         throw AppointmentApiException(
@@ -68,11 +70,12 @@ class AppointmentsApiService {
   }
 
   List<Appointment> _parseAppointmentList(Map<String, dynamic> body) {
-    final raw = body['appointments'] ??
+    final raw =
+        body['appointments'] ??
         body['service_appointments'] ??
         (body['data'] is Map
             ? (body['data'] as Map)['appointments'] ??
-                (body['data'] as Map)['service_appointments']
+                  (body['data'] as Map)['service_appointments']
             : body['data']);
 
     if (raw is! List) return const [];
@@ -98,12 +101,18 @@ class AppointmentsApiService {
     }
 
     try {
-      Log('Updating appointment $id status to: "$nextStatus"', name: 'AppointmentsApi');
+      Log(
+        'Updating appointment $id status to: "$nextStatus"',
+        name: 'AppointmentsApi',
+      );
       final response = await _apiClient.post(
         ApiEndpoints.engineerAppointmentStatus(id),
         {'status': nextStatus},
       );
-      Log('Update status response: ${response.statusCode} ${response.data}', name: 'AppointmentsApi');
+      Log(
+        'Update status response: ${response.statusCode} ${response.data}',
+        name: 'AppointmentsApi',
+      );
       final body = ApiResponseHelper.toMap(response.data);
       if (body['success'] == false) {
         throw AppointmentApiException(
@@ -117,7 +126,10 @@ class AppointmentsApiService {
     } on AppointmentApiException {
       rethrow;
     } on DioException catch (e) {
-      Log('Update status failed for $id with error: ${e.response?.statusCode} ${e.response?.data}', name: 'AppointmentsApi');
+      Log(
+        'Update status failed for $id with error: ${e.response?.statusCode} ${e.response?.data}',
+        name: 'AppointmentsApi',
+      );
       throw AppointmentApiException(
         _messageForDio(e, fallback: 'Unable to update appointment status.'),
       );
@@ -133,8 +145,13 @@ class AppointmentsApiService {
 
     try {
       Log('Fetching forms for appointment $id', name: 'AppointmentsApi');
-      final response = await _apiClient.get(ApiEndpoints.engineerAppointmentForms(id));
-      Log('Fetch forms response for $id: ${response.statusCode}', name: 'AppointmentsApi');
+      final response = await _apiClient.get(
+        ApiEndpoints.engineerAppointmentForms(id),
+      );
+      Log(
+        'Fetch forms response for $id: ${response.statusCode}',
+        name: 'AppointmentsApi',
+      );
       final body = ApiResponseHelper.toMap(response.data);
       if (body['success'] == false) {
         throw AppointmentApiException(
@@ -148,14 +165,19 @@ class AppointmentsApiService {
       if (list is List) {
         return list
             .whereType<Map>()
-            .map((m) => EngineerFormSummary.fromJson(Map<String, dynamic>.from(m)))
+            .map(
+              (m) => EngineerFormSummary.fromJson(Map<String, dynamic>.from(m)),
+            )
             .toList();
       }
       return const [];
     } on AppointmentApiException {
       rethrow;
     } on DioException catch (e) {
-      Log('Fetch forms failed for $id: ${e.response?.statusCode} ${e.response?.data}', name: 'AppointmentsApi');
+      Log(
+        'Fetch forms failed for $id: ${e.response?.statusCode} ${e.response?.data}',
+        name: 'AppointmentsApi',
+      );
       throw AppointmentApiException(
         _messageForDio(e, fallback: 'Unable to load appointment forms.'),
       );
@@ -170,7 +192,9 @@ class AppointmentsApiService {
     final id = saId.trim();
     final wt = workTypeId.trim();
     if (id.isEmpty || wt.isEmpty) {
-      throw const AppointmentApiException('Appointment id and work type id are required.');
+      throw const AppointmentApiException(
+        'Appointment id and work type id are required.',
+      );
     }
 
     try {
@@ -178,7 +202,10 @@ class AppointmentsApiService {
       final response = await _apiClient.get(
         ApiEndpoints.engineerAppointmentFormDetail(id, wt),
       );
-      Log('Fetch form detail response for $id / $wt: ${response.statusCode}', name: 'AppointmentsApi');
+      Log(
+        'Fetch form detail response for $id / $wt: ${response.statusCode}',
+        name: 'AppointmentsApi',
+      );
       final body = ApiResponseHelper.toMap(response.data);
       if (body['success'] == false) {
         throw AppointmentApiException(
@@ -192,7 +219,10 @@ class AppointmentsApiService {
     } on AppointmentApiException {
       rethrow;
     } on DioException catch (e) {
-      Log('Fetch form detail failed for $id / $wt: ${e.response?.statusCode} ${e.response?.data}', name: 'AppointmentsApi');
+      Log(
+        'Fetch form detail failed for $id / $wt: ${e.response?.statusCode} ${e.response?.data}',
+        name: 'AppointmentsApi',
+      );
       throw AppointmentApiException(
         _messageForDio(e, fallback: 'Unable to load form details.'),
       );
@@ -211,23 +241,31 @@ class AppointmentsApiService {
     final id = saId.trim();
     final wt = workTypeId.trim();
     if (id.isEmpty || wt.isEmpty) {
-      throw const AppointmentApiException('Appointment id and work type id are required.');
+      throw const AppointmentApiException(
+        'Appointment id and work type id are required.',
+      );
     }
 
     final payload = <String, dynamic>{
       'answers': answers,
-      if (photoSlots != null) 'photo_slots': photoSlots,
-      if (step != null) 'step': step,
-      if (extraData != null) ...extraData,
+      'photo_slots': ?photoSlots,
+      'step': ?step,
+      ...?extraData,
     };
 
     try {
-      Log('Saving form draft for $id / $wt: payload keys ${payload.keys}', name: 'AppointmentsApi');
+      Log(
+        'Saving form draft for $id / $wt: payload keys ${payload.keys}',
+        name: 'AppointmentsApi',
+      );
       final response = await _apiClient.put(
         ApiEndpoints.engineerAppointmentFormDraft(id, wt),
         payload,
       );
-      Log('Save form draft response for $id / $wt: ${response.statusCode}', name: 'AppointmentsApi');
+      Log(
+        'Save form draft response for $id / $wt: ${response.statusCode}',
+        name: 'AppointmentsApi',
+      );
       final body = ApiResponseHelper.toMap(response.data);
       if (body['success'] == false) {
         throw AppointmentApiException(
@@ -241,7 +279,10 @@ class AppointmentsApiService {
     } on AppointmentApiException {
       rethrow;
     } on DioException catch (e) {
-      Log('Save form draft failed for $id / $wt: ${e.response?.statusCode} ${e.response?.data}', name: 'AppointmentsApi');
+      Log(
+        'Save form draft failed for $id / $wt: ${e.response?.statusCode} ${e.response?.data}',
+        name: 'AppointmentsApi',
+      );
       throw AppointmentApiException(
         _messageForDio(e, fallback: 'Unable to save form draft.'),
       );
@@ -259,22 +300,30 @@ class AppointmentsApiService {
     final id = saId.trim();
     final wt = workTypeId.trim();
     if (id.isEmpty || wt.isEmpty) {
-      throw const AppointmentApiException('Appointment id and work type id are required.');
+      throw const AppointmentApiException(
+        'Appointment id and work type id are required.',
+      );
     }
 
     final payload = <String, dynamic>{
       'answers': answers,
-      if (photoSlots != null) 'photo_slots': photoSlots,
-      if (extraData != null) ...extraData,
+      'photo_slots': ?photoSlots,
+      ...?extraData,
     };
 
     try {
-      Log('Submitting form for $id / $wt: payload keys ${payload.keys}', name: 'AppointmentsApi');
+      Log(
+        'Submitting form for $id / $wt: payload keys ${payload.keys}',
+        name: 'AppointmentsApi',
+      );
       final response = await _apiClient.post(
         ApiEndpoints.engineerAppointmentFormSubmit(id, wt),
         payload,
       );
-      Log('Submit form response for $id / $wt: ${response.statusCode} ${response.data}', name: 'AppointmentsApi');
+      Log(
+        'Submit form response for $id / $wt: ${response.statusCode} ${response.data}',
+        name: 'AppointmentsApi',
+      );
       final body = ApiResponseHelper.toMap(response.data);
       if (body['success'] == false) {
         throw AppointmentApiException(
@@ -288,7 +337,10 @@ class AppointmentsApiService {
     } on AppointmentApiException {
       rethrow;
     } on DioException catch (e) {
-      Log('Submit form failed for $id / $wt: ${e.response?.statusCode} ${e.response?.data}', name: 'AppointmentsApi');
+      Log(
+        'Submit form failed for $id / $wt: ${e.response?.statusCode} ${e.response?.data}',
+        name: 'AppointmentsApi',
+      );
       throw AppointmentApiException(
         _messageForDio(e, fallback: 'Unable to submit form.'),
       );
@@ -330,8 +382,8 @@ class AppointmentsApiService {
     return serverMessage.isNotEmpty
         ? serverMessage
         : (NetworkExceptions.getError(e).isNotEmpty
-            ? NetworkExceptions.getError(e)
-            : fallback);
+              ? NetworkExceptions.getError(e)
+              : fallback);
   }
 }
 

@@ -15,7 +15,9 @@ class FixedPriceRepository {
   Future<List<FixedPriceModel>> fetchFixedPriceTrades() async {
     try {
       final response = await _apiService.fetchFixedPriceTrades();
-      await Prefs.saveFixedPriceTrades(FixedPriceTradesResponse(trades: response));
+      await Prefs.saveFixedPriceTrades(
+        FixedPriceTradesResponse(trades: response),
+      );
       return response;
     } on FixedPriceApiException {
       final cached = await readCachedFixedPriceTrades();
@@ -26,11 +28,15 @@ class FixedPriceRepository {
     }
   }
 
-  Future<List<FixedPriceCategoryModel>> fetchFixedPriceCategories(String tradeId) async {
+  Future<List<FixedPriceCategoryModel>> fetchFixedPriceCategories(
+    String tradeId,
+  ) async {
     return _apiService.fetchFixedPriceCategories(tradeId);
   }
 
-  Future<List<FixedPriceWorkTypeModel>> fetchFixedPriceWorkTypes(String groupId) async {
+  Future<List<FixedPriceWorkTypeModel>> fetchFixedPriceWorkTypes(
+    String groupId,
+  ) async {
     return _apiService.fetchFixedPriceWorkTypes(groupId);
   }
 

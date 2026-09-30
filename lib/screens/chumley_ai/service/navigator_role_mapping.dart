@@ -42,7 +42,8 @@ class NavigatorRoleMapping {
       return 'You must have at least one trade group assigned to use the chatbot.';
     }
     final mapped = mapRole(raw);
-    if (mapped == 'engineer' && (engineerId == null || engineerId.trim().isEmpty)) {
+    if (mapped == 'engineer' &&
+        (engineerId == null || engineerId.trim().isEmpty)) {
       return 'Your engineer profile is missing required info (engineer ID).';
     }
     return null;

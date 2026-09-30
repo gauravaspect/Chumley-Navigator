@@ -64,10 +64,7 @@ class VehicleModel extends Equatable {
 }
 
 class VehicleResponse extends Equatable {
-  const VehicleResponse({
-    this.data = const [],
-    this.success = false,
-  });
+  const VehicleResponse({this.data = const [], this.success = false});
 
   final List<VehicleModel> data;
   final bool success;
@@ -76,19 +73,15 @@ class VehicleResponse extends Equatable {
     final rawData = json['data'];
     final vehicles = rawData is List
         ? rawData
-            .whereType<Map>()
-            .map(
-              (item) => VehicleModel.fromJson(
-                Map<String, dynamic>.from(item),
-              ),
-            )
-            .toList()
+              .whereType<Map>()
+              .map(
+                (item) =>
+                    VehicleModel.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .toList()
         : <VehicleModel>[];
 
-    return VehicleResponse(
-      data: vehicles,
-      success: json['success'] == true,
-    );
+    return VehicleResponse(data: vehicles, success: json['success'] == true);
   }
 
   Map<String, dynamic> toJson() => {

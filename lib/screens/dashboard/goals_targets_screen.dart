@@ -176,11 +176,7 @@ class GoalsTargetsScreen extends StatelessWidget {
                 physics: const BouncingScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 28.h),
                 children: [
-                  _OverallHero(
-                    score: overall,
-                    max: _kpiMax,
-                    theme: theme,
-                  ),
+                  _OverallHero(score: overall, max: _kpiMax, theme: theme),
                   SizedBox(height: 14.h),
                   _NudgeCard(pool: weakest, theme: theme),
                   SizedBox(height: 18.h),
@@ -245,8 +241,9 @@ class _OverallHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = (score / max).clamp(0.0, 1.0);
-    final scoreLabel =
-        score % 1 == 0 ? score.toInt().toString() : score.toStringAsFixed(1);
+    final scoreLabel = score % 1 == 0
+        ? score.toInt().toString()
+        : score.toStringAsFixed(1);
 
     return Container(
       width: double.infinity,
@@ -433,8 +430,7 @@ class _PoolRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = (pool.value / pool.max).clamp(0.0, 1.0);
     final up = pool.delta >= 0;
-    final deltaColor =
-        up ? const Color(0xFF15803D) : const Color(0xFFC42A2A);
+    final deltaColor = up ? const Color(0xFF15803D) : const Color(0xFFC42A2A);
     final valueLabel = pool.value % 1 == 0
         ? pool.value.toInt().toString()
         : pool.value.toStringAsFixed(1);
@@ -460,11 +456,7 @@ class _PoolRow extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: Icon(
-                  pool.icon,
-                  size: 20.sp,
-                  color: theme.dashPrimary,
-                ),
+                child: Icon(pool.icon, size: 20.sp, color: theme.dashPrimary),
               ),
               SizedBox(width: 13.w),
               Expanded(

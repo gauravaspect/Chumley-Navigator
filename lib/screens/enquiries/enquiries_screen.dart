@@ -18,6 +18,7 @@ class EnquiryItem {
     required this.id,
     required this.subtitle,
     required this.status,
+
     /// How many of the 4 steps are complete (1–4).
     required this.completedSteps,
   });
@@ -46,12 +47,7 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
     'Other',
   ];
 
-  static const _stepLabels = [
-    'Submitted',
-    'Assigned',
-    'Reviewing',
-    'Resolved',
-  ];
+  static const _stepLabels = ['Submitted', 'Assigned', 'Reviewing', 'Resolved'];
 
   String? _selectedCategory;
   final _descriptionController = TextEditingController();
@@ -144,9 +140,7 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text('Enquiry #$id submitted.')),
-      );
+      ..showSnackBar(SnackBar(content: Text('Enquiry #$id submitted.')));
   }
 
   @override
@@ -286,10 +280,12 @@ class _SubmitEnquiryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fieldFill =
-        theme.isDark ? theme.dashSurfaceTint : const Color(0xFFE9EDF5);
-    final hairline =
-        theme.isDark ? theme.dashBorderLight : const Color(0xFFE2E7F0);
+    final fieldFill = theme.isDark
+        ? theme.dashSurfaceTint
+        : const Color(0xFFE9EDF5);
+    final hairline = theme.isDark
+        ? theme.dashBorderLight
+        : const Color(0xFFE2E7F0);
 
     return Container(
       width: double.infinity,
@@ -324,8 +320,10 @@ class _SubmitEnquiryCard extends StatelessWidget {
             decoration: InputDecoration(
               filled: true,
               fillColor: fieldFill,
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 14.w,
+                vertical: 4.h,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide(color: hairline),
@@ -372,10 +370,8 @@ class _SubmitEnquiryCard extends StatelessWidget {
             ),
             items: categories
                 .map(
-                  (cat) => DropdownMenuItem<String>(
-                    value: cat,
-                    child: Text(cat),
-                  ),
+                  (cat) =>
+                      DropdownMenuItem<String>(value: cat, child: Text(cat)),
                 )
                 .toList(),
             onChanged: onCategoryChanged,
@@ -448,7 +444,7 @@ class _SubmitEnquiryCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w700,
-                  color: theme.dashHeading,
+                  color: AppColors.textDarkBlue,
                 ),
               ),
             ),
@@ -476,10 +472,10 @@ class _PhotoUploadZone extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dashed =
-        theme.isDark ? theme.dashBorderLight : const Color(0xFFD3DBE8);
-    final fill =
-        theme.isDark ? theme.dashSurfaceTint : const Color(0xFFE9EDF5);
+    final dashed = theme.isDark
+        ? theme.dashBorderLight
+        : const Color(0xFFD3DBE8);
+    final fill = theme.isDark ? theme.dashSurfaceTint : const Color(0xFFE9EDF5);
 
     return Container(
       width: double.infinity,
@@ -491,11 +487,7 @@ class _PhotoUploadZone extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            LucideIcons.image,
-            size: 22.sp,
-            color: theme.dashPrimary,
-          ),
+          Icon(LucideIcons.image, size: 22.sp, color: theme.dashPrimary),
           SizedBox(height: 9.h),
           Text(
             'Add photos to speed things up (optional)',
@@ -615,7 +607,7 @@ class _PhotoUploadZone extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w700,
-                      color: theme.dashHeading,
+                      color: AppColors.textDarkBlue,
                     ),
                   ),
                 ),
@@ -747,8 +739,7 @@ class _EnquiryProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final navy = theme.dashPrimary;
-    final tint =
-        theme.isDark ? theme.dashSurfaceTint : const Color(0xFFD8E6FC);
+    final tint = theme.isDark ? theme.dashSurfaceTint : const Color(0xFFD8E6FC);
     final doneLabel = theme.dashSubtitle;
     final pendingLabel = const Color(0xFF8A99B0);
 
@@ -851,10 +842,7 @@ class _EmptyEnquiriesCard extends StatelessWidget {
           Text(
             'Submitted enquiries will appear here',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: theme.dashMuted,
-            ),
+            style: TextStyle(fontSize: 13.sp, color: theme.dashMuted),
           ),
         ],
       ),

@@ -43,7 +43,9 @@ class FixedPriceApiService {
     }
   }
 
-  Future<List<FixedPriceCategoryModel>> fetchFixedPriceCategories(String tradeId) async {
+  Future<List<FixedPriceCategoryModel>> fetchFixedPriceCategories(
+    String tradeId,
+  ) async {
     if (!ApiEndpoints.isConfigured) {
       throw const FixedPriceApiException(
         'API server URL is not configured. Set API_BASE_URL when running the app.',
@@ -76,7 +78,9 @@ class FixedPriceApiService {
     }
   }
 
-  Future<List<FixedPriceWorkTypeModel>> fetchFixedPriceWorkTypes(String groupId) async {
+  Future<List<FixedPriceWorkTypeModel>> fetchFixedPriceWorkTypes(
+    String groupId,
+  ) async {
     if (!ApiEndpoints.isConfigured) {
       throw const FixedPriceApiException(
         'API server URL is not configured. Set API_BASE_URL when running the app.',
@@ -156,7 +160,9 @@ class FixedPriceApiService {
     } on DioException catch (e) {
       log('submitFixedPriceWorkOrder error: ${NetworkExceptions.getError(e)}');
       if (e.response != null) {
-        log('submitFixedPriceWorkOrder error status: ${e.response?.statusCode}');
+        log(
+          'submitFixedPriceWorkOrder error status: ${e.response?.statusCode}',
+        );
         log('submitFixedPriceWorkOrder error data: ${e.response?.data}');
       }
       throw FixedPriceApiException(NetworkExceptions.getError(e));

@@ -25,9 +25,18 @@ class EngineerFormSummary extends Equatable {
   final Map<String, dynamic> raw;
 
   factory EngineerFormSummary.fromJson(Map<String, dynamic> json) {
-    final id = (json['id'] ?? json['form_id'] ?? json['work_type_id'] ?? '').toString();
-    final workTypeId = (json['work_type_id'] ?? json['workTypeId'] ?? json['type'] ?? id).toString();
-    final title = (json['title'] ?? json['name'] ?? json['form_name'] ?? json['work_type'] ?? workTypeId).toString();
+    final id = (json['id'] ?? json['form_id'] ?? json['work_type_id'] ?? '')
+        .toString();
+    final workTypeId =
+        (json['work_type_id'] ?? json['workTypeId'] ?? json['type'] ?? id)
+            .toString();
+    final title =
+        (json['title'] ??
+                json['name'] ??
+                json['form_name'] ??
+                json['work_type'] ??
+                workTypeId)
+            .toString();
     final status = (json['status'] ?? 'not_started').toString();
 
     DateTime? updatedAt;
@@ -42,7 +51,8 @@ class EngineerFormSummary extends Equatable {
       title: title,
       status: status,
       isDraft: status.toLowerCase() == 'draft' || json['is_draft'] == true,
-      isSubmitted: status.toLowerCase() == 'submitted' ||
+      isSubmitted:
+          status.toLowerCase() == 'submitted' ||
           status.toLowerCase() == 'complete' ||
           json['is_submitted'] == true,
       step: (json['step'] is num) ? (json['step'] as num).toInt() : 0,
@@ -52,19 +62,28 @@ class EngineerFormSummary extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'work_type_id': workTypeId,
-        'title': title,
-        'status': status,
-        'is_draft': isDraft,
-        'is_submitted': isSubmitted,
-        'step': step,
-        if (updatedAt != null) 'updated_at': updatedAt!.toIso8601String(),
-        ...raw,
-      };
+    'id': id,
+    'work_type_id': workTypeId,
+    'title': title,
+    'status': status,
+    'is_draft': isDraft,
+    'is_submitted': isSubmitted,
+    'step': step,
+    if (updatedAt != null) 'updated_at': updatedAt!.toIso8601String(),
+    ...raw,
+  };
 
   @override
-  List<Object?> get props => [id, workTypeId, title, status, isDraft, isSubmitted, step, updatedAt];
+  List<Object?> get props => [
+    id,
+    workTypeId,
+    title,
+    status,
+    isDraft,
+    isSubmitted,
+    step,
+    updatedAt,
+  ];
 }
 
 /// Detailed form schema and responses for drafting/submitting.
@@ -97,26 +116,42 @@ class EngineerFormDetail extends Equatable {
     final root = (json['form'] is Map)
         ? Map<String, dynamic>.from(json['form'])
         : (json['data'] is Map)
-            ? Map<String, dynamic>.from(json['data'])
-            : json;
+        ? Map<String, dynamic>.from(json['data'])
+        : json;
 
-    final id = (root['id'] ?? root['form_id'] ?? root['work_type_id'] ?? '').toString();
-    final workTypeId = (root['work_type_id'] ?? root['workTypeId'] ?? root['type'] ?? id).toString();
-    final title = (root['title'] ?? root['name'] ?? root['form_name'] ?? root['work_type'] ?? workTypeId).toString();
+    final id = (root['id'] ?? root['form_id'] ?? root['work_type_id'] ?? '')
+        .toString();
+    final workTypeId =
+        (root['work_type_id'] ?? root['workTypeId'] ?? root['type'] ?? id)
+            .toString();
+    final title =
+        (root['title'] ??
+                root['name'] ??
+                root['form_name'] ??
+                root['work_type'] ??
+                workTypeId)
+            .toString();
     final status = (root['status'] ?? 'draft').toString();
 
     // Parse answers / responses
     Map<String, dynamic> answers = {};
-    final rawAnswers = root['answers'] ?? root['responses'] ?? root['draft_responses'] ?? root['data'];
+    final rawAnswers =
+        root['answers'] ??
+        root['responses'] ??
+        root['draft_responses'] ??
+        root['data'];
     if (rawAnswers is Map) {
       answers = Map<String, dynamic>.from(rawAnswers);
     }
 
     // Parse photo slots
     Map<String, String> photoSlots = {};
-    final rawPhotos = root['photo_slots'] ?? root['photos'] ?? root['photoSlots'];
+    final rawPhotos =
+        root['photo_slots'] ?? root['photos'] ?? root['photoSlots'];
     if (rawPhotos is Map) {
-      photoSlots = rawPhotos.map((k, v) => MapEntry(k.toString(), v.toString()));
+      photoSlots = rawPhotos.map(
+        (k, v) => MapEntry(k.toString(), v.toString()),
+      );
     }
 
     // Parse schema
@@ -149,20 +184,30 @@ class EngineerFormDetail extends Equatable {
   }
 
   Map<String, dynamic> toDraftPayload() => {
-        'work_type_id': workTypeId,
-        'step': step,
-        'answers': answers,
-        'photo_slots': photoSlots,
-        'updated_at': (updatedAt ?? DateTime.now()).toIso8601String(),
-      };
+    'work_type_id': workTypeId,
+    'step': step,
+    'answers': answers,
+    'photo_slots': photoSlots,
+    'updated_at': (updatedAt ?? DateTime.now()).toIso8601String(),
+  };
 
   Map<String, dynamic> toSubmitPayload() => {
-        'work_type_id': workTypeId,
-        'answers': answers,
-        'photo_slots': photoSlots,
-        'submitted_at': DateTime.now().toIso8601String(),
-      };
+    'work_type_id': workTypeId,
+    'answers': answers,
+    'photo_slots': photoSlots,
+    'submitted_at': DateTime.now().toIso8601String(),
+  };
 
   @override
-  List<Object?> get props => [id, workTypeId, title, status, schema, answers, photoSlots, step, updatedAt];
+  List<Object?> get props => [
+    id,
+    workTypeId,
+    title,
+    status,
+    schema,
+    answers,
+    photoSlots,
+    step,
+    updatedAt,
+  ];
 }

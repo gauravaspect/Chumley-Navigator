@@ -20,8 +20,7 @@ class VcrStepIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
     final navy = theme.dashPrimary;
-    final tint =
-        theme.isDark ? theme.dashSurfaceTint : const Color(0xFFD8E6FC);
+    final tint = theme.isDark ? theme.dashSurfaceTint : const Color(0xFFD8E6FC);
 
     return Row(
       children: List.generate(totalSteps, (stepIndex) {

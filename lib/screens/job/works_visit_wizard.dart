@@ -98,7 +98,8 @@ class _WorksVisitWizardState extends State<WorksVisitWizard> {
             .get();
         return snap.docs.map((d) => d.data()).toList();
       }
-      if (widget.job.pmProjectId != null && widget.job.pmProjectId!.isNotEmpty) {
+      if (widget.job.pmProjectId != null &&
+          widget.job.pmProjectId!.isNotEmpty) {
         final snap = await FirebaseFirestore.instance
             .collection(PillarClient.colPmTasks)
             .where('pm_project_id', isEqualTo: widget.job.pmProjectId)
@@ -212,12 +213,16 @@ class _WorksVisitWizardState extends State<WorksVisitWizard> {
             if (_error != null)
               Padding(
                 padding: EdgeInsets.only(bottom: 12.h),
-                child: Text(_error!, style: const TextStyle(color: NavigatorTokens.errorFg)),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: NavigatorTokens.errorFg),
+                ),
               ),
             if (_step == 1) _beforeAfter() else _stepField(),
             if (_step == JobJourney.bath.form.length - 1)
               const VisitInfoBanner(
-                text: 'Submit report writes COMPLETE and the works visit report.',
+                text:
+                    'Submit report writes COMPLETE and the works visit report.',
               ),
           ],
         ),
@@ -240,7 +245,9 @@ class _WorksVisitWizardState extends State<WorksVisitWizard> {
 
   Widget _beforeAfter() {
     if (_lines.isEmpty) {
-      return const VisitFormCaption(text: 'No line items or tasks for this visit.');
+      return const VisitFormCaption(
+        text: 'No line items or tasks for this visit.',
+      );
     }
     return Column(
       children: [

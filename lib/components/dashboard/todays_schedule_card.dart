@@ -306,9 +306,10 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
   }
 
   Future<void> _openFilterSheet(List<String> options) async {
+    final theme = DashboardTheme.of(context);
     final selected = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
@@ -316,12 +317,43 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
         return SafeArea(
           child: ListView(
             shrinkWrap: true,
+            padding: EdgeInsets.symmetric(vertical: 8.h),
             children: [
+              Center(
+                child: Container(
+                  margin: EdgeInsets.only(top: 4.h, bottom: 8.h),
+                  width: 36.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: theme.border,
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+              ),
               for (final opt in options)
                 ListTile(
-                  title: Text(opt),
+                  title: Text(
+                    opt,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: opt == _filter
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: opt == _filter
+                          ? (theme.isDark
+                              ? AppColors.accentBlue
+                              : AppColors.primaryBlue)
+                          : theme.dashTitle,
+                    ),
+                  ),
                   trailing: opt == _filter
-                      ? Icon(LucideIcons.check, color: AppColors.primaryBlue)
+                      ? Icon(
+                          LucideIcons.check,
+                          color: theme.isDark
+                              ? AppColors.accentBlue
+                              : AppColors.primaryBlue,
+                          size: 20.sp,
+                        )
                       : null,
                   onTap: () => Navigator.pop(context, opt),
                 ),

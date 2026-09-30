@@ -126,8 +126,9 @@ class ChumleyChatState extends Equatable {
       permissionsLoaded: permissionsLoaded ?? this.permissionsLoaded,
       briefing: briefing ?? this.briefing,
       briefingLoading: briefingLoading ?? this.briefingLoading,
-      briefingError:
-          clearBriefingError ? null : (briefingError ?? this.briefingError),
+      briefingError: clearBriefingError
+          ? null
+          : (briefingError ?? this.briefingError),
       navigatorOnline: navigatorOnline ?? this.navigatorOnline,
       aiConversations: aiConversations ?? this.aiConversations,
       activeAiConversationId: clearActiveAiConversationId
@@ -141,8 +142,9 @@ class ChumleyChatState extends Equatable {
       chumleyMe: chumleyMe ?? this.chumleyMe,
       chumleyConversations: chumleyConversations ?? this.chumleyConversations,
       chumleyLoading: chumleyLoading ?? this.chumleyLoading,
-      chumleyError:
-          clearChumleyError ? null : (chumleyError ?? this.chumleyError),
+      chumleyError: clearChumleyError
+          ? null
+          : (chumleyError ?? this.chumleyError),
       activeChumleyConversationId: clearActiveChumleyConversationId
           ? null
           : (activeChumleyConversationId ?? this.activeChumleyConversationId),
@@ -159,32 +161,32 @@ class ChumleyChatState extends Equatable {
 
   @override
   List<Object?> get props => [
-        user,
-        activeTab,
-        chumleyChatEnabled,
-        permissionsLoaded,
-        briefing,
-        briefingLoading,
-        briefingError,
-        navigatorOnline,
-        aiConversations,
-        activeAiConversationId,
-        aiMessages,
-        aiLoading,
-        aiSending,
-        aiError,
-        showAiPastChats,
-        chumleyMe,
-        chumleyConversations,
-        chumleyLoading,
-        chumleyError,
-        activeChumleyConversationId,
-        chumleyMessages,
-        chumleyMessagesLoading,
-        chumleySending,
-        socketConnected,
-        unreadTotal,
-        typingEmails,
-        onlineEmails,
-      ];
+    user,
+    activeTab,
+    chumleyChatEnabled,
+    permissionsLoaded,
+    briefing,
+    briefingLoading,
+    briefingError,
+    navigatorOnline,
+    aiConversations,
+    activeAiConversationId,
+    aiMessages,
+    aiLoading,
+    aiSending,
+    aiError,
+    showAiPastChats,
+    chumleyMe,
+    chumleyConversations,
+    chumleyLoading,
+    chumleyError,
+    activeChumleyConversationId,
+    chumleyMessages,
+    chumleyMessagesLoading,
+    chumleySending,
+    socketConnected,
+    unreadTotal,
+    typingEmails,
+    onlineEmails,
+  ];
 }

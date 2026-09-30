@@ -4,10 +4,7 @@ import 'package:chumley_navigator/models/fixed_price_model.dart';
 void main() {
   group('FixedPriceModel', () {
     test('fromJson sets properties correctly', () {
-      final json = {
-        'id': 'a2d4G000000ukoxQAA',
-        'name': 'Access',
-      };
+      final json = {'id': 'a2d4G000000ukoxQAA', 'name': 'Access'};
 
       final model = FixedPriceModel.fromJson(json);
 
@@ -16,10 +13,7 @@ void main() {
     });
 
     test('toJson serializes properties correctly', () {
-      const model = FixedPriceModel(
-        id: 'a2d4G000000ukoxQAA',
-        name: 'Access',
-      );
+      const model = FixedPriceModel(id: 'a2d4G000000ukoxQAA', name: 'Access');
 
       final json = model.toJson();
 
@@ -39,15 +33,9 @@ void main() {
     test('fromJson sets trades correctly', () {
       final json = {
         'trades': [
-          {
-            'id': 'a2d4G000000ukoxQAA',
-            'name': 'Access',
-          },
-          {
-            'id': 'a2d4G000000ukp2QAA',
-            'name': 'Air Con',
-          }
-        ]
+          {'id': 'a2d4G000000ukoxQAA', 'name': 'Access'},
+          {'id': 'a2d4G000000ukp2QAA', 'name': 'Air Con'},
+        ],
       };
 
       final response = FixedPriceTradesResponse.fromJson(json);
@@ -61,9 +49,7 @@ void main() {
 
     test('toJson serializes trades correctly', () {
       const response = FixedPriceTradesResponse(
-        trades: [
-          FixedPriceModel(id: 'a2d4G000000ukoxQAA', name: 'Access'),
-        ],
+        trades: [FixedPriceModel(id: 'a2d4G000000ukoxQAA', name: 'Access')],
       );
 
       final json = response.toJson();
@@ -76,10 +62,7 @@ void main() {
 
   group('FixedPriceCategoryModel', () {
     test('fromJson sets properties correctly', () {
-      final json = {
-        'id': 'cat_1',
-        'name': 'Leaks',
-      };
+      final json = {'id': 'cat_1', 'name': 'Leaks'};
 
       final model = FixedPriceCategoryModel.fromJson(json);
 
@@ -88,10 +71,7 @@ void main() {
     });
 
     test('toJson serializes properties correctly', () {
-      const model = FixedPriceCategoryModel(
-        id: 'cat_1',
-        name: 'Leaks',
-      );
+      const model = FixedPriceCategoryModel(id: 'cat_1', name: 'Leaks');
 
       final json = model.toJson();
 
@@ -111,15 +91,9 @@ void main() {
     test('fromJson sets categories correctly', () {
       final json = {
         'categories': [
-          {
-            'id': 'cat_1',
-            'name': 'Leaks',
-          },
-          {
-            'id': 'cat_2',
-            'name': 'Taps',
-          }
-        ]
+          {'id': 'cat_1', 'name': 'Leaks'},
+          {'id': 'cat_2', 'name': 'Taps'},
+        ],
       };
 
       final response = FixedPriceCategoriesResponse.fromJson(json);
@@ -133,9 +107,7 @@ void main() {
 
     test('toJson serializes categories correctly', () {
       const response = FixedPriceCategoriesResponse(
-        categories: [
-          FixedPriceCategoryModel(id: 'cat_1', name: 'Leaks'),
-        ],
+        categories: [FixedPriceCategoryModel(id: 'cat_1', name: 'Leaks')],
       );
 
       final json = response.toJson();
@@ -148,10 +120,7 @@ void main() {
 
   group('FixedPriceWorkTypeModel', () {
     test('fromJson sets properties correctly', () {
-      final json = {
-        'id': 'wt_1',
-        'name': 'Trace & Access',
-      };
+      final json = {'id': 'wt_1', 'name': 'Trace & Access'};
 
       final model = FixedPriceWorkTypeModel.fromJson(json);
 
@@ -160,10 +129,7 @@ void main() {
     });
 
     test('toJson serializes properties correctly', () {
-      const model = FixedPriceWorkTypeModel(
-        id: 'wt_1',
-        name: 'Trace & Access',
-      );
+      const model = FixedPriceWorkTypeModel(id: 'wt_1', name: 'Trace & Access');
 
       final json = model.toJson();
 
@@ -183,15 +149,9 @@ void main() {
     test('fromJson sets work types correctly', () {
       final json = {
         'work_types': [
-          {
-            'id': 'wt_1',
-            'name': 'Trace & Access',
-          },
-          {
-            'id': 'wt_2',
-            'name': 'Repair Leak',
-          }
-        ]
+          {'id': 'wt_1', 'name': 'Trace & Access'},
+          {'id': 'wt_2', 'name': 'Repair Leak'},
+        ],
       };
 
       final response = FixedPriceWorkTypesResponse.fromJson(json);

@@ -39,19 +39,19 @@ class AbsencesApiService {
       );
     }
     try {
-      final response = await _apiClient.post(
-        ApiEndpoints.postMyAbsence,
-        {
-          'type': type,
-          'start': start,
-          'end': end,
-          'description': description,
-        },
-      );
+      final response = await _apiClient.post(ApiEndpoints.postMyAbsence, {
+        'type': type,
+        'start': start,
+        'end': end,
+        'description': description,
+      });
       final body = ApiResponseHelper.toMap(response.data);
       if (body['success'] == false) {
         throw AbsenceApiException(
-          ApiResponseHelper.extractMessage(body, fallback: 'Unable to submit absence.'),
+          ApiResponseHelper.extractMessage(
+            body,
+            fallback: 'Unable to submit absence.',
+          ),
         );
       }
     } on AbsenceApiException {

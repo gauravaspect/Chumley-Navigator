@@ -31,10 +31,8 @@ class NotificationScreen extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: CommandCentreBackButton(
                     semanticsLabel: 'Back to home',
-                    onTap: () => Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.home,
-                    ),
+                    onTap: () =>
+                        Navigator.pushReplacementNamed(context, AppRoutes.home),
                   ),
                 ),
               ),

@@ -18,10 +18,12 @@ class LeaderboardCubit extends Cubit<LeaderboardState> {
     } on LeaderBoardApiException catch (e) {
       emit(LeaderboardError(message: e.message, cachedLeaderboard: cached));
     } catch (_) {
-      emit(LeaderboardError(
-        message: 'Unable to load leaderboard. Please try again.',
-        cachedLeaderboard: cached,
-      ));
+      emit(
+        LeaderboardError(
+          message: 'Unable to load leaderboard. Please try again.',
+          cachedLeaderboard: cached,
+        ),
+      );
     }
   }
 

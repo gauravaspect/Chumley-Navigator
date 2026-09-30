@@ -24,15 +24,13 @@ class _Section {
 // ── Bottom sheet ──────────────────────────────────────────────────────────────
 
 class RedeemPointsBottomModal extends StatefulWidget {
-  const RedeemPointsBottomModal({
-    super.key,
-    required this.performanceHistory,
-  });
+  const RedeemPointsBottomModal({super.key, required this.performanceHistory});
 
   final EngineerPerformanceHistory performanceHistory;
 
   @override
-  State<RedeemPointsBottomModal> createState() => _RedeemPointsBottomModalState();
+  State<RedeemPointsBottomModal> createState() =>
+      _RedeemPointsBottomModalState();
 }
 
 class _RedeemPointsBottomModalState extends State<RedeemPointsBottomModal> {
@@ -194,7 +192,8 @@ class _RedeemPointsBottomModalState extends State<RedeemPointsBottomModal> {
                               theme: theme,
                               title: 'All points',
                               points: widget.performanceHistory.cumulativeTotal,
-                              body: 'last ${widget.performanceHistory.monthsRequested} months',
+                              body:
+                                  'last ${widget.performanceHistory.monthsRequested} months',
                               emphasized: true,
                             ),
                           ),
@@ -227,7 +226,10 @@ class _RedeemPointsBottomModalState extends State<RedeemPointsBottomModal> {
                             child: DropdownButton<PerformanceMonth>(
                               value: _selectedMonth,
                               dropdownColor: theme.surfaceDeep,
-                              icon: Icon(Icons.arrow_drop_down, color: theme.textMuted),
+                              icon: Icon(
+                                Icons.arrow_drop_down,
+                                color: theme.textMuted,
+                              ),
                               isExpanded: true,
                               style: TextStyle(
                                 fontSize: 13.sp,
@@ -235,10 +237,12 @@ class _RedeemPointsBottomModalState extends State<RedeemPointsBottomModal> {
                                 color: theme.text,
                               ),
                               items: widget.performanceHistory.months
-                                  .map((m) => DropdownMenuItem<PerformanceMonth>(
-                                        value: m,
-                                        child: Text(m.monthLabel),
-                                      ))
+                                  .map(
+                                    (m) => DropdownMenuItem<PerformanceMonth>(
+                                      value: m,
+                                      child: Text(m.monthLabel),
+                                    ),
+                                  )
                                   .toList(),
                               onChanged: (val) {
                                 setState(() {
@@ -326,7 +330,7 @@ class _SummaryCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
               color: emphasized
-                  ? Colors.white.withOpacity(0.7)
+                  ? Colors.white.withValues(alpha: 0.7)
                   : theme.textMuted,
             ),
           ),
@@ -351,7 +355,7 @@ class _SummaryCard extends StatelessWidget {
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
                     color: emphasized
-                        ? Colors.white.withOpacity(0.85)
+                        ? Colors.white.withValues(alpha: 0.85)
                         : theme.textMuted,
                   ),
                 ),
@@ -364,7 +368,7 @@ class _SummaryCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 10.sp,
               color: emphasized
-                  ? Colors.white.withOpacity(0.55)
+                  ? Colors.white.withValues(alpha: 0.55)
                   : theme.textMuted,
             ),
           ),
@@ -408,10 +412,7 @@ class _SectionItem extends StatelessWidget {
                     SizedBox(height: 2.h),
                     Text(
                       section.subtitle,
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: theme.textMuted,
-                      ),
+                      style: TextStyle(fontSize: 11.sp, color: theme.textMuted),
                     ),
                   ],
                 ),
@@ -448,10 +449,7 @@ class _SectionItem extends StatelessWidget {
             child: section.events.isEmpty
                 ? Text(
                     '—',
-                    style: TextStyle(
-                      fontSize: 11.5.sp,
-                      color: theme.textMuted,
-                    ),
+                    style: TextStyle(fontSize: 11.5.sp, color: theme.textMuted),
                   )
                 : Column(
                     children: section.events.map((e) {

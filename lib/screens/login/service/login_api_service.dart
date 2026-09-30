@@ -15,7 +15,9 @@ class LoginApiService {
 
   final ApiClient _apiClient;
 
-  Future<LoginExchangeResponse> exchangeTokens(MicrosoftAuthTokens tokens) async {
+  Future<LoginExchangeResponse> exchangeTokens(
+    MicrosoftAuthTokens tokens,
+  ) async {
     if (!ApiEndpoints.isConfigured) {
       throw const LoginApiException(
         'API server URL is not configured. Set API_BASE_URL when running the app.',

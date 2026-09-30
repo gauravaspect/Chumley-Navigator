@@ -28,9 +28,7 @@ class ChumleyAuthProvider {
 
   Future<String> _mint() async {
     if (!ApiEndpoints.isConfigured) {
-      throw const ChumleyAuthException(
-        'API server URL is not configured.',
-      );
+      throw const ChumleyAuthException('API server URL is not configured.');
     }
 
     try {
@@ -42,7 +40,9 @@ class ChumleyAuthProvider {
       }
       final ttl = (body['expires_in'] as num?)?.toInt() ?? 300;
       _token = token;
-      _expiresAt = DateTime.now().add(Duration(seconds: (ttl - 30).clamp(30, ttl)));
+      _expiresAt = DateTime.now().add(
+        Duration(seconds: (ttl - 30).clamp(30, ttl)),
+      );
       return token;
     } on DioException catch (e) {
       throw ChumleyAuthException(NetworkExceptions.getError(e));

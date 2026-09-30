@@ -34,7 +34,7 @@ class _HomeState extends State<Home> {
       label: 'Leaderboard',
       icon: Icons.bar_chart_outlined,
       activeIcon: Icons.bar_chart_rounded,
-      screen: LeaderboardScreen(),
+      screen: const LeaderboardScreen(),
     ),
     _NavItem(
       label: 'Milestones',
@@ -98,7 +98,8 @@ class _HomeState extends State<Home> {
 
                   if (notification is UserScrollNotification) {
                     final direction = notification.direction;
-                    if (direction == ScrollDirection.reverse && _showBottomBar) {
+                    if (direction == ScrollDirection.reverse &&
+                        _showBottomBar) {
                       setState(() => _showBottomBar = false);
                     } else if (direction == ScrollDirection.forward &&
                         !_showBottomBar) {
@@ -114,7 +115,10 @@ class _HomeState extends State<Home> {
                   }
                   return false;
                 },
-                child: navItems[selectedIndex].screen,
+                child: IndexedStack(
+                  index: selectedIndex,
+                  children: navItems.map((item) => item.screen).toList(),
+                ),
               ),
               Positioned(
                 left: 0,
@@ -139,11 +143,7 @@ class _HomeState extends State<Home> {
                               end: Alignment.bottomCenter,
                               colors: [
                                 Colors.transparent,
-                                Color.lerp(
-                                  Colors.transparent,
-                                  fadeTop,
-                                  0.94,
-                                )!,
+                                Color.lerp(Colors.transparent, fadeTop, 0.94)!,
                                 fadeTop,
                               ],
                               stops: const [0.0, 0.35, 1.0],
@@ -162,15 +162,11 @@ class _HomeState extends State<Home> {
                                 topRight: Radius.circular(24.r),
                               ),
                               border: Border(
-                                top: BorderSide(
-                                  color: barBorder,
-                                  width: 0.5,
-                                ),
+                                top: BorderSide(color: barBorder, width: 0.5),
                               ),
                             ),
                             child: Row(
-                              children:
-                                  List.generate(navItems.length, (index) {
+                              children: List.generate(navItems.length, (index) {
                                 final item = navItems[index];
                                 final isSelected = selectedIndex == index;
 
@@ -184,20 +180,23 @@ class _HomeState extends State<Home> {
                                       });
                                     },
                                     child: AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 280),
+                                      duration: const Duration(
+                                        milliseconds: 280,
+                                      ),
                                       curve: Curves.easeOutCubic,
                                       margin: EdgeInsets.symmetric(
                                         horizontal: 3.w,
                                       ),
-                                      padding:
-                                          EdgeInsets.symmetric(vertical: 10.h),
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 10.h,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: isSelected
                                             ? selectedBg
                                             : Colors.transparent,
-                                        borderRadius:
-                                            BorderRadius.circular(14.r),
+                                        borderRadius: BorderRadius.circular(
+                                          14.r,
+                                        ),
                                         border: isSelected
                                             ? Border.all(
                                                 color: barBorder,

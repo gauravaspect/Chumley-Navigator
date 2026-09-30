@@ -97,8 +97,10 @@ class SaStatus {
       normalizedKey(status) == 'complete' ||
       normalizedKey(status) == 'job completed';
 
-  static bool isTerminal(String? status, {List<String> allowedNext = const []}) =>
-      isVisitComplete(status) && allowedNext.isEmpty;
+  static bool isTerminal(
+    String? status, {
+    List<String> allowedNext = const [],
+  }) => isVisitComplete(status) && allowedNext.isEmpty;
 
   static String actionLabel(String status) {
     switch (normalizedKey(status)) {

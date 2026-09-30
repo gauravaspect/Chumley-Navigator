@@ -26,12 +26,19 @@ class DashboardCubit extends Cubit<DashboardState> {
     );
 
     try {
-      final user = await _repository.fetchDashboardData();
-      final points = await _repository.fetchPoints();
-      final ppmTasks = await _fetchPpmBestEffort(stalePpm);
-      final appointments = await _repository.fetchAppointments(
+      final userFuture = _repository.fetchDashboardData();
+      final pointsFuture = _repository.fetchPoints();
+      final ppmFuture = _fetchPpmBestEffort(stalePpm);
+
+      final user = await userFuture;
+      final appointmentsFuture = _repository.fetchAppointments(
         profileFallback: user,
       );
+
+      final points = await pointsFuture;
+      final ppmTasks = await ppmFuture;
+      final appointments = await appointmentsFuture;
+
       emit(
         DashboardLoaded(
           user: user,

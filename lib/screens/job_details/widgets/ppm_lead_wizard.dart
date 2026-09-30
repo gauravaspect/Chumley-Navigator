@@ -41,7 +41,8 @@ class PpmLeadWizard extends StatefulWidget {
 }
 
 class _PpmLeadWizardState extends State<PpmLeadWizard> {
-  int _currentStep = 0; // 0: Equipment, 1: Frequency & Scope, 2: Customer, 3: Sent
+  int _currentStep =
+      0; // 0: Equipment, 1: Frequency & Scope, 2: Customer, 3: Sent
   bool _isSubmitting = false;
 
   final Set<String> _selectedEquipment = {'Gas Boiler'};
@@ -72,7 +73,9 @@ class _PpmLeadWizardState extends State<PpmLeadWizard> {
   @override
   void initState() {
     super.initState();
-    _customerNameController = TextEditingController(text: widget.customerName ?? '');
+    _customerNameController = TextEditingController(
+      text: widget.customerName ?? '',
+    );
     _postcodeController = TextEditingController(text: widget.postcode ?? '');
   }
 
@@ -96,7 +99,8 @@ class _PpmLeadWizardState extends State<PpmLeadWizard> {
 
     final success = await PillarClient.raiseEnquiry(
       category: 'PPM_INTEREST',
-      description: 'PPM Service Lead: ${_selectedEquipment.join(", ")} ($_selectedFrequency)',
+      description:
+          'PPM Service Lead: ${_selectedEquipment.join(", ")} ($_selectedFrequency)',
       details: details,
       jobId: widget.jobId,
       customerName: _customerNameController.text.trim(),
@@ -187,9 +191,7 @@ class _PpmLeadWizardState extends State<PpmLeadWizard> {
 
           // Step Body
           Expanded(
-            child: SingleChildScrollView(
-              child: _buildStepContent(theme),
-            ),
+            child: SingleChildScrollView(child: _buildStepContent(theme)),
           ),
 
           // Bottom CTAs
@@ -315,7 +317,10 @@ class _PpmLeadWizardState extends State<PpmLeadWizard> {
                 },
                 child: Container(
                   margin: EdgeInsets.only(bottom: 8.h),
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
                     color: selected
                         ? AppColors.primaryBlue.withValues(alpha: 0.08)
@@ -329,11 +334,11 @@ class _PpmLeadWizardState extends State<PpmLeadWizard> {
                   child: Row(
                     children: [
                       Icon(
-                        selected
-                            ? LucideIcons.squareCheck
-                            : LucideIcons.square,
+                        selected ? LucideIcons.squareCheck : LucideIcons.square,
                         size: 18.sp,
-                        color: selected ? AppColors.primaryBlue : theme.textMuted,
+                        color: selected
+                            ? AppColors.primaryBlue
+                            : theme.textMuted,
                       ),
                       SizedBox(width: 10.w),
                       Expanded(
@@ -341,8 +346,9 @@ class _PpmLeadWizardState extends State<PpmLeadWizard> {
                           item,
                           style: TextStyle(
                             fontSize: 13.sp,
-                            fontWeight:
-                                selected ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                             color: theme.text,
                           ),
                         ),
@@ -374,7 +380,10 @@ class _PpmLeadWizardState extends State<PpmLeadWizard> {
                 onTap: () => setState(() => _selectedFrequency = opt),
                 child: Container(
                   margin: EdgeInsets.only(bottom: 8.h),
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
                     color: selected
                         ? AppColors.primaryBlue.withValues(alpha: 0.08)
@@ -388,11 +397,11 @@ class _PpmLeadWizardState extends State<PpmLeadWizard> {
                   child: Row(
                     children: [
                       Icon(
-                        selected
-                            ? LucideIcons.circleDot
-                            : LucideIcons.circle,
+                        selected ? LucideIcons.circleDot : LucideIcons.circle,
                         size: 18.sp,
-                        color: selected ? AppColors.primaryBlue : theme.textMuted,
+                        color: selected
+                            ? AppColors.primaryBlue
+                            : theme.textMuted,
                       ),
                       SizedBox(width: 10.w),
                       Expanded(
@@ -400,8 +409,9 @@ class _PpmLeadWizardState extends State<PpmLeadWizard> {
                           opt,
                           style: TextStyle(
                             fontSize: 13.sp,
-                            fontWeight:
-                                selected ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                             color: theme.text,
                           ),
                         ),
@@ -426,7 +436,8 @@ class _PpmLeadWizardState extends State<PpmLeadWizard> {
               maxLines: 3,
               style: TextStyle(fontSize: 13.sp, color: theme.text),
               decoration: InputDecoration(
-                hintText: 'e.g. Access via side alley, boiler located in loft...',
+                hintText:
+                    'e.g. Access via side alley, boiler located in loft...',
                 hintStyle: TextStyle(color: theme.textMuted, fontSize: 12.sp),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.r),
@@ -452,9 +463,19 @@ class _PpmLeadWizardState extends State<PpmLeadWizard> {
             SizedBox(height: 12.h),
             _buildTextField(theme, 'Customer Name', _customerNameController),
             SizedBox(height: 10.h),
-            _buildTextField(theme, 'Phone Number', _phoneController, keyboard: TextInputType.phone),
+            _buildTextField(
+              theme,
+              'Phone Number',
+              _phoneController,
+              keyboard: TextInputType.phone,
+            ),
             SizedBox(height: 10.h),
-            _buildTextField(theme, 'Email Address', _emailController, keyboard: TextInputType.emailAddress),
+            _buildTextField(
+              theme,
+              'Email Address',
+              _emailController,
+              keyboard: TextInputType.emailAddress,
+            ),
             SizedBox(height: 10.h),
             _buildTextField(theme, 'Postcode', _postcodeController),
           ],
@@ -494,10 +515,7 @@ class _PpmLeadWizardState extends State<PpmLeadWizard> {
                 child: Text(
                   'The lead has been recorded in the Firestore spine (demo_customer_enquiries) and forwarded to the PPM intake queue.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: theme.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 12.sp, color: theme.textMuted),
                 ),
               ),
               SizedBox(height: 30.h),

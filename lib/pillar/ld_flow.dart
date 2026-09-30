@@ -1,10 +1,6 @@
 /// Port of `app/form_flow.js` PLAN + PHOTO_HOST.
 class LdHost {
-  const LdHost({
-    required this.sid,
-    required this.name,
-    required this.absorb,
-  });
+  const LdHost({required this.sid, required this.name, required this.absorb});
 
   final String sid;
   final String name;

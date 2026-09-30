@@ -6,10 +6,7 @@ import '../core/app_constants.dart';
 
 /// Microsoft OAuth tokens from aad_oauth — see MOBILE_APP_AUTH_GUIDE_V2.md §7.
 class MicrosoftAuthTokens {
-  const MicrosoftAuthTokens({
-    required this.idToken,
-    required this.accessToken,
-  });
+  const MicrosoftAuthTokens({required this.idToken, required this.accessToken});
 
   final String idToken;
   final String accessToken;

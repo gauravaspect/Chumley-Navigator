@@ -97,8 +97,8 @@ class ChumleyChatSocket {
       'type': 'send',
       'conversation_id': conversationId,
       'text': text,
-      if (clientId != null) 'client_id': clientId,
-      if (context != null) 'context': context,
+      'client_id': ?clientId,
+      'context': ?context,
     });
   }
 

@@ -16,7 +16,8 @@ class EngineerAppointmentDetail extends Equatable {
 
   factory EngineerAppointmentDetail.fromJson(Map<String, dynamic> json) {
     final root = _asMap(json['data']) ?? json;
-    final appointmentJson = _asMap(
+    final appointmentJson =
+        _asMap(
           root['appointment'] ??
               root['service_appointment'] ??
               root['serviceAppointment'],
@@ -25,8 +26,8 @@ class EngineerAppointmentDetail extends Equatable {
             ? root
             : null);
 
-    final statusStr =
-        (appointmentJson?['status'] ?? root['status'] ?? '').toString();
+    final statusStr = (appointmentJson?['status'] ?? root['status'] ?? '')
+        .toString();
     final allowedStatuses = _readStringList(
       appointmentJson?['allowed_next_statuses'] ??
           appointmentJson?['allowedNextStatuses'] ??
@@ -59,8 +60,12 @@ class EngineerAppointmentDetail extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [status, allowedNextStatuses, appointment, changed];
+  List<Object?> get props => [
+    status,
+    allowedNextStatuses,
+    appointment,
+    changed,
+  ];
 }
 
 Map<String, dynamic>? _asMap(dynamic value) {

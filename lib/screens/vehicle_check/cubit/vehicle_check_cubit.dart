@@ -11,34 +11,43 @@ class VehicleCheckCubit extends Cubit<VehicleCheckState> {
 
   Future<void> load() async {
     final cachedAllocations =
-        state.allocationsOrNull ?? await _repository.readCachedVehicleAllocations();
+        state.allocationsOrNull ??
+        await _repository.readCachedVehicleAllocations();
     final selectedVehicle = state.selectedVehicleOrNull;
-    emit(VehicleCheckLoading(
-      cachedAllocations: cachedAllocations,
-      selectedVehicle: selectedVehicle,
-    ));
+    emit(
+      VehicleCheckLoading(
+        cachedAllocations: cachedAllocations,
+        selectedVehicle: selectedVehicle,
+      ),
+    );
 
     try {
       final allocations = await _repository.fetchVehicleAllocations();
-      emit(VehicleCheckLoaded(
-        allocations: allocations,
-        selectedVehicle: _resolveSelectedVehicle(
+      emit(
+        VehicleCheckLoaded(
           allocations: allocations,
-          current: selectedVehicle,
+          selectedVehicle: _resolveSelectedVehicle(
+            allocations: allocations,
+            current: selectedVehicle,
+          ),
         ),
-      ));
+      );
     } on VehicleCheckApiException catch (e) {
-      emit(VehicleCheckError(
-        message: e.message,
-        cachedAllocations: cachedAllocations,
-        selectedVehicle: selectedVehicle,
-      ));
+      emit(
+        VehicleCheckError(
+          message: e.message,
+          cachedAllocations: cachedAllocations,
+          selectedVehicle: selectedVehicle,
+        ),
+      );
     } catch (_) {
-      emit(VehicleCheckError(
-        message: 'Unable to load vehicle allocations. Please try again.',
-        cachedAllocations: cachedAllocations,
-        selectedVehicle: selectedVehicle,
-      ));
+      emit(
+        VehicleCheckError(
+          message: 'Unable to load vehicle allocations. Please try again.',
+          cachedAllocations: cachedAllocations,
+          selectedVehicle: selectedVehicle,
+        ),
+      );
     }
   }
 
@@ -48,21 +57,27 @@ class VehicleCheckCubit extends Cubit<VehicleCheckState> {
 
     switch (state) {
       case VehicleCheckLoaded():
-        emit(VehicleCheckLoaded(
-          allocations: allocations,
-          selectedVehicle: vehicle,
-        ));
+        emit(
+          VehicleCheckLoaded(
+            allocations: allocations,
+            selectedVehicle: vehicle,
+          ),
+        );
       case VehicleCheckError(:final message):
-        emit(VehicleCheckError(
-          message: message,
-          cachedAllocations: allocations,
-          selectedVehicle: vehicle,
-        ));
+        emit(
+          VehicleCheckError(
+            message: message,
+            cachedAllocations: allocations,
+            selectedVehicle: vehicle,
+          ),
+        );
       case VehicleCheckLoading(:final cachedAllocations):
-        emit(VehicleCheckLoading(
-          cachedAllocations: cachedAllocations,
-          selectedVehicle: vehicle,
-        ));
+        emit(
+          VehicleCheckLoading(
+            cachedAllocations: cachedAllocations,
+            selectedVehicle: vehicle,
+          ),
+        );
       default:
         break;
     }

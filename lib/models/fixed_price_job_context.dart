@@ -32,8 +32,8 @@ class FixedPriceJobContext extends Equatable {
     final scheduled = appointment.scheduledStart;
     final dateStr = scheduled != null
         ? '${scheduled.year}-'
-            '${scheduled.month.toString().padLeft(2, '0')}-'
-            '${scheduled.day.toString().padLeft(2, '0')}'
+              '${scheduled.month.toString().padLeft(2, '0')}-'
+              '${scheduled.day.toString().padLeft(2, '0')}'
         : '';
 
     // Prefer parent Work Order id (0WO...). Fall back to Service Appointment id
@@ -62,8 +62,8 @@ class FixedPriceJobContext extends Equatable {
     final scheduled = job.scheduledStart;
     final dateStr = scheduled != null
         ? '${scheduled.year}-'
-            '${scheduled.month.toString().padLeft(2, '0')}-'
-            '${scheduled.day.toString().padLeft(2, '0')}'
+              '${scheduled.month.toString().padLeft(2, '0')}-'
+              '${scheduled.day.toString().padLeft(2, '0')}'
         : '';
     final jobId = (job.id as String?) ?? '';
     final jobNo = (job.jobNumber as String?) ?? jobId;
@@ -103,15 +103,15 @@ class FixedPriceJobContext extends Equatable {
 
   @override
   List<Object?> get props => [
-        sourceWorkOrderId,
-        workOrderLabel,
-        siteId,
-        accountId,
-        contactId,
-        customerEmail,
-        earliestRequestedDate,
-        resolvedServiceFeePct,
-        resolvedMarkupPct,
-        operativeSharePct,
-      ];
+    sourceWorkOrderId,
+    workOrderLabel,
+    siteId,
+    accountId,
+    contactId,
+    customerEmail,
+    earliestRequestedDate,
+    resolvedServiceFeePct,
+    resolvedMarkupPct,
+    operativeSharePct,
+  ];
 }

@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class VcrFormCard extends StatelessWidget {
-  const VcrFormCard({
-    super.key,
-    required this.child,
-    this.padding,
-  });
+  const VcrFormCard({super.key, required this.child, this.padding});
 
   final Widget child;
   final EdgeInsetsGeometry? padding;

@@ -56,12 +56,12 @@ void main() {
                   'count': 1,
                   'detail': 'Detail msg',
                   'data_quality': 'high',
-                }
+                },
               ],
-            }
-          }
-        }
-      ]
+            },
+          },
+        },
+      ],
     });
 
     expect(history.engineerId, 'eng_1');
@@ -73,7 +73,10 @@ void main() {
     expect(history.months.length, 1);
     expect(history.months.first.monthLabel, 'May 2026');
     expect(history.months.first.categories.perJob.total, 50);
-    expect(history.months.first.categories.perJob.events.first.label, 'Job Completed');
+    expect(
+      history.months.first.categories.perJob.events.first.label,
+      'Job Completed',
+    );
 
     final json = history.toJson();
     expect(json['engineer_id'], 'eng_1');
@@ -82,7 +85,9 @@ void main() {
     expect(json['months'].first['categories']['per_job']['total'], 50);
   });
 
-  testWidgets('JobScheduleCard renders appointment details correctly', (WidgetTester tester) async {
+  testWidgets('JobScheduleCard renders appointment details correctly', (
+    WidgetTester tester,
+  ) async {
     final appointment = Appointment(
       id: 'app_1',
       appointmentNumber: 'SA-123456',
@@ -101,7 +106,8 @@ void main() {
             notifier: themeNotifier,
             child: ScreenUtilInit(
               designSize: const Size(375, 812),
-              builder: (context, child) => JobScheduleCard(appointment: appointment),
+              builder: (context, child) =>
+                  JobScheduleCard(appointment: appointment),
             ),
           ),
         ),

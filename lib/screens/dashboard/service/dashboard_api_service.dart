@@ -41,7 +41,10 @@ class DashboardApiService {
 
       if (body['success'] == false) {
         throw DashboardApiException(
-          ApiResponseHelper.extractMessage(body, fallback: 'Unable to load dashboard.'),
+          ApiResponseHelper.extractMessage(
+            body,
+            fallback: 'Unable to load dashboard.',
+          ),
         );
       }
 
@@ -53,7 +56,7 @@ class DashboardApiService {
     }
   }
 
-  Future<EngineerPerformanceHistory> fetchPoints({int months = 12})async{
+  Future<EngineerPerformanceHistory> fetchPoints({int months = 12}) async {
     if (!ApiEndpoints.isConfigured) {
       throw const DashboardApiException(
         'API server URL is not configured. Set API_BASE_URL when running the app.',
@@ -71,24 +74,26 @@ class DashboardApiService {
       );
     }
 
-    try{
+    try {
       final response = await _apiClient.get(
-        ApiEndpoints.getPointsData(engineerId,month: months),
+        ApiEndpoints.getPointsData(engineerId, month: months),
       );
       final body = ApiResponseHelper.toMap(response.data);
 
       if (body['success'] == false) {
         throw DashboardApiException(
-          ApiResponseHelper.extractMessage(body, fallback: 'Unable to load dashboard.'),
+          ApiResponseHelper.extractMessage(
+            body,
+            fallback: 'Unable to load dashboard.',
+          ),
         );
       }
       return EngineerPerformanceHistory.fromJson(body);
-    }on DashboardApiException {
+    } on DashboardApiException {
       rethrow;
     } on DioException catch (e) {
       throw DashboardApiException(NetworkExceptions.getError(e));
     }
-
   }
 
   Future<List<PpmJobTask>> fetchPpmJobs() async {
@@ -110,9 +115,7 @@ class DashboardApiService {
       final response = await _apiClient.get(
         ApiEndpoints.getPpmJobs,
         queryParameters: {'engineer_email': email},
-        options: Options(
-          headers: {'X-Demo-Key': AppConstants.demoApiKey},
-        ),
+        options: Options(headers: {'X-Demo-Key': AppConstants.demoApiKey}),
       );
       final body = ApiResponseHelper.toMap(response.data);
 

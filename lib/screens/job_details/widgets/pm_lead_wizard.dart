@@ -41,7 +41,8 @@ class PmLeadWizard extends StatefulWidget {
 }
 
 class _PmLeadWizardState extends State<PmLeadWizard> {
-  int _currentStep = 0; // 0: Project Type, 1: Scope & Measurements, 2: Budget/Customer, 3: Sent
+  int _currentStep =
+      0; // 0: Project Type, 1: Scope & Measurements, 2: Budget/Customer, 3: Sent
   bool _isSubmitting = false;
 
   String _selectedProjectType = 'Bathroom Refurbishment';
@@ -79,7 +80,9 @@ class _PmLeadWizardState extends State<PmLeadWizard> {
   @override
   void initState() {
     super.initState();
-    _customerNameController = TextEditingController(text: widget.customerName ?? '');
+    _customerNameController = TextEditingController(
+      text: widget.customerName ?? '',
+    );
     _postcodeController = TextEditingController(text: widget.postcode ?? '');
   }
 
@@ -105,7 +108,8 @@ class _PmLeadWizardState extends State<PmLeadWizard> {
 
     final success = await PillarClient.raiseEnquiry(
       category: 'PM_INTEREST',
-      description: 'Project Management Lead: $_selectedProjectType ($_selectedBudget, $_selectedTimeline)',
+      description:
+          'Project Management Lead: $_selectedProjectType ($_selectedBudget, $_selectedTimeline)',
       details: details,
       jobId: widget.jobId,
       customerName: _customerNameController.text.trim(),
@@ -191,9 +195,7 @@ class _PmLeadWizardState extends State<PmLeadWizard> {
           ],
 
           Expanded(
-            child: SingleChildScrollView(
-              child: _buildStepContent(theme),
-            ),
+            child: SingleChildScrollView(child: _buildStepContent(theme)),
           ),
 
           if (_currentStep < 3)
@@ -310,7 +312,10 @@ class _PmLeadWizardState extends State<PmLeadWizard> {
                 onTap: () => setState(() => _selectedProjectType = item),
                 child: Container(
                   margin: EdgeInsets.only(bottom: 8.h),
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
                     color: selected
                         ? AppColors.primaryBlue.withValues(alpha: 0.08)
@@ -326,7 +331,9 @@ class _PmLeadWizardState extends State<PmLeadWizard> {
                       Icon(
                         selected ? LucideIcons.circleDot : LucideIcons.circle,
                         size: 18.sp,
-                        color: selected ? AppColors.primaryBlue : theme.textMuted,
+                        color: selected
+                            ? AppColors.primaryBlue
+                            : theme.textMuted,
                       ),
                       SizedBox(width: 10.w),
                       Expanded(
@@ -334,8 +341,9 @@ class _PmLeadWizardState extends State<PmLeadWizard> {
                           item,
                           style: TextStyle(
                             fontSize: 13.sp,
-                            fontWeight:
-                                selected ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                             color: theme.text,
                           ),
                         ),
@@ -361,20 +369,37 @@ class _PmLeadWizardState extends State<PmLeadWizard> {
               ),
             ),
             SizedBox(height: 12.h),
-            Text('Project Scope & Client Requirements', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: theme.text)),
+            Text(
+              'Project Scope & Client Requirements',
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: theme.text,
+              ),
+            ),
             SizedBox(height: 6.h),
             TextField(
               controller: _scopeController,
               maxLines: 3,
               style: TextStyle(fontSize: 13.sp, color: theme.text),
               decoration: InputDecoration(
-                hintText: 'e.g. Complete rip-out of existing suite, new walk-in shower...',
+                hintText:
+                    'e.g. Complete rip-out of existing suite, new walk-in shower...',
                 hintStyle: TextStyle(color: theme.textMuted, fontSize: 12.sp),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
               ),
             ),
             SizedBox(height: 14.h),
-            Text('Measurements / Dimensions', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: theme.text)),
+            Text(
+              'Measurements / Dimensions',
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: theme.text,
+              ),
+            ),
             SizedBox(height: 6.h),
             TextField(
               controller: _measurementsController,
@@ -383,7 +408,9 @@ class _PmLeadWizardState extends State<PmLeadWizard> {
               decoration: InputDecoration(
                 hintText: 'e.g. 2.4m x 1.8m, ceiling height 2.5m...',
                 hintStyle: TextStyle(color: theme.textMuted, fontSize: 12.sp),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
               ),
             ),
           ],
@@ -402,31 +429,108 @@ class _PmLeadWizardState extends State<PmLeadWizard> {
               ),
             ),
             SizedBox(height: 12.h),
-            Text('Estimated Budget Bracket', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: theme.text)),
+            Text(
+              'Estimated Budget Bracket',
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: theme.text,
+              ),
+            ),
             SizedBox(height: 6.h),
             DropdownButtonFormField<String>(
-              value: _selectedBudget,
-              items: _budgetOptions.map((b) => DropdownMenuItem(value: b, child: Text(b, style: TextStyle(fontSize: 13.sp, color: theme.text)))).toList(),
-              onChanged: (v) => setState(() => _selectedBudget = v ?? _selectedBudget),
-              decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+              initialValue: _selectedBudget,
+              items: _budgetOptions
+                  .map(
+                    (b) => DropdownMenuItem(
+                      value: b,
+                      child: Text(
+                        b,
+                        style: TextStyle(fontSize: 13.sp, color: theme.text),
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) =>
+                  setState(() => _selectedBudget = v ?? _selectedBudget),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
             ),
             SizedBox(height: 12.h),
-            Text('Timeline', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: theme.text)),
+            Text(
+              'Timeline',
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: theme.text,
+              ),
+            ),
             SizedBox(height: 6.h),
             DropdownButtonFormField<String>(
-              value: _selectedTimeline,
-              items: _timelineOptions.map((t) => DropdownMenuItem(value: t, child: Text(t, style: TextStyle(fontSize: 13.sp, color: theme.text)))).toList(),
-              onChanged: (v) => setState(() => _selectedTimeline = v ?? _selectedTimeline),
-              decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+              initialValue: _selectedTimeline,
+              items: _timelineOptions
+                  .map(
+                    (t) => DropdownMenuItem(
+                      value: t,
+                      child: Text(
+                        t,
+                        style: TextStyle(fontSize: 13.sp, color: theme.text),
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) =>
+                  setState(() => _selectedTimeline = v ?? _selectedTimeline),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
             ),
             SizedBox(height: 12.h),
-            Text('Customer Name', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: theme.text)),
+            Text(
+              'Customer Name',
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: theme.text,
+              ),
+            ),
             SizedBox(height: 4.h),
-            TextField(controller: _customerNameController, style: TextStyle(fontSize: 13.sp, color: theme.text), decoration: InputDecoration(isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)))),
+            TextField(
+              controller: _customerNameController,
+              style: TextStyle(fontSize: 13.sp, color: theme.text),
+              decoration: InputDecoration(
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+            ),
             SizedBox(height: 10.h),
-            Text('Phone Number', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: theme.text)),
+            Text(
+              'Phone Number',
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: theme.text,
+              ),
+            ),
             SizedBox(height: 4.h),
-            TextField(controller: _phoneController, keyboardType: TextInputType.phone, style: TextStyle(fontSize: 13.sp, color: theme.text), decoration: InputDecoration(isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)))),
+            TextField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              style: TextStyle(fontSize: 13.sp, color: theme.text),
+              decoration: InputDecoration(
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+            ),
           ],
         );
 
@@ -464,10 +568,7 @@ class _PmLeadWizardState extends State<PmLeadWizard> {
                 child: Text(
                   'Recorded in Firestore spine (demo_customer_enquiries) with category PM_INTEREST and origin NAV_APP.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: theme.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 12.sp, color: theme.textMuted),
                 ),
               ),
               SizedBox(height: 30.h),

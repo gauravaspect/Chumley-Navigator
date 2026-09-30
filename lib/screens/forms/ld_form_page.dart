@@ -1,16 +1,18 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/log.dart';
 import 'package:chumley_navigator/pillar/jobs_repository.dart';
+import 'package:chumley_navigator/screens/forms/ld/steps/ld_customer_tab.dart';
+import 'package:chumley_navigator/screens/forms/ld/steps/ld_information_tab.dart';
+import 'package:chumley_navigator/screens/forms/ld/steps/ld_visual_tab.dart';
+import 'package:chumley_navigator/screens/forms/ld/widgets/ld_form_helpers.dart';
 import 'package:chumley_navigator/screens/forms/widgets/hse_risk_section.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Lightning / LD inspection form — Information, Customer Details, Visual Inspection.
 class LdFormPage extends StatefulWidget {
@@ -141,13 +143,16 @@ class _LdFormPageState extends State<LdFormPage>
             _pdfUrlController.text = answers['pdf_url'].toString();
           }
           if (answers['front_of_property'] != null) {
-            _frontOfPropertyController.text = answers['front_of_property'].toString();
+            _frontOfPropertyController.text = answers['front_of_property']
+                .toString();
           }
           if (answers['visual_image_desc'] != null) {
-            _visualImageDescController.text = answers['visual_image_desc'].toString();
+            _visualImageDescController.text = answers['visual_image_desc']
+                .toString();
           }
           if (answers['visual_findings'] != null) {
-            _visualFindingsController.text = answers['visual_findings'].toString();
+            _visualFindingsController.text = answers['visual_findings']
+                .toString();
           }
           if (answers['weather_other'] != null) {
             _weatherOtherController.text = answers['weather_other'].toString();
@@ -162,7 +167,9 @@ class _LdFormPageState extends State<LdFormPage>
             _selectedWeather = answers['weather'] as String?;
           }
           if (answers['survey_date_time'] != null) {
-            _surveyDateTime = DateTime.tryParse(answers['survey_date_time'].toString());
+            _surveyDateTime = DateTime.tryParse(
+              answers['survey_date_time'].toString(),
+            );
           }
           final rawHse = answers['hse'];
           if (rawHse is Map) {
@@ -179,18 +186,18 @@ class _LdFormPageState extends State<LdFormPage>
   }
 
   Map<String, dynamic> _buildAnswersMap() => {
-        'form_name': _formNameController.text.trim(),
-        'pdf_url': _pdfUrlController.text.trim(),
-        'service_appointment': _selectedAppointment,
-        'operative': _selectedOperative,
-        'front_of_property': _frontOfPropertyController.text.trim(),
-        'weather': _selectedWeather,
-        'weather_other': _weatherOtherController.text.trim(),
-        'survey_date_time': _surveyDateTime?.toIso8601String(),
-        'visual_image_desc': _visualImageDescController.text.trim(),
-        'visual_findings': _visualFindingsController.text.trim(),
-        'hse': _hse.toMap(),
-      };
+    'form_name': _formNameController.text.trim(),
+    'pdf_url': _pdfUrlController.text.trim(),
+    'service_appointment': _selectedAppointment,
+    'operative': _selectedOperative,
+    'front_of_property': _frontOfPropertyController.text.trim(),
+    'weather': _selectedWeather,
+    'weather_other': _weatherOtherController.text.trim(),
+    'survey_date_time': _surveyDateTime?.toIso8601String(),
+    'visual_image_desc': _visualImageDescController.text.trim(),
+    'visual_findings': _visualFindingsController.text.trim(),
+    'hse': _hse.toMap(),
+  };
 
   @override
   void dispose() {
@@ -274,7 +281,7 @@ class _LdFormPageState extends State<LdFormPage>
           ),
           child: Column(
             children: [
-              _pickerHeader(
+              LdFormHelpers.buildPickerHeader(
                 theme: theme,
                 title: 'Survey date',
                 onCancel: () => Navigator.pop(sheetContext),
@@ -342,7 +349,7 @@ class _LdFormPageState extends State<LdFormPage>
           ),
           child: Column(
             children: [
-              _pickerHeader(
+              LdFormHelpers.buildPickerHeader(
                 theme: theme,
                 title: 'Survey time',
                 onCancel: () => Navigator.pop(sheetContext),
@@ -394,53 +401,6 @@ class _LdFormPageState extends State<LdFormPage>
         _surveyDateTime = value;
       }
     });
-  }
-
-  Widget _pickerHeader({
-    required DashboardTheme theme,
-    required String title,
-    required VoidCallback onCancel,
-    required VoidCallback onDone,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: theme.dashBorderLight)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          CupertinoButton(
-            padding: EdgeInsets.zero,
-            onPressed: onCancel,
-            child: Text(
-              'Cancel',
-              style: TextStyle(fontSize: 16.sp, color: theme.dashSubtitle),
-            ),
-          ),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: theme.dashTitle,
-            ),
-          ),
-          CupertinoButton(
-            padding: EdgeInsets.zero,
-            onPressed: onDone,
-            child: Text(
-              'Done',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-                color: theme.dashPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   bool _validateForSave() {
@@ -585,9 +545,7 @@ class _LdFormPageState extends State<LdFormPage>
                                   fontSize: 13.sp,
                                   fontWeight: FontWeight.w500,
                                 ),
-                                tabs: [
-                                  for (final t in _tabs) Tab(text: t),
-                                ],
+                                tabs: [for (final t in _tabs) Tab(text: t)],
                               ),
                             ),
                           ),
@@ -596,9 +554,47 @@ class _LdFormPageState extends State<LdFormPage>
                           controller: _tabController,
                           children: [
                             _buildHseTab(theme),
-                            _buildInformationTab(theme),
-                            _buildCustomerTab(theme),
-                            _buildVisualTab(theme),
+                            LdInformationTab(
+                              theme: theme,
+                              formNameController: _formNameController,
+                              pdfUrlController: _pdfUrlController,
+                              appointmentSearchController:
+                                  _appointmentSearchController,
+                              workOrderDisplay: _workOrderDisplay,
+                              selectedAppointment: _selectedAppointment,
+                              serviceAppointments: _serviceAppointments,
+                              onAppointmentChanged: (v) =>
+                                  setState(() => _selectedAppointment = v),
+                            ),
+                            LdCustomerTab(
+                              theme: theme,
+                              frontOfPropertyController:
+                                  _frontOfPropertyController,
+                              operativeSearchController:
+                                  _operativeSearchController,
+                              selectedOperative: _selectedOperative,
+                              people: _people,
+                              surveyDateTime: _surveyDateTime,
+                              dateTimeError: _dateTimeError,
+                              onOperativeChanged: (v) =>
+                                  setState(() => _selectedOperative = v),
+                              onPickSurveyDate: _pickSurveyDate,
+                              onPickSurveyTime: _pickSurveyTime,
+                              formatDate: _formatDate,
+                              formatTime: _formatTime,
+                            ),
+                            LdVisualTab(
+                              theme: theme,
+                              visualImageDescController:
+                                  _visualImageDescController,
+                              visualFindingsController:
+                                  _visualFindingsController,
+                              weatherOtherController: _weatherOtherController,
+                              selectedWeather: _selectedWeather,
+                              weatherOptions: _weatherOptions,
+                              onWeatherChanged: (v) =>
+                                  setState(() => _selectedWeather = v),
+                            ),
                           ],
                         ),
                       ),
@@ -743,423 +739,6 @@ class _LdFormPageState extends State<LdFormPage>
           onChanged: () => setState(() {}),
         ),
       ],
-    );
-  }
-
-  Widget _buildInformationTab(DashboardTheme theme) {
-    return ListView(
-      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-      children: [
-        _labeledField(
-          theme: theme,
-          label: 'LD Form Name',
-          child: _textField(
-            theme: theme,
-            controller: _formNameController,
-            hint: 'Enter LD form name',
-          ),
-        ),
-        SizedBox(height: 14.h),
-        _labeledField(
-          theme: theme,
-          label: 'Work Order',
-          child: _readOnlyField(theme: theme, value: _workOrderDisplay),
-        ),
-        SizedBox(height: 14.h),
-        _labeledField(
-          theme: theme,
-          label: 'LD Form PDF Url',
-          child: _textField(
-            theme: theme,
-            controller: _pdfUrlController,
-            hint: 'https://…',
-            keyboardType: TextInputType.url,
-          ),
-        ),
-        SizedBox(height: 14.h),
-        _labeledField(
-          theme: theme,
-          label: 'Service Appointment',
-          child: _searchableDropdown(
-            theme: theme,
-            value: _selectedAppointment,
-            items: _serviceAppointments,
-            hint: 'Search Service Appointments',
-            searchController: _appointmentSearchController,
-            onChanged: (v) => setState(() => _selectedAppointment = v),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCustomerTab(DashboardTheme theme) {
-    final dateLabel = _surveyDateTime == null
-        ? 'Select date'
-        : _formatDate(_surveyDateTime!);
-    final timeLabel = _surveyDateTime == null
-        ? 'Select time'
-        : _formatTime(_surveyDateTime!);
-
-    return ListView(
-      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-      children: [
-        _labeledField(
-          theme: theme,
-          label: 'Operative Name',
-          child: _searchableDropdown(
-            theme: theme,
-            value: _selectedOperative,
-            items: _people,
-            hint: 'Search People',
-            searchController: _operativeSearchController,
-            onChanged: (v) => setState(() => _selectedOperative = v),
-          ),
-        ),
-        SizedBox(height: 14.h),
-        _labeledField(
-          theme: theme,
-          label: 'Description for image — Front of Property',
-          child: _expandableField(
-            theme: theme,
-            controller: _frontOfPropertyController,
-            hint: 'Describe the front-of-property image…',
-          ),
-        ),
-        SizedBox(height: 14.h),
-        _labeledField(
-          theme: theme,
-          label: 'Survey Date / Time',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _pickerButton(
-                      theme: theme,
-                      icon: LucideIcons.calendar,
-                      label: dateLabel,
-                      onTap: _pickSurveyDate,
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: _pickerButton(
-                      theme: theme,
-                      icon: LucideIcons.clock,
-                      label: timeLabel,
-                      onTap: _pickSurveyTime,
-                    ),
-                  ),
-                ],
-              ),
-              if (_dateTimeError != null) ...[
-                SizedBox(height: 8.h),
-                Text(
-                  _dateTimeError!,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.errorText,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVisualTab(DashboardTheme theme) {
-    return ListView(
-      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-      children: [
-        _labeledField(
-          theme: theme,
-          label: 'Description for visual inspection image',
-          child: _expandableField(
-            theme: theme,
-            controller: _visualImageDescController,
-            hint: 'Describe the visual inspection image…',
-          ),
-        ),
-        SizedBox(height: 14.h),
-        _labeledField(
-          theme: theme,
-          label: 'Findings from visual inspection',
-          child: _expandableField(
-            theme: theme,
-            controller: _visualFindingsController,
-            hint: 'Record findings from the visual inspection…',
-          ),
-        ),
-        SizedBox(height: 14.h),
-        _labeledField(
-          theme: theme,
-          label: 'How is the weather during survey',
-          child: _simpleDropdown(
-            theme: theme,
-            value: _selectedWeather,
-            items: _weatherOptions,
-            hint: 'Select weather',
-            onChanged: (v) => setState(() => _selectedWeather = v),
-          ),
-        ),
-        SizedBox(height: 14.h),
-        _labeledField(
-          theme: theme,
-          label: 'Weather other details',
-          child: _expandableField(
-            theme: theme,
-            controller: _weatherOtherController,
-            hint: 'Additional weather details…',
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _labeledField({
-    required DashboardTheme theme,
-    required String label,
-    required Widget child,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: theme.text,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        child,
-      ],
-    );
-  }
-
-  InputDecoration _inputDecoration(DashboardTheme theme, {String? hint}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(fontSize: 13.sp, color: theme.textMuted),
-      filled: true,
-      fillColor: theme.surfaceDeep,
-      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: theme.border, width: 0.5),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: theme.border, width: 0.5),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: theme.accent, width: 0.5),
-      ),
-    );
-  }
-
-  Widget _textField({
-    required DashboardTheme theme,
-    required TextEditingController controller,
-    String? hint,
-    TextInputType? keyboardType,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: TextStyle(fontSize: 13.sp, color: theme.text),
-      decoration: _inputDecoration(theme, hint: hint),
-    );
-  }
-
-  Widget _expandableField({
-    required DashboardTheme theme,
-    required TextEditingController controller,
-    String? hint,
-  }) {
-    return TextField(
-      controller: controller,
-      minLines: 3,
-      maxLines: 8,
-      style: TextStyle(fontSize: 13.sp, color: theme.text, height: 1.4),
-      decoration: _inputDecoration(theme, hint: hint),
-    );
-  }
-
-  Widget _readOnlyField({
-    required DashboardTheme theme,
-    required String value,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
-      decoration: BoxDecoration(
-        color: theme.surfaceDeep,
-        borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: theme.border, width: 0.5),
-      ),
-      child: Text(
-        value,
-        style: TextStyle(
-          fontSize: 13.sp,
-          color: theme.textMuted,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  Widget _pickerButton({
-    required DashboardTheme theme,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: theme.surfaceDeep,
-      borderRadius: BorderRadius.circular(10.r),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10.r),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(color: theme.border, width: 0.5),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 16.sp, color: theme.textMuted),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(fontSize: 13.sp, color: theme.text),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _simpleDropdown({
-    required DashboardTheme theme,
-    required String? value,
-    required List<String> items,
-    required String hint,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonFormField2<String>(
-      value: value,
-      isExpanded: true,
-      decoration: _inputDecoration(theme),
-      hint: Text(hint, style: TextStyle(fontSize: 13.sp, color: theme.textMuted)),
-      iconStyleData: IconStyleData(
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: theme.textMuted,
-          size: 20.sp,
-        ),
-      ),
-      dropdownStyleData: DropdownStyleData(
-        decoration: BoxDecoration(
-          color: theme.surface,
-          border: Border.all(color: theme.border, width: 0.5),
-          borderRadius: BorderRadius.circular(10.r),
-        ),
-      ),
-      style: TextStyle(fontSize: 13.sp, color: theme.text),
-      items: items
-          .map(
-            (item) => DropdownMenuItem<String>(
-              value: item,
-              child: Text(item),
-            ),
-          )
-          .toList(),
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _searchableDropdown({
-    required DashboardTheme theme,
-    required String? value,
-    required List<String> items,
-    required String hint,
-    required TextEditingController searchController,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonFormField2<String>(
-      value: value,
-      isExpanded: true,
-      decoration: _inputDecoration(theme),
-      hint: Text(hint, style: TextStyle(fontSize: 13.sp, color: theme.textMuted)),
-      iconStyleData: IconStyleData(
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: theme.textMuted,
-          size: 20.sp,
-        ),
-      ),
-      dropdownStyleData: DropdownStyleData(
-        maxHeight: 280.h,
-        decoration: BoxDecoration(
-          color: theme.surface,
-          border: Border.all(color: theme.border, width: 0.5),
-          borderRadius: BorderRadius.circular(10.r),
-        ),
-      ),
-      style: TextStyle(fontSize: 13.sp, color: theme.text),
-      items: items
-          .map(
-            (item) => DropdownMenuItem<String>(
-              value: item,
-              child: Text(item, overflow: TextOverflow.ellipsis),
-            ),
-          )
-          .toList(),
-      onChanged: onChanged,
-      dropdownSearchData: DropdownSearchData(
-        searchController: searchController,
-        searchInnerWidgetHeight: 50.h,
-        searchInnerWidget: Container(
-          height: 50.h,
-          padding: EdgeInsets.fromLTRB(8.w, 8.h, 8.w, 4.h),
-          child: TextFormField(
-            expands: true,
-            maxLines: null,
-            controller: searchController,
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 10.w,
-                vertical: 8.h,
-              ),
-              hintText: hint,
-              hintStyle: TextStyle(fontSize: 12.sp, color: theme.textMuted),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-            ),
-          ),
-        ),
-        searchMatchFn: (item, searchValue) {
-          final text = item.value?.toString().toLowerCase() ?? '';
-          return text.contains(searchValue.toLowerCase());
-        },
-      ),
-      onMenuStateChange: (isOpen) {
-        if (!isOpen) searchController.clear();
-      },
     );
   }
 }

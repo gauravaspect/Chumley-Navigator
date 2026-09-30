@@ -8,12 +8,9 @@ import 'package:chumley_navigator/screens/job_details/repo/appointments_reposito
 import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
 
 class JobsRepository {
-  JobsRepository({
-    FormDraftStore? drafts,
-    AppointmentsRepository? appointments,
-  })  : _drafts = drafts ?? FormDraftStore(),
-        _appointments =
-            appointments ?? AppDependencies.appointmentsRepository;
+  JobsRepository({FormDraftStore? drafts, AppointmentsRepository? appointments})
+    : _drafts = drafts ?? FormDraftStore(),
+      _appointments = appointments ?? AppDependencies.appointmentsRepository;
 
   final FormDraftStore _drafts;
   final AppointmentsRepository _appointments;
@@ -33,7 +30,8 @@ class JobsRepository {
   }) async {
     if (formStepIndex != 0) return;
     final current = await resolveStatus(saId, '');
-    if (SaStatus.normalizedKey(current) == SaStatus.normalizedKey(SaStatus.onSite)) {
+    if (SaStatus.normalizedKey(current) ==
+        SaStatus.normalizedKey(SaStatus.onSite)) {
       return;
     }
     final detail = await fetchAppointment(saId);
@@ -77,7 +75,10 @@ class JobsRepository {
       }
       return detail;
     } catch (e) {
-      Log('API fetchFormDetail failed for $saId / $workTypeId: $e', name: 'JobsRepository');
+      Log(
+        'API fetchFormDetail failed for $saId / $workTypeId: $e',
+        name: 'JobsRepository',
+      );
     }
 
     // Fallback: SharedPreferences local store
@@ -134,7 +135,10 @@ class JobsRepository {
         extraData: extraData,
       );
     } catch (e) {
-      Log('PUT form draft endpoint failed for $saId / $workTypeId: $e', name: 'JobsRepository');
+      Log(
+        'PUT form draft endpoint failed for $saId / $workTypeId: $e',
+        name: 'JobsRepository',
+      );
     }
   }
 
@@ -168,7 +172,10 @@ class JobsRepository {
         extraData: extraData,
       );
     } catch (e) {
-      Log('POST submit form API failed for $saId / $workTypeId: $e', name: 'JobsRepository');
+      Log(
+        'POST submit form API failed for $saId / $workTypeId: $e',
+        name: 'JobsRepository',
+      );
       rethrow;
     }
     final ok = await PillarClient.submitSignOff(
@@ -180,7 +187,10 @@ class JobsRepository {
       pmProjectId: pmProjectId,
     );
     if (!ok) {
-      Log('PillarClient submitSignOff skipped/returned false for $saId', name: 'JobsRepository');
+      Log(
+        'PillarClient submitSignOff skipped/returned false for $saId',
+        name: 'JobsRepository',
+      );
     }
     await _drafts.saveStatus(saId, SaStatus.jobClosure);
   }
@@ -208,7 +218,10 @@ class JobsRepository {
   Future<EngineerAppointmentDetail?> advanceToJobClosure(String saId) async {
     try {
       final detail = await fetchAppointment(saId);
-      final allowed = SaStatus.pickAllowed(detail.allowedNextStatuses, SaStatus.jobClosure);
+      final allowed = SaStatus.pickAllowed(
+        detail.allowedNextStatuses,
+        SaStatus.jobClosure,
+      );
       if (allowed != null) {
         return await setStatus(saId: saId, status: allowed);
       }
@@ -223,7 +236,10 @@ class JobsRepository {
   Future<EngineerAppointmentDetail?> advanceAfterSignOff(String saId) async {
     try {
       final detail = await fetchAppointment(saId);
-      final allowed = SaStatus.pickAllowed(detail.allowedNextStatuses, SaStatus.jobClosure);
+      final allowed = SaStatus.pickAllowed(
+        detail.allowedNextStatuses,
+        SaStatus.jobClosure,
+      );
       if (allowed != null) {
         return await setStatus(saId: saId, status: allowed);
       }

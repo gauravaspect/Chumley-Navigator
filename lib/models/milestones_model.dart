@@ -27,9 +27,12 @@ class MilestonesResponse extends Equatable {
     final rawMilestones = json['milestones'];
     final milestonesList = rawMilestones is List
         ? rawMilestones
-            .whereType<Map>()
-            .map((item) => MilestoneItem.fromJson(Map<String, dynamic>.from(item)))
-            .toList()
+              .whereType<Map>()
+              .map(
+                (item) =>
+                    MilestoneItem.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .toList()
         : <MilestoneItem>[];
 
     return MilestonesResponse(
@@ -38,10 +41,14 @@ class MilestonesResponse extends Equatable {
       tradeGroup: (json['tradeGroup'] ?? '').toString(),
       currentPoints: _readInt(json['currentPoints']),
       currentMilestone: json['currentMilestone'] != null
-          ? MilestoneItem.fromJson(Map<String, dynamic>.from(json['currentMilestone']))
+          ? MilestoneItem.fromJson(
+              Map<String, dynamic>.from(json['currentMilestone']),
+            )
           : null,
       nextMilestone: json['nextMilestone'] != null
-          ? MilestoneItem.fromJson(Map<String, dynamic>.from(json['nextMilestone']))
+          ? MilestoneItem.fromJson(
+              Map<String, dynamic>.from(json['nextMilestone']),
+            )
           : null,
       nextMilestoneProgress: _readDouble(json['nextMilestoneProgress']),
       pointsToNextMilestone: _readInt(json['pointsToNextMilestone']),
@@ -50,29 +57,29 @@ class MilestonesResponse extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
-        'engineerId': engineerId,
-        'engineerName': engineerName,
-        'tradeGroup': tradeGroup,
-        'currentPoints': currentPoints,
-        'currentMilestone': currentMilestone?.toJson(),
-        'nextMilestone': nextMilestone?.toJson(),
-        'nextMilestoneProgress': nextMilestoneProgress,
-        'pointsToNextMilestone': pointsToNextMilestone,
-        'milestones': milestones.map((e) => e.toJson()).toList(),
-      };
+    'engineerId': engineerId,
+    'engineerName': engineerName,
+    'tradeGroup': tradeGroup,
+    'currentPoints': currentPoints,
+    'currentMilestone': currentMilestone?.toJson(),
+    'nextMilestone': nextMilestone?.toJson(),
+    'nextMilestoneProgress': nextMilestoneProgress,
+    'pointsToNextMilestone': pointsToNextMilestone,
+    'milestones': milestones.map((e) => e.toJson()).toList(),
+  };
 
   @override
   List<Object?> get props => [
-        engineerId,
-        engineerName,
-        tradeGroup,
-        currentPoints,
-        currentMilestone,
-        nextMilestone,
-        nextMilestoneProgress,
-        pointsToNextMilestone,
-        milestones,
-      ];
+    engineerId,
+    engineerName,
+    tradeGroup,
+    currentPoints,
+    currentMilestone,
+    nextMilestone,
+    nextMilestoneProgress,
+    pointsToNextMilestone,
+    milestones,
+  ];
 }
 
 class MilestoneItem extends Equatable {
@@ -104,23 +111,23 @@ class MilestoneItem extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
-        'order': order,
-        'title': title,
-        'pointsRequired': pointsRequired,
-        'description': description,
-        'reward': reward,
-        'isUnlocked': isUnlocked,
-      };
+    'order': order,
+    'title': title,
+    'pointsRequired': pointsRequired,
+    'description': description,
+    'reward': reward,
+    'isUnlocked': isUnlocked,
+  };
 
   @override
   List<Object?> get props => [
-        order,
-        title,
-        pointsRequired,
-        description,
-        reward,
-        isUnlocked,
-      ];
+    order,
+    title,
+    pointsRequired,
+    description,
+    reward,
+    isUnlocked,
+  ];
 }
 
 int _readInt(dynamic value, [int fallback = 0]) {

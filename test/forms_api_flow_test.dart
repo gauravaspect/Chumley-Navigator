@@ -111,150 +111,155 @@ void main() {
       apiService = AppointmentsApiService(mockClient);
     });
 
-    test('fetchForms GET calls /api/engineer/appointments/{sa_id}/forms', () async {
-      mockClient.mockGetResponse = Response(
-        requestOptions: RequestOptions(path: ''),
-        statusCode: 200,
-        data: {
-          'success': true,
-          'forms': [
-            {
+    test(
+      'fetchForms GET calls /api/engineer/appointments/{sa_id}/forms',
+      () async {
+        mockClient.mockGetResponse = Response(
+          requestOptions: RequestOptions(path: ''),
+          statusCode: 200,
+          data: {
+            'success': true,
+            'forms': [
+              {
+                'id': 'f1',
+                'work_type_id': 'ld_form',
+                'title': 'LD Inspection Form',
+                'status': 'draft',
+                'is_draft': true,
+              },
+              {
+                'id': 'f2',
+                'work_type_id': 'damp_survey',
+                'title': 'Damp Survey Form',
+                'status': 'submitted',
+                'is_submitted': true,
+              },
+            ],
+          },
+        );
+
+        final forms = await apiService.fetchForms('SA-100');
+        expect(
+          mockClient.lastGetPath,
+          '/api/engineer/appointments/SA-100/forms',
+        );
+        expect(forms.length, 2);
+        expect(forms[0].workTypeId, 'ld_form');
+        expect(forms[0].isDraft, true);
+        expect(forms[1].workTypeId, 'damp_survey');
+        expect(forms[1].isSubmitted, true);
+      },
+    );
+
+    test(
+      'fetchFormDetail GET calls /api/engineer/appointments/{sa_id}/forms/{work_type_id}',
+      () async {
+        mockClient.mockGetResponse = Response(
+          requestOptions: RequestOptions(path: ''),
+          statusCode: 200,
+          data: {
+            'success': true,
+            'form': {
               'id': 'f1',
               'work_type_id': 'ld_form',
-              'title': 'LD Inspection Form',
+              'title': 'LD Inspection',
               'status': 'draft',
-              'is_draft': true,
+              'step': 2,
+              'answers': {
+                'weather': 'Sunny',
+                'visual_findings': 'Minor damp observed',
+              },
+              'photo_slots': {'front': 'https://example.com/front.jpg'},
             },
-            {
-              'id': 'f2',
-              'work_type_id': 'damp_survey',
-              'title': 'Damp Survey Form',
-              'status': 'submitted',
-              'is_submitted': true,
-            },
-          ]
-        },
-      );
+          },
+        );
 
-      final forms = await apiService.fetchForms('SA-100');
-      expect(mockClient.lastGetPath, '/api/engineer/appointments/SA-100/forms');
-      expect(forms.length, 2);
-      expect(forms[0].workTypeId, 'ld_form');
-      expect(forms[0].isDraft, true);
-      expect(forms[1].workTypeId, 'damp_survey');
-      expect(forms[1].isSubmitted, true);
-    });
+        final detail = await apiService.fetchFormDetail(
+          saId: 'SA-100',
+          workTypeId: 'ld_form',
+        );
+        expect(
+          mockClient.lastGetPath,
+          '/api/engineer/appointments/SA-100/forms/ld_form',
+        );
+        expect(detail.step, 2);
+        expect(detail.answers['weather'], 'Sunny');
+        expect(detail.photoSlots['front'], 'https://example.com/front.jpg');
+      },
+    );
 
-    test('fetchFormDetail GET calls /api/engineer/appointments/{sa_id}/forms/{work_type_id}', () async {
-      mockClient.mockGetResponse = Response(
-        requestOptions: RequestOptions(path: ''),
-        statusCode: 200,
-        data: {
-          'success': true,
-          'form': {
-            'id': 'f1',
-            'work_type_id': 'ld_form',
-            'title': 'LD Inspection',
-            'status': 'draft',
-            'step': 2,
-            'answers': {
-              'weather': 'Sunny',
-              'visual_findings': 'Minor damp observed',
-            },
-            'photo_slots': {
-              'front': 'https://example.com/front.jpg',
-            },
-          }
-        },
-      );
+    test(
+      'saveFormDraft PUT calls /api/engineer/appointments/{sa_id}/forms/{work_type_id}/draft with consistent payload',
+      () async {
+        mockClient.mockPutResponse = Response(
+          requestOptions: RequestOptions(path: ''),
+          statusCode: 200,
+          data: {
+            'success': true,
+            'form': {'work_type_id': 'ld_form', 'status': 'draft'},
+          },
+        );
 
-      final detail = await apiService.fetchFormDetail(
-        saId: 'SA-100',
-        workTypeId: 'ld_form',
-      );
-      expect(
-        mockClient.lastGetPath,
-        '/api/engineer/appointments/SA-100/forms/ld_form',
-      );
-      expect(detail.step, 2);
-      expect(detail.answers['weather'], 'Sunny');
-      expect(detail.photoSlots['front'], 'https://example.com/front.jpg');
-    });
+        final answers = {
+          'weather': 'Rainy',
+          'visual_findings': 'Inspection complete',
+        };
+        final photoSlots = {'site': 'https://example.com/site.jpg'};
 
-    test('saveFormDraft PUT calls /api/engineer/appointments/{sa_id}/forms/{work_type_id}/draft with consistent payload', () async {
-      mockClient.mockPutResponse = Response(
-        requestOptions: RequestOptions(path: ''),
-        statusCode: 200,
-        data: {
-          'success': true,
-          'form': {
-            'work_type_id': 'ld_form',
-            'status': 'draft',
-          }
-        },
-      );
+        await apiService.saveFormDraft(
+          saId: 'SA-100',
+          workTypeId: 'ld_form',
+          answers: answers,
+          photoSlots: photoSlots,
+          step: 1,
+        );
 
-      final answers = {
-        'weather': 'Rainy',
-        'visual_findings': 'Inspection complete',
-      };
-      final photoSlots = {'site': 'https://example.com/site.jpg'};
+        expect(
+          mockClient.lastPutPath,
+          '/api/engineer/appointments/SA-100/forms/ld_form/draft',
+        );
+        final payload = mockClient.lastPutData as Map<String, dynamic>;
+        expect(payload['answers'], answers);
+        expect(payload['photo_slots'], photoSlots);
+        expect(payload['step'], 1);
+      },
+    );
 
-      await apiService.saveFormDraft(
-        saId: 'SA-100',
-        workTypeId: 'ld_form',
-        answers: answers,
-        photoSlots: photoSlots,
-        step: 1,
-      );
+    test(
+      'submitForm POST calls /api/engineer/appointments/{sa_id}/forms/{work_type_id}/submit with consistent payload',
+      () async {
+        mockClient.mockPostResponse = Response(
+          requestOptions: RequestOptions(path: ''),
+          statusCode: 200,
+          data: {'success': true, 'message': 'Form submitted successfully'},
+        );
 
-      expect(
-        mockClient.lastPutPath,
-        '/api/engineer/appointments/SA-100/forms/ld_form/draft',
-      );
-      final payload = mockClient.lastPutData as Map<String, dynamic>;
-      expect(payload['answers'], answers);
-      expect(payload['photo_slots'], photoSlots);
-      expect(payload['step'], 1);
-    });
+        final answers = {'weather': 'Rainy', 'works_completed': true};
 
-    test('submitForm POST calls /api/engineer/appointments/{sa_id}/forms/{work_type_id}/submit with consistent payload', () async {
-      mockClient.mockPostResponse = Response(
-        requestOptions: RequestOptions(path: ''),
-        statusCode: 200,
-        data: {
-          'success': true,
-          'message': 'Form submitted successfully',
-        },
-      );
+        final result = await apiService.submitForm(
+          saId: 'SA-100',
+          workTypeId: 'damp_survey',
+          answers: answers,
+          photoSlots: const {},
+        );
 
-      final answers = {
-        'weather': 'Rainy',
-        'works_completed': true,
-      };
-
-      final result = await apiService.submitForm(
-        saId: 'SA-100',
-        workTypeId: 'damp_survey',
-        answers: answers,
-        photoSlots: const {},
-      );
-
-      expect(
-        mockClient.lastPostPath,
-        '/api/engineer/appointments/SA-100/forms/damp_survey/submit',
-      );
-      final payload = mockClient.lastPostData as Map<String, dynamic>;
-      expect(payload['answers'], answers);
-      expect(payload['photo_slots'], const {});
-      expect(result['success'], true);
-    });
+        expect(
+          mockClient.lastPostPath,
+          '/api/engineer/appointments/SA-100/forms/damp_survey/submit',
+        );
+        final payload = mockClient.lastPostData as Map<String, dynamic>;
+        expect(payload['answers'], answers);
+        expect(payload['photo_slots'], const {});
+        expect(result['success'], true);
+      },
+    );
   });
 
   group('HseRiskFormController Serialization', () {
     test('toMap and fromMap serialize and restore all risk fields', () {
       final controller = HseRiskFormController();
-      controller.riskAssessment = 'Yes - risk assessment completed, standard controls in place';
+      controller.riskAssessment =
+          'Yes - risk assessment completed, standard controls in place';
       controller.workAtHeight = 'Yes - work at height in scope today';
       controller.safeIsolation = 'Yes - locked off and proved dead';
       controller.clientBriefed = 'Briefed and consent given';
@@ -278,35 +283,35 @@ void main() {
   });
 
   group('JobsRepository Forms Flow', () {
-    test('saveFormDraft saves to local store and calls repository API', () async {
-      final mockClient = MockApiClient();
-      final apiService = AppointmentsApiService(mockClient);
-      final repo = AppointmentsRepository(apiService);
-      final draftStore = FormDraftStore();
-      final jobs = JobsRepository(drafts: draftStore, appointments: repo);
+    test(
+      'saveFormDraft saves to local store and calls repository API',
+      () async {
+        final mockClient = MockApiClient();
+        final apiService = AppointmentsApiService(mockClient);
+        final repo = AppointmentsRepository(apiService);
+        final draftStore = FormDraftStore();
+        final jobs = JobsRepository(drafts: draftStore, appointments: repo);
 
-      final answers = {
-        'form_name': 'LD Form',
-        'weather': 'Sunny',
-      };
+        final answers = {'form_name': 'LD Form', 'weather': 'Sunny'};
 
-      await jobs.saveFormDraft(
-        saId: 'SA-999',
-        workTypeId: 'ld_form',
-        answers: answers,
-        step: 2,
-      );
+        await jobs.saveFormDraft(
+          saId: 'SA-999',
+          workTypeId: 'ld_form',
+          answers: answers,
+          step: 2,
+        );
 
-      final localAnswers = await draftStore.loadAnswers('SA-999');
-      expect(localAnswers['form_name'], 'LD Form');
-      expect(localAnswers['weather'], 'Sunny');
-      final localStep = await draftStore.loadFurthestStep('SA-999');
-      expect(localStep, 2);
+        final localAnswers = await draftStore.loadAnswers('SA-999');
+        expect(localAnswers['form_name'], 'LD Form');
+        expect(localAnswers['weather'], 'Sunny');
+        final localStep = await draftStore.loadFurthestStep('SA-999');
+        expect(localStep, 2);
 
-      expect(
-        mockClient.lastPutPath,
-        '/api/engineer/appointments/SA-999/forms/ld_form/draft',
-      );
-    });
+        expect(
+          mockClient.lastPutPath,
+          '/api/engineer/appointments/SA-999/forms/ld_form/draft',
+        );
+      },
+    );
   });
 }

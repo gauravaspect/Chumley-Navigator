@@ -8,8 +8,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// Tracks the active route so the global Chumley AI tab can hide on auth/splash.
 class ChumleyAiRouteObserver extends NavigatorObserver {
   /// Start on splash so the FAB is hidden before the first observer event.
-  static final ValueNotifier<String?> routeName =
-      ValueNotifier<String?>(AppRoutes.splash);
+  static final ValueNotifier<String?> routeName = ValueNotifier<String?>(
+    AppRoutes.splash,
+  );
 
   void _setRoute(Route<dynamic>? route) {
     final name = route?.settings.name;
@@ -58,8 +59,7 @@ class ChumleyAiAppOverlay extends StatelessWidget {
       valueListenable: ChumleyAiRouteObserver.routeName,
       builder: (context, routeName, _) {
         // Hidden on splash, login, chumley chat, and before any named route.
-        final showFab =
-            routeName != null && !_hiddenRoutes.contains(routeName);
+        final showFab = routeName != null && !_hiddenRoutes.contains(routeName);
 
         return Stack(
           fit: StackFit.expand,
@@ -117,10 +117,7 @@ class ChumleyAiFloatingButton extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.streakOrange,
-                  AppColors.primaryBlue,
-                ],
+                colors: [AppColors.streakOrange, AppColors.primaryBlue],
               ),
             ),
             child: Padding(
@@ -131,7 +128,10 @@ class ChumleyAiFloatingButton extends StatelessWidget {
                   if (unreadCount > 0) ...[
                     Container(
                       constraints: BoxConstraints(minWidth: 20.w),
-                      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 5.w,
+                        vertical: 2.h,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(999.r),

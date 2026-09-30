@@ -31,10 +31,7 @@ class LeaderboardLoaded extends LeaderboardState {
 }
 
 class LeaderboardError extends LeaderboardState {
-  const LeaderboardError({
-    required this.message,
-    this.cachedLeaderboard,
-  });
+  const LeaderboardError({required this.message, this.cachedLeaderboard});
 
   final String message;
   final LeaderboardResponse? cachedLeaderboard;

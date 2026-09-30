@@ -66,7 +66,7 @@ class VcrExamplePhotoCard extends StatelessWidget {
                           color: AppColors.primaryBlue,
                           value: progress.expectedTotalBytes != null
                               ? progress.cumulativeBytesLoaded /
-                                  progress.expectedTotalBytes!
+                                    progress.expectedTotalBytes!
                               : null,
                         ),
                       ),

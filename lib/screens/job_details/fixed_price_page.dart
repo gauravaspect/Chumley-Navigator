@@ -1,24 +1,26 @@
+import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/models/fixed_price_job_context.dart';
+import 'package:chumley_navigator/models/fixed_price_model.dart';
+import 'package:chumley_navigator/models/fixed_price_submit_payload.dart';
+import 'package:chumley_navigator/models/user_model.dart';
+import 'package:chumley_navigator/screens/job_details/cubit/fixed_price_cubit.dart';
+import 'package:chumley_navigator/screens/job_details/cubit/fixed_price_state.dart';
+import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_catalog_step.dart';
+import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_confirmation_step.dart';
+import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_operative_step.dart';
+import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_pricing_step.dart';
+import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_review_step.dart';
+import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_scope_step.dart';
+import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
+import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
+import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
+import 'package:chumley_navigator/widgets/ui/outlined_cta_button.dart';
+import 'package:chumley_navigator/widgets/ui/primary_cta_button.dart';
+import 'package:chumley_navigator/widgets/ui/screen_title_block.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
-
-import '../../components/common/aspect_branding.dart';
-import '../../utils/dashboard_theme.dart';
-import '../../utils/colors.dart';
-import '../../widgets/ui/command_centre_back_button.dart';
-import '../../widgets/ui/elevated_surface.dart';
-import '../../widgets/ui/primary_cta_button.dart';
-import '../../widgets/ui/outlined_cta_button.dart';
-import '../../widgets/ui/screen_title_block.dart';
-import '../../models/user_model.dart';
-import '../../models/fixed_price_job_context.dart';
-import '../../models/fixed_price_submit_payload.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../models/fixed_price_model.dart';
-import 'cubit/fixed_price_cubit.dart';
-import 'cubit/fixed_price_state.dart';
-import 'service/pillar_client.dart';
-import '../../shimmers/shimmer_box.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class FixedPricePage extends StatefulWidget {
   const FixedPricePage({super.key});
@@ -155,7 +157,6 @@ class _FixedPricePageState extends State<FixedPricePage> {
   @override
   void initState() {
     super.initState();
-    // Setup focus listeners to animate borders properly
     _scopeOfWorkFocusNode.addListener(() {
       setState(() => _scopeOfWorkFocused = _scopeOfWorkFocusNode.hasFocus);
     });
@@ -343,14 +344,16 @@ class _FixedPricePageState extends State<FixedPricePage> {
       additionalScope3: _additionalScope3Controller.text.trim(),
       collectionFeeApplicable: _collectionFeeApplicable!,
       listPriceServiceCode: _selectedListPriceService!,
-      operativeMaterialsCost:
-          _parsedMaterialCost(_materialCostOperativeController),
-      operativeMaterialsDescription:
-          _descriptionMaterialsOperativeController.text.trim(),
+      operativeMaterialsCost: _parsedMaterialCost(
+        _materialCostOperativeController,
+      ),
+      operativeMaterialsDescription: _descriptionMaterialsOperativeController
+          .text
+          .trim(),
       chargeDrainagePatches: _chargeDrainagePatches,
       aspectMaterialsCost: _parsedMaterialCost(_materialCostAspectController),
-      aspectMaterialsDescription:
-          _descriptionMaterialsAspectController.text.trim(),
+      aspectMaterialsDescription: _descriptionMaterialsAspectController.text
+          .trim(),
       ulezChargeApplicable: _ulezChargeApplicable!,
       labourRateLevel: _selectedLabourRate!,
       customerConfirmationChoice: _customerConfirmationChoice!,
@@ -386,17 +389,17 @@ class _FixedPricePageState extends State<FixedPricePage> {
     );
 
     if (errors.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errors.first)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errors.first)));
       return;
     }
 
     try {
       await context.read<FixedPriceCubit>().submitWorkOrder(
-            payload: payload,
-            context: salesforceContext,
-          );
+        payload: payload,
+        context: salesforceContext,
+      );
 
       // Also commit to Firestore demo_fp_submissions/fp-{jobId}
       final targetJobId = jobContext.sourceWorkOrderId.isNotEmpty
@@ -413,7 +416,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
               'service_price': _listPriceServiceCost,
               'materials_cost': _materialsCharge,
               'total_net': _totalCustomerCharges,
-            }
+            },
           ],
           totalNet: _totalCustomerCharges,
           totalGross: _totalCustomerCharges * 1.20,
@@ -435,9 +438,9 @@ class _FixedPricePageState extends State<FixedPricePage> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
@@ -622,98 +625,28 @@ class _FixedPricePageState extends State<FixedPricePage> {
   }
 
   // Builder functions for wizard steps
-  Widget _buildStepContent(DashboardTheme theme, FixedPriceJobContext? jobContext) {
+  Widget _buildStepContent(
+    DashboardTheme theme,
+    FixedPriceJobContext? jobContext,
+  ) {
     switch (_currentStep) {
       case 0:
-        return _buildStep1(theme);
-      case 1:
-        return _buildStep2(theme);
-      case 2:
-        return _buildStep3(theme);
-      case 3:
-        return _buildStep5(theme);
-      case 4:
-        return _buildStep7(theme);
-      case 5:
-        return _buildStep8(theme, jobContext);
-      default:
-        return _buildStep1(theme);
-    }
-  }
-
-  Widget _buildShimmerDropdown(DashboardTheme theme, String label) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: theme.text,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        ThemedShimmerBox(theme: theme, height: 48.h, radius: 10),
-      ],
-    );
-  }
-
-  Widget _buildStep1(DashboardTheme theme) {
-    final fixedPriceState = context.watch<FixedPriceCubit>().state;
-    final trades = fixedPriceState.trades;
-    final categories = fixedPriceState.categories;
-    final loadingCategories = fixedPriceState.loadingCategories;
-    final workTypes = fixedPriceState.workTypes;
-    final loadingWorkTypes = fixedPriceState.loadingWorkTypes;
-
-    if (fixedPriceState is FixedPriceLoading && trades.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildShimmerDropdown(theme, 'Please Select Trade *'),
-          SizedBox(height: 12.h),
-          _buildShimmerDropdown(theme, 'Please Select Category *'),
-          SizedBox(height: 12.h),
-          _buildShimmerDropdown(theme, 'Please Select Work Type *'),
-        ],
-      );
-    }
-
-    if (fixedPriceState is FixedPriceError && trades.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 24.h),
-          child: Column(
-            children: [
-              Text(
-                'Failed to load trades.',
-                style: TextStyle(color: theme.text, fontSize: 13.sp),
-              ),
-              SizedBox(height: 12.h),
-              TextButton(
-                onPressed: () => context.read<FixedPriceCubit>().loadTrades(
-                  forceRefresh: true,
-                ),
-                child: Text('Retry', style: TextStyle(color: theme.accent)),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final tradeIds = trades.map((t) => t.id).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildDropdownField(
-          label: 'Please Select Trade *',
-          value: _selectedTrade,
-          items: tradeIds,
-          hintText: 'Select Trade',
-          onChanged: (val) {
+        final fixedPriceState = context.watch<FixedPriceCubit>().state;
+        return FixedPriceCatalogStep(
+          theme: theme,
+          selectedTrade: _selectedTrade,
+          selectedCategory: _selectedCategory,
+          selectedWorkType: _selectedWorkType,
+          trades: fixedPriceState.trades,
+          categories: fixedPriceState.categories,
+          workTypes: fixedPriceState.workTypes,
+          loadingCategories: fixedPriceState.loadingCategories,
+          loadingWorkTypes: fixedPriceState.loadingWorkTypes,
+          isLoading: fixedPriceState is FixedPriceLoading,
+          isError: fixedPriceState is FixedPriceError,
+          onRetry: () =>
+              context.read<FixedPriceCubit>().loadTrades(forceRefresh: true),
+          onTradeChanged: (val) {
             setState(() {
               _selectedTrade = val;
               _selectedCategory = null;
@@ -723,1374 +656,129 @@ class _FixedPricePageState extends State<FixedPricePage> {
               context.read<FixedPriceCubit>().loadCategories(val);
             }
           },
+          onCategoryChanged: (val) {
+            setState(() {
+              _selectedCategory = val;
+              _selectedWorkType = null;
+            });
+            if (val != null) {
+              context.read<FixedPriceCubit>().loadWorkTypes(val);
+            }
+          },
+          onWorkTypeChanged: (val) {
+            setState(() {
+              _selectedWorkType = val;
+              if (val != null) {
+                _scopeOfWorkController.text = _generateMockScopeOfWork(
+                  _getTradeName(_selectedTrade),
+                  _getCategoryName(_selectedCategory),
+                  _getWorkTypeName(val),
+                );
+              }
+            });
+          },
+          tradeSearchController: _tradeSearchController,
+          categorySearchController: _categorySearchController,
+          workTypeSearchController: _workTypeSearchController,
+          getTradeName: _getTradeName,
+          getCategoryName: _getCategoryName,
+          getWorkTypeName: _getWorkTypeName,
+        );
+      case 1:
+        return FixedPriceScopeStep(
           theme: theme,
-          itemLabelBuilder: _getTradeName,
-          searchController: _tradeSearchController,
-        ),
-        SizedBox(height: 12.h),
-        if (loadingCategories && categories.isEmpty)
-          _buildShimmerDropdown(theme, 'Please Select Category *')
-        else
-          _buildDropdownField(
-            label: 'Please Select Category *',
-            value: _selectedCategory,
-            items: categories.map((c) => c.id).toList(),
-            hintText: _selectedTrade == null
-                ? 'Select Trade first'
-                : 'Select Category',
-            onChanged: _selectedTrade == null
-                ? null
-                : (val) {
-                    setState(() {
-                      _selectedCategory = val;
-                      _selectedWorkType = null;
-                    });
-                    if (val != null) {
-                      context.read<FixedPriceCubit>().loadWorkTypes(val);
-                    }
-                  },
-            theme: theme,
-            itemLabelBuilder: (id) {
-              final match = categories.firstWhere(
-                (c) => c.id == id,
-                orElse: () => const FixedPriceCategoryModel(id: '', name: ''),
-              );
-              return match.name;
-            },
-            searchController: _categorySearchController,
-          ),
-        SizedBox(height: 12.h),
-        if (loadingWorkTypes && workTypes.isEmpty)
-          _buildShimmerDropdown(theme, 'Please Select Work Type *')
-        else
-          _buildDropdownField(
-            label: 'Please Select Work Type *',
-            value: _selectedWorkType,
-            items: workTypes.map((w) => w.id).toList(),
-            hintText: _selectedCategory == null
-                ? 'Select Category first'
-                : 'Select Work Type',
-            onChanged: _selectedCategory == null
-                ? null
-                : (val) {
-                    setState(() {
-                      _selectedWorkType = val;
-                      if (val != null) {
-                        _scopeOfWorkController.text = _generateMockScopeOfWork(
-                          _getTradeName(_selectedTrade),
-                          _getCategoryName(_selectedCategory),
-                          _getWorkTypeName(val),
-                        );
-                      }
-                    });
-                  },
-            theme: theme,
-            itemLabelBuilder: _getWorkTypeName,
-            searchController: _workTypeSearchController,
-          ),
-      ],
-    );
-  }
-
-  Widget _buildStep2(DashboardTheme theme) {
-    final hasScopeError =
-        _scopeOfWorkController.text.trim().isNotEmpty &&
-        _scopeOfWorkController.text.split('\n').length < 5;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ElevatedSurface(
-          padding: EdgeInsets.all(16.r),
-          backgroundColor: theme.surface,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Selected Work Type',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.dashTitle,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _buildInfoRow(
-                'Trade:',
-                _selectedTrade != null ? _getTradeName(_selectedTrade) : '',
-                theme,
-              ),
-              _buildInfoRow(
-                'Group:',
-                _selectedCategory != null
-                    ? _getCategoryName(_selectedCategory)
-                    : '',
-                theme,
-              ),
-              _buildInfoRow(
-                'Work Type:',
-                _selectedWorkType != null
-                    ? _getWorkTypeName(_selectedWorkType)
-                    : '',
-                theme,
-              ),
-              Divider(color: theme.border, height: 20.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Approval Limit',
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: theme.text,
-                    ),
-                  ),
-                  Text(
-                    '£50,000',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.streakOrange,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-              Text(
-                'Your estimate may be priced over this value and accepted by the customer. If it is not accepted via the app it will automatically be sent to the Trade Manager before becoming available to the customer.',
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: theme.textMuted,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 20.h),
-        _buildMultilineTextField(
-          label: 'Scope of Work',
-          controller: _scopeOfWorkController,
-          focusNode: _scopeOfWorkFocusNode,
-          isFocused: _scopeOfWorkFocused,
-          hintText: 'Enter scope of work...',
+          selectedTradeName: _selectedTrade != null
+              ? _getTradeName(_selectedTrade)
+              : '',
+          selectedCategoryName: _selectedCategory != null
+              ? _getCategoryName(_selectedCategory)
+              : '',
+          selectedWorkTypeName: _selectedWorkType != null
+              ? _getWorkTypeName(_selectedWorkType)
+              : '',
+          scopeOfWorkController: _scopeOfWorkController,
+          scopeOfWorkFocusNode: _scopeOfWorkFocusNode,
+          scopeOfWorkFocused: _scopeOfWorkFocused,
+          additionalScope2Controller: _additionalScope2Controller,
+          additionalScope2FocusNode: _additionalScope2FocusNode,
+          additionalScope2Focused: _additionalScope2Focused,
+          additionalScope3Controller: _additionalScope3Controller,
+          additionalScope3FocusNode: _additionalScope3FocusNode,
+          additionalScope3Focused: _additionalScope3Focused,
+        );
+      case 2:
+        return FixedPricePricingStep(
           theme: theme,
-          isRequired: true,
-          errorText: hasScopeError
-              ? 'Scope of work must be at least 5 lines.'
-              : null,
-        ),
-        SizedBox(height: 12.h),
-        _buildMultilineTextField(
-          label: 'Additional Scope of Work 2',
-          controller: _additionalScope2Controller,
-          focusNode: _additionalScope2FocusNode,
-          isFocused: _additionalScope2Focused,
-          hintText: 'Enter additional scope of work (optional)...',
+          collectionFeeApplicable: _collectionFeeApplicable,
+          onCollectionFeeApplicableChanged: (val) =>
+              setState(() => _collectionFeeApplicable = val),
+          selectedListPriceService: _selectedListPriceService,
+          onListPriceServiceChanged: (val) =>
+              setState(() => _selectedListPriceService = val),
+          listPriceServices: _listPriceServices,
+          materialCostOperativeController: _materialCostOperativeController,
+          materialCostOperativeFocusNode: _materialCostOperativeFocusNode,
+          materialCostOperativeFocused: _materialCostOperativeFocused,
+          descriptionMaterialsOperativeController:
+              _descriptionMaterialsOperativeController,
+          descriptionMaterialsOperativeFocusNode:
+              _descriptionMaterialsOperativeFocusNode,
+          descriptionMaterialsOperativeFocused:
+              _descriptionMaterialsOperativeFocused,
+          chargeDrainagePatches: _chargeDrainagePatches,
+          onChargeDrainagePatchesChanged: (val) =>
+              setState(() => _chargeDrainagePatches = val),
+          materialCostAspectController: _materialCostAspectController,
+          materialCostAspectFocusNode: _materialCostAspectFocusNode,
+          materialCostAspectFocused: _materialCostAspectFocused,
+          descriptionMaterialsAspectController:
+              _descriptionMaterialsAspectController,
+          descriptionMaterialsAspectFocusNode:
+              _descriptionMaterialsAspectFocusNode,
+          descriptionMaterialsAspectFocused: _descriptionMaterialsAspectFocused,
+          ulezChargeApplicable: _ulezChargeApplicable,
+          onUlezChargeApplicableChanged: (val) =>
+              setState(() => _ulezChargeApplicable = val),
+          materialCostError: _materialCostError,
+        );
+      case 3:
+        return FixedPriceOperativeStep(
           theme: theme,
-        ),
-        SizedBox(height: 12.h),
-        _buildMultilineTextField(
-          label: 'Additional Scope of Work 3',
-          controller: _additionalScope3Controller,
-          focusNode: _additionalScope3FocusNode,
-          isFocused: _additionalScope3Focused,
-          hintText: 'Enter additional scope of work (optional)...',
+          durationHoursController: _durationHoursController,
+          durationHoursFocusNode: _durationHoursFocusNode,
+          durationHoursFocused: _durationHoursFocused,
+          durationHours: _durationHours,
+          selectedLabourRate: _selectedLabourRate,
+          onLabourRateChanged: (val) =>
+              setState(() => _selectedLabourRate = val),
+          listPriceServiceCost: _listPriceServiceCost,
+          materialsCharge: _materialsCharge,
+          attendanceFee: _attendanceFee,
+          ulezCharge: _ulezCharge,
+          collectionFee: _collectionFee,
+          chargeDrainagePatches: _chargeDrainagePatches,
+          drainagePatchesFee: _drainagePatchesFee,
+          totalCustomerCharges: _totalCustomerCharges,
+        );
+      case 4:
+        return FixedPriceConfirmationStep(
           theme: theme,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStep3(DashboardTheme theme) {
-    final listPriceLabels = _listPriceServices
-        .map((s) => s['label'] as String)
-        .toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ElevatedSurface(
-          padding: EdgeInsets.all(16.r),
-          backgroundColor: theme.surface,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Pricing & Materials',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.dashTitle,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              _buildRadioButtonSection<bool>(
-                label: 'Collection Fee Applicable *',
-                selectedValue: _collectionFeeApplicable,
-                options: [
-                  {'label': 'Yes', 'value': true},
-                  {'label': 'No', 'value': false},
-                ],
-                onChanged: (val) =>
-                    setState(() => _collectionFeeApplicable = val),
-                theme: theme,
-              ),
-              Divider(color: theme.border, height: 24.h),
-              _buildDropdownField(
-                label: 'List Price Services *',
-                value: _selectedListPriceService != null
-                    ? _listPriceServices.firstWhere(
-                        (s) => s['value'] == _selectedListPriceService,
-                      )['label']
-                    : null,
-                items: listPriceLabels,
-                hintText: 'Select List Price Service',
-                onChanged: (val) {
-                  setState(() {
-                    if (val != null) {
-                      _selectedListPriceService = _listPriceServices.firstWhere(
-                        (s) => s['label'] == val,
-                      )['value'];
-                    } else {
-                      _selectedListPriceService = null;
-                    }
-                  });
-                },
-                theme: theme,
-              ),
-              Divider(color: theme.border, height: 24.h),
-              _buildCurrencyField(
-                label: 'Material Cost for Operative',
-                controller: _materialCostOperativeController,
-                focusNode: _materialCostOperativeFocusNode,
-                isFocused: _materialCostOperativeFocused,
-                theme: theme,
-                errorText: _materialCostError(_materialCostOperativeController),
-              ),
-              SizedBox(height: 12.h),
-              _buildMultilineTextField(
-                label: 'Description of Materials supplied by Operative',
-                controller: _descriptionMaterialsOperativeController,
-                focusNode: _descriptionMaterialsOperativeFocusNode,
-                isFocused: _descriptionMaterialsOperativeFocused,
-                hintText: 'Describe materials...',
-                theme: theme,
-              ),
-              Divider(color: theme.border, height: 24.h),
-              _buildToggleSwitch(
-                label: 'Charge Drainage Patches',
-                value: _chargeDrainagePatches,
-                onChanged: (val) =>
-                    setState(() => _chargeDrainagePatches = val),
-                theme: theme,
-              ),
-              Divider(color: theme.border, height: 24.h),
-              _buildCurrencyField(
-                label: 'Material Cost for Aspect',
-                controller: _materialCostAspectController,
-                focusNode: _materialCostAspectFocusNode,
-                isFocused: _materialCostAspectFocused,
-                theme: theme,
-                errorText: _materialCostError(_materialCostAspectController),
-              ),
-              SizedBox(height: 12.h),
-              _buildMultilineTextField(
-                label: 'Description of Materials supplied by Aspect',
-                controller: _descriptionMaterialsAspectController,
-                focusNode: _descriptionMaterialsAspectFocusNode,
-                isFocused: _descriptionMaterialsAspectFocused,
-                hintText: 'Describe materials...',
-                theme: theme,
-              ),
-              Divider(color: theme.border, height: 24.h),
-              _buildRadioButtonSection<bool>(
-                label: 'ULEZ Charge Applicable *',
-                selectedValue: _ulezChargeApplicable,
-                options: [
-                  {'label': 'Yes (£12.50)', 'value': true},
-                  {'label': 'No', 'value': false},
-                ],
-                onChanged: (val) => setState(() => _ulezChargeApplicable = val),
-                theme: theme,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStep5(DashboardTheme theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ElevatedSurface(
-          padding: EdgeInsets.all(16.r),
-          backgroundColor: theme.surface,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Operative Summary',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.dashTitle,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _buildSummaryIndicatorRow('This site is in Zone A', theme),
-              _buildSummaryIndicatorRow(
-                '10% Zonal Discount has been applied to the Trade Rate Card.',
-                theme,
-              ),
-              _buildSummaryIndicatorRow('Discount based on Dog: 0%', theme),
-              _buildSummaryIndicatorRow('Job Duration Discount: 0%', theme),
-            ],
-          ),
-        ),
-        SizedBox(height: 16.h),
-        ElevatedSurface(
-          padding: EdgeInsets.all(16.r),
-          backgroundColor: theme.surface,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Job Duration',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.dashTitle,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _buildDecimalField(
-                label: 'Duration (hours) *',
-                controller: _durationHoursController,
-                focusNode: _durationHoursFocusNode,
-                isFocused: _durationHoursFocused,
-                hintText: 'e.g. 2.83',
-                theme: theme,
-                errorText: _durationHours == null &&
-                        _durationHoursController.text.trim().isNotEmpty
-                    ? 'Enter a valid duration greater than 0.'
-                    : _durationHours == null &&
-                            _durationHoursController.text.trim().isEmpty
-                        ? 'Duration is required.'
-                        : null,
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 16.h),
-        ElevatedSurface(
-          padding: EdgeInsets.all(16.r),
-          backgroundColor: theme.surface,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Select Labour Rate',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.dashTitle,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _buildRadioButtonSection<String>(
-                label: 'Select One *',
-                selectedValue: _selectedLabourRate,
-                options: [
-                  {
-                    'label': 'Rate 1 (£80.00/hr)',
-                    'value': 'Rate 1',
-                    'subtitle': 'Standard daytime rate',
-                  },
-                  {
-                    'label': 'Rate 2 (£90.00/hr)',
-                    'value': 'Rate 2',
-                    'subtitle': 'Evening/Saturday rate',
-                  },
-                  {
-                    'label': 'Rate 3 (£100.00/hr)',
-                    'value': 'Rate 3',
-                    'subtitle': 'Night/Sunday rate',
-                  },
-                ],
-                onChanged: (val) => setState(() => _selectedLabourRate = val),
-                theme: theme,
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 16.h),
-        ElevatedSurface(
-          padding: EdgeInsets.all(16.r),
-          backgroundColor: theme.surface,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Customer Charges',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.dashTitle,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _buildChargeRow(
-                'List Price Services',
-                _listPriceServiceCost,
-                theme,
-              ),
-              _buildChargeRow('Materials Charge', _materialsCharge, theme),
-              _buildChargeRow('Labour', _attendanceFee, theme),
-              _buildChargeRow('ULEZ Charge', _ulezCharge, theme),
-              _buildChargeRow('Collection Fee', _collectionFee, theme),
-              if (_chargeDrainagePatches)
-                _buildChargeRow(
-                  'Drainage Patches Charge',
-                  _drainagePatchesFee,
-                  theme,
-                ),
-              Divider(color: theme.border, height: 16.h),
-              _buildChargeRow(
-                'Total Customer Charges',
-                _totalCustomerCharges,
-                theme,
-                isTotal: true,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStep7(DashboardTheme theme) {
-    final subtotal = _totalCustomerCharges;
-    final vat = subtotal * 0.20;
-    final total = subtotal + vat;
-    final deposit = total * 0.50;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Summary',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-            color: theme.dashTitle,
-          ),
-        ),
-        SizedBox(height: 12.h),
-        Text(
-          'Scope of Work',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            color: theme.text,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Container(
-          height: 160.h,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: theme.surface,
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: theme.border, width: 0.5),
-          ),
-          child: Scrollbar(
-            controller: _scopeScrollController,
-            thumbVisibility: true,
-            child: SingleChildScrollView(
-              controller: _scopeScrollController,
-              padding: EdgeInsets.all(12.r),
-              physics: const BouncingScrollPhysics(),
-              child: Text(
-                _scopeOfWorkController.text,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  height: 1.45,
-                  color: theme.text,
-                ),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 20.h),
-        ElevatedSurface(
-          padding: EdgeInsets.all(16.r),
-          backgroundColor: theme.surface,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Pricing Summary',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.dashTitle,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _buildPricingSummaryItem(
-                'Subtotal',
-                '£${subtotal.toStringAsFixed(2)}',
-                theme,
-              ),
-              _buildPricingSummaryItem(
-                'VAT',
-                '£${vat.toStringAsFixed(2)}',
-                theme,
-              ),
-              Divider(color: theme.border, height: 16.h),
-              _buildPricingSummaryItem(
-                'Total incl. VAT',
-                '£${total.toStringAsFixed(2)}',
-                theme,
-                isTotal: true,
-              ),
-              Divider(color: theme.border, height: 16.h),
-              _buildPricingSummaryItem(
-                'Deposit Required',
-                '£${deposit.toStringAsFixed(2)}',
-                theme,
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 20.h),
-        ElevatedSurface(
-          padding: EdgeInsets.all(16.r),
-          backgroundColor: theme.surface,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Please confirm Customer's choice",
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.dashTitle,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _buildRadioButtonSection<String>(
-                label: 'Choice *',
-                selectedValue: _customerConfirmationChoice,
-                options: [
-                  {
-                    'label': 'Send Estimate to Customer',
-                    'value': 'Send Estimate to Customer',
-                  },
-                  {'label': 'Reject', 'value': 'Reject'},
-                ],
-                onChanged: (val) =>
-                    setState(() => _customerConfirmationChoice = val),
-                theme: theme,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStep8(DashboardTheme theme, FixedPriceJobContext? jobContext) {
-    final scheduledStart = jobContext?.earliestRequestedDate;
-    final dateStr = scheduledStart != null && scheduledStart.isNotEmpty
-        ? scheduledStart
-        : '—';
-    final workOrderId = jobContext?.workOrderLabel.isNotEmpty == true
-        ? jobContext!.workOrderLabel
-        : jobContext?.sourceWorkOrderId ?? '—';
-    final customerEmail =
-        jobContext?.customerEmail.isNotEmpty == true
-            ? jobContext!.customerEmail
-            : '—';
-    final siteLabel = () {
-      if (jobContext == null) return '—';
-      final id = jobContext.siteId.trim();
-      if (id.isEmpty) return '—';
-      return id;
-    }();
-
-    final deposit = (_totalCustomerCharges * 1.2) * 0.50;
-    final missingJobContext = jobContext == null;
-    final jobContextErrors = jobContext?.validate() ?? const <String>[];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Job Summary',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-            color: theme.dashTitle,
-          ),
-        ),
-        SizedBox(height: 16.h),
-        if (missingJobContext || jobContextErrors.isNotEmpty)
-          Container(
-            width: double.infinity,
-            margin: EdgeInsets.only(bottom: 16.h),
-            padding: EdgeInsets.all(12.r),
-            decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10.r),
-              border: Border.all(color: Colors.red.withValues(alpha: 0.35)),
-            ),
-            child: Text(
-              missingJobContext
-                  ? 'This agreement must be opened from a job appointment before it can be submitted.'
-                  : jobContextErrors.first,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: Colors.red.shade700,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ElevatedSurface(
-          padding: EdgeInsets.all(16.r),
-          backgroundColor: theme.surface,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Job Information',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.dashTitle,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _buildDetailRow('Contact Email', customerEmail, theme),
-              _buildDetailRow('Site', siteLabel, theme),
-              _buildDetailRow(
-                'Earliest Work Order Requested Date',
-                dateStr,
-                theme,
-              ),
-              _buildDetailRow('Job Type', 'Fixed Price (Single)', theme),
-              _buildDetailRow('Status', 'Pending Confirmation', theme),
-              _buildDetailRow('Work Order ID', workOrderId, theme),
-              if (jobContext?.sourceWorkOrderId.isNotEmpty == true &&
-                  jobContext!.sourceWorkOrderId != workOrderId)
-                _buildDetailRow(
-                  'Source Work Order',
-                  jobContext.sourceWorkOrderId,
-                  theme,
-                ),
-            ],
-          ),
-        ),
-        SizedBox(height: 16.h),
-        ElevatedSurface(
-          padding: EdgeInsets.all(16.r),
-          backgroundColor: theme.surface,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Estimate Details',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.dashTitle,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              _buildDetailRow(
-                'Generate Deposit Invoice',
-                deposit > 0 ? 'Yes' : 'No',
-                theme,
-              ),
-              _buildDetailRow('Work Commencing Immediately', 'Yes', theme),
-              _buildDetailRow(
-                'Date Time Last Estimate Sent',
-                '29/06/2026 11:20',
-                theme,
-              ),
-              _buildDetailRow('Payment Link Sent to Customer', 'Yes', theme),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Common UI form widgets helpers
-  Widget _buildDropdownField({
-    required String label,
-    required String? value,
-    required List<String> items,
-    required String hintText,
-    required ValueChanged<String?>? onChanged,
-    required DashboardTheme theme,
-    String Function(String)? itemLabelBuilder,
-    TextEditingController? searchController,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: theme.text,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        DropdownButtonFormField2<String>(
-          value: value,
-          isExpanded: true,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: theme.surfaceDeep,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 12.w,
-              vertical: 6.h,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide: BorderSide(color: theme.border, width: 0.5),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide: BorderSide(color: theme.border, width: 0.5),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide: BorderSide(
-                color: theme.border.withValues(alpha: 0.5),
-                width: 0.5,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide: BorderSide(color: theme.accent, width: 0.5),
-            ),
-          ),
-          hint: Text(
-            hintText,
-            style: TextStyle(fontSize: 13.sp, color: theme.textMuted),
-          ),
-          iconStyleData: IconStyleData(
-            icon: Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: theme.textMuted,
-              size: 20.sp,
-            ),
-          ),
-          dropdownStyleData: DropdownStyleData(
-            decoration: BoxDecoration(
-              color: theme.surface,
-              border: Border.all(color: theme.border, width: 0.5),
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-          ),
-          menuItemStyleData: MenuItemStyleData(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            height: 44.h,
-          ),
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w500,
-            color: theme.text,
-          ),
-          items: items
-              .map(
-                (item) => DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(
-                    itemLabelBuilder != null ? itemLabelBuilder(item) : item,
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: onChanged,
-          dropdownSearchData: searchController != null
-              ? DropdownSearchData(
-                  searchController: searchController,
-                  searchInnerWidgetHeight: 50.h,
-                  searchInnerWidget: Container(
-                    height: 50.h,
-                    padding: EdgeInsets.only(
-                      top: 8.h,
-                      bottom: 4.h,
-                      left: 8.w,
-                      right: 8.w,
-                    ),
-                    child: TextFormField(
-                      expands: true,
-                      maxLines: null,
-                      controller: searchController,
-                      style: TextStyle(fontSize: 13.sp, color: theme.text),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 10.w,
-                          vertical: 8.h,
-                        ),
-                        hintText: 'Search...',
-                        hintStyle: TextStyle(fontSize: 13.sp, color: theme.textMuted),
-                        filled: true,
-                        fillColor: theme.surfaceDeep,
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          color: theme.textMuted,
-                          size: 18.sp,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                          borderSide: BorderSide(color: theme.border, width: 0.5),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                          borderSide: BorderSide(color: theme.border, width: 0.5),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                          borderSide: BorderSide(color: theme.accent, width: 0.5),
-                        ),
-                      ),
-                    ),
-                  ),
-                  searchMatchFn: (item, searchValue) {
-                    final itemLabel = itemLabelBuilder != null
-                        ? itemLabelBuilder(item.value ?? '')
-                        : (item.value ?? '');
-                    return itemLabel
-                        .toLowerCase()
-                        .contains(searchValue.toLowerCase());
-                  },
-                )
-              : null,
-          onMenuStateChange: searchController != null
-              ? (isOpen) {
-                  if (!isOpen) {
-                    searchController.clear();
-                  }
-                }
-              : null,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMultilineTextField({
-    required String label,
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required bool isFocused,
-    required String hintText,
-    required DashboardTheme theme,
-    bool isRequired = false,
-    String? errorText,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          isRequired ? '$label *' : label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: theme.text,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            color: theme.surfaceDeep,
-            borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(
-              color: errorText != null
-                  ? Colors.red
-                  : (isFocused ? theme.accent : theme.border),
-              width: 0.5,
-            ),
-          ),
-          child: TextField(
-            controller: controller,
-            focusNode: focusNode,
-            maxLines: null,
-            minLines: isRequired ? 5 : 3,
-            onChanged: (text) {
-              setState(() {});
-            },
-            style: TextStyle(fontSize: 13.sp, height: 1.45, color: theme.text),
-            decoration: InputDecoration(
-              hintText: hintText,
-              hintStyle: TextStyle(fontSize: 13.sp, color: theme.textMuted),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.all(12.r),
-            ),
-          ),
-        ),
-        if (errorText != null) ...[
-          SizedBox(height: 4.h),
-          Text(
-            errorText,
-            style: TextStyle(color: Colors.red, fontSize: 11.sp),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildCurrencyField({
-    required String label,
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required bool isFocused,
-    required DashboardTheme theme,
-    String? errorText,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: theme.text,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          padding: EdgeInsets.symmetric(horizontal: 12.w),
-          decoration: BoxDecoration(
-            color: theme.surfaceDeep,
-            borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(
-              color: errorText != null
-                  ? Colors.red
-                  : (isFocused ? theme.accent : theme.border),
-              width: 0.5,
-            ),
-          ),
-          child: Row(
-            children: [
-              Text(
-                '£',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.text,
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  onChanged: (_) {
-                    setState(() {});
-                  },
-                  style: TextStyle(fontSize: 13.sp, color: theme.text),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText: '0.00',
-                    hintStyle: TextStyle(color: theme.textMuted),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (errorText != null) ...[
-          SizedBox(height: 4.h),
-          Text(
-            errorText,
-            style: TextStyle(color: Colors.red, fontSize: 11.sp),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildDecimalField({
-    required String label,
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required bool isFocused,
-    required String hintText,
-    required DashboardTheme theme,
-    String? errorText,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: theme.text,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
-          decoration: BoxDecoration(
-            color: theme.surfaceDeep,
-            borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(
-              color: errorText != null
-                  ? Colors.red
-                  : (isFocused ? theme.accent : theme.border),
-              width: 0.5,
-            ),
-          ),
-          child: TextField(
-            controller: controller,
-            focusNode: focusNode,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (_) => setState(() {}),
-            style: TextStyle(fontSize: 13.sp, color: theme.text),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: hintText,
-              hintStyle: TextStyle(color: theme.textMuted),
-            ),
-          ),
-        ),
-        if (errorText != null) ...[
-          SizedBox(height: 4.h),
-          Text(
-            errorText,
-            style: TextStyle(color: Colors.red, fontSize: 11.sp),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildRadioButtonSection<T>({
-    required String label,
-    required T? selectedValue,
-    required List<Map<String, dynamic>> options,
-    required ValueChanged<T> onChanged,
-    required DashboardTheme theme,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: theme.text,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        ...options.map(
-          (opt) => _buildRadioOption<T>(
-            value: opt['value'] as T,
-            groupValue: selectedValue,
-            label: opt['label'] as String,
-            subtitle: opt['subtitle'] as String?,
-            onChanged: onChanged,
-            theme: theme,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRadioOption<T>({
-    required T value,
-    required T? groupValue,
-    required String label,
-    required ValueChanged<T> onChanged,
-    required DashboardTheme theme,
-    String? subtitle,
-  }) {
-    final isSelected = value == groupValue;
-    return InkWell(
-      onTap: () => onChanged(value),
-      borderRadius: BorderRadius.circular(8.r),
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 8.h),
-        child: Row(
-          children: [
-            Icon(
-              isSelected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
-              color: isSelected ? theme.dashPrimary : theme.textMuted,
-              size: 20.sp,
-            ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      color: theme.text,
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    SizedBox(height: 2.h),
-                    Text(
-                      subtitle,
-                      style: TextStyle(fontSize: 12.sp, color: theme.textMuted),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildToggleSwitch({
-    required String label,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-    required DashboardTheme theme,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: theme.text,
-          ),
-        ),
-        GestureDetector(
-          onTap: () => onChanged(!value),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            width: 38.w,
-            height: 20.h,
-            decoration: value
-                ? BoxDecoration(
-                    color: theme.dashPrimary,
-                    borderRadius: BorderRadius.circular(999.r),
-                  )
-                : BoxDecoration(
-                    color: theme.dashChipBg,
-                    borderRadius: BorderRadius.circular(999.r),
-                  ),
-            child: AnimatedAlign(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              alignment: value ? Alignment.centerRight : Alignment.centerLeft,
-              child: Container(
-                width: 16.w,
-                height: 16.w,
-                margin: EdgeInsets.symmetric(horizontal: 2.w),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 2.r,
-                      offset: Offset(0, 1.h),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value, DashboardTheme theme) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 90.w,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: theme.textMuted,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w500,
-                color: theme.text,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChargeRow(
-    String label,
-    double amount,
-    DashboardTheme theme, {
-    bool isTotal = false,
-  }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 6.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isTotal ? 14.sp : 13.sp,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-              color: isTotal ? theme.text : theme.textMuted,
-            ),
-          ),
-          Text(
-            '£${amount.toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: isTotal ? 15.sp : 13.sp,
-              fontWeight: FontWeight.bold,
-              color: isTotal ? theme.dashPrimary : theme.text,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryIndicatorRow(String text, DashboardTheme theme) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.info_outline_rounded,
-            color: theme.dashPrimary,
-            size: 16.sp,
-          ),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: theme.text,
-                height: 1.35,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPricingSummaryItem(
-    String label,
-    String value,
-    DashboardTheme theme, {
-    bool isTotal = false,
-  }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 6.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isTotal ? 14.sp : 13.sp,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-              color: isTotal ? theme.text : theme.textMuted,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isTotal ? 18.sp : 13.sp,
-              fontWeight: FontWeight.bold,
-              color: isTotal ? theme.dashPrimary : theme.text,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value, DashboardTheme theme) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 6.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 4,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: theme.textMuted,
-              ),
-            ),
-          ),
-          SizedBox(width: 8.w),
-          Expanded(
-            flex: 5,
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w500,
-                color: theme.text,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+          scopeOfWorkText: _scopeOfWorkController.text,
+          scopeScrollController: _scopeScrollController,
+          totalCustomerCharges: _totalCustomerCharges,
+          customerConfirmationChoice: _customerConfirmationChoice,
+          onCustomerConfirmationChoiceChanged: (val) =>
+              setState(() => _customerConfirmationChoice = val),
+        );
+      case 5:
+        return FixedPriceReviewStep(
+          theme: theme,
+          jobContext: jobContext,
+          totalCustomerCharges: _totalCustomerCharges,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
   // Navigation button block builder
@@ -2144,7 +832,6 @@ class _FixedPricePageState extends State<FixedPricePage> {
                       _handleFinish(jobContext);
                     } else {
                       setState(() => _currentStep++);
-                      // Scroll back to top on step transition
                       _scrollController.animateTo(
                         0,
                         duration: const Duration(milliseconds: 300),

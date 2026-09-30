@@ -54,15 +54,14 @@ class AbsenceWholeDaySwitch extends StatelessWidget {
               color: value
                   ? theme.dashPrimary
                   : (theme.isDark
-                      ? theme.dashSurfaceTint
-                      : const Color(0xFFD3DBE8)),
+                        ? theme.dashSurfaceTint
+                        : const Color(0xFFD3DBE8)),
               borderRadius: BorderRadius.circular(500.r),
             ),
             child: AnimatedAlign(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOutCubic,
-              alignment:
-                  value ? Alignment.centerRight : Alignment.centerLeft,
+              alignment: value ? Alignment.centerRight : Alignment.centerLeft,
               child: Container(
                 width: 22.w,
                 height: 22.w,

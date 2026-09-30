@@ -178,7 +178,10 @@ class _LdVisitWizardState extends State<LdVisitWizard> {
             if (_error != null)
               Padding(
                 padding: EdgeInsets.only(bottom: 12.h),
-                child: Text(_error!, style: const TextStyle(color: NavigatorTokens.errorFg)),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: NavigatorTokens.errorFg),
+                ),
               ),
             ..._fieldsFor(_step),
           ],
@@ -192,7 +195,8 @@ class _LdVisitWizardState extends State<LdVisitWizard> {
       case 0:
         return [
           const VisitFormCaption(
-            text: 'Complete HSE gatekeeper checks before any leak detection work.',
+            text:
+                'Complete HSE gatekeeper checks before any leak detection work.',
           ),
           VisitChoiceChips(
             label: 'Risk assessment completed?',
@@ -292,8 +296,14 @@ class _LdVisitWizardState extends State<LdVisitWizard> {
           VisitChoiceChips(
             label: 'Did this test help find the source of the leak?',
             options: const ['Yes', 'No', 'Inconclusive'],
-            value: (_answers['Did this test help find the source of the leak?'] ?? '').toString(),
-            onSelected: (v) => _setAnswer('Did this test help find the source of the leak?', v),
+            value:
+                (_answers['Did this test help find the source of the leak?'] ??
+                        '')
+                    .toString(),
+            onSelected: (v) => _setAnswer(
+              'Did this test help find the source of the leak?',
+              v,
+            ),
           ),
           VisitChoiceChips(
             label: 'Parts used?',
@@ -303,9 +313,15 @@ class _LdVisitWizardState extends State<LdVisitWizard> {
           ),
           VisitTextField(
             label: "Scope notes - customer's reported symptom + history",
-            value: (_answers["Scope notes - customer's reported symptom + history"] ?? '').toString(),
+            value:
+                (_answers["Scope notes - customer's reported symptom + history"] ??
+                        '')
+                    .toString(),
             maxLines: 4,
-            onChanged: (v) => _setAnswer("Scope notes - customer's reported symptom + history", v),
+            onChanged: (v) => _setAnswer(
+              "Scope notes - customer's reported symptom + history",
+              v,
+            ),
           ),
           JobPhotoSlot(
             label: 'Proposed access route',
@@ -321,7 +337,8 @@ class _LdVisitWizardState extends State<LdVisitWizard> {
           VisitChoiceChips(
             label: 'Customer present for sign-off?',
             options: const ['Yes', 'No'],
-            value: (_answers['Customer present for sign-off?'] ?? '').toString(),
+            value: (_answers['Customer present for sign-off?'] ?? '')
+                .toString(),
             onSelected: (v) => _setAnswer('Customer present for sign-off?', v),
           ),
           VisitTextField(
@@ -331,7 +348,8 @@ class _LdVisitWizardState extends State<LdVisitWizard> {
             onChanged: (v) => _setAnswer('Engineer declaration', v),
           ),
           const VisitInfoBanner(
-            text: 'Submit report writes COMPLETE, the leak report, timeline, and photos.',
+            text:
+                'Submit report writes COMPLETE, the leak report, timeline, and photos.',
           ),
         ];
     }

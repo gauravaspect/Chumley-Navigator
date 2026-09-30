@@ -4,10 +4,7 @@ String stripSas(String url) {
 }
 
 class PhotoUploader {
-  PhotoUploader({
-    required this.uploadBase,
-    required this.postBytes,
-  });
+  PhotoUploader({required this.uploadBase, required this.postBytes});
 
   final String uploadBase;
   final Future<String> Function(List<int> bytes, String filename) postBytes;

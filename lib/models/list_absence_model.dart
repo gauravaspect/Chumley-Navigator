@@ -2,10 +2,7 @@ import 'package:equatable/equatable.dart';
 
 /// API envelope: `{ success, data: [...] }`
 class ListMyAbsenceResponse extends Equatable {
-  const ListMyAbsenceResponse({
-    this.success = false,
-    this.absences = const [],
-  });
+  const ListMyAbsenceResponse({this.success = false, this.absences = const []});
 
   final bool success;
   final List<AbsenceItem> absences;
@@ -15,13 +12,11 @@ class ListMyAbsenceResponse extends Equatable {
 
     final absences = rawData is List
         ? rawData
-        .whereType<Map>()
-        .map(
-          (item) => AbsenceItem.fromJson(
-        Map<String, dynamic>.from(item),
-      ),
-    )
-        .toList(growable: false)
+              .whereType<Map>()
+              .map(
+                (item) => AbsenceItem.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .toList(growable: false)
         : <AbsenceItem>[];
 
     return ListMyAbsenceResponse(
@@ -36,25 +31,16 @@ class ListMyAbsenceResponse extends Equatable {
 
 /// Offline cache model.
 class AbsenceCache extends Equatable {
-  const AbsenceCache({
-    this.absences = const [],
-  });
+  const AbsenceCache({this.absences = const []});
 
   final List<AbsenceItem> absences;
 
-  factory AbsenceCache.fromResponse(
-      ListMyAbsenceResponse response,
-      ) {
-    return AbsenceCache(
-      absences: response.absences,
-    );
+  factory AbsenceCache.fromResponse(ListMyAbsenceResponse response) {
+    return AbsenceCache(absences: response.absences);
   }
 
   ListMyAbsenceResponse toResponse() {
-    return ListMyAbsenceResponse(
-      success: true,
-      absences: absences,
-    );
+    return ListMyAbsenceResponse(success: true, absences: absences);
   }
 
   factory AbsenceCache.fromJson(Map<String, dynamic> json) {
@@ -62,18 +48,14 @@ class AbsenceCache extends Equatable {
 
     final absences = rawAbsences is List
         ? rawAbsences
-        .whereType<Map>()
-        .map(
-          (item) => AbsenceItem.fromJson(
-        Map<String, dynamic>.from(item),
-      ),
-    )
-        .toList(growable: false)
+              .whereType<Map>()
+              .map(
+                (item) => AbsenceItem.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .toList(growable: false)
         : <AbsenceItem>[];
 
-    return AbsenceCache(
-      absences: absences,
-    );
+    return AbsenceCache(absences: absences);
   }
 
   Map<String, dynamic> toJson() => {
@@ -130,8 +112,7 @@ class AbsenceItem extends Equatable {
     'status': status,
     'approved': approved,
     'description': description,
-    'sentForApprovalAt':
-    sentForApprovalAt.isEmpty ? null : sentForApprovalAt,
+    'sentForApprovalAt': sentForApprovalAt.isEmpty ? null : sentForApprovalAt,
   };
 
   @override

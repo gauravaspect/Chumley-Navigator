@@ -2,7 +2,10 @@ import 'dart:convert';
 
 /// Lightweight Microsoft id_token checks (JWT payload only, no signature verify).
 class IdTokenHelper {
-  static bool isExpired(String jwt, {Duration clockSkew = const Duration(seconds: 60)}) {
+  static bool isExpired(
+    String jwt, {
+    Duration clockSkew = const Duration(seconds: 60),
+  }) {
     final exp = _readExp(jwt);
     if (exp == null) return false;
     final expiry = DateTime.fromMillisecondsSinceEpoch(exp * 1000, isUtc: true);

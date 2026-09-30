@@ -1,8 +1,10 @@
 import 'package:chumley_navigator/core/app_dependencies.dart';
-import 'package:chumley_navigator/screens/chumley_ai/Chumley_Chat.dart';
+import 'package:chumley_navigator/screens/chumley_ai/chumley_chat.dart';
 import 'package:chumley_navigator/screens/dashboard/earnings_detail_screen.dart';
 import 'package:chumley_navigator/screens/dashboard/goals_targets_screen.dart';
 import 'package:chumley_navigator/screens/job_details/fixed_price_page.dart';
+import 'package:chumley_navigator/screens/job_details/raise_multiple_fixed_price_page.dart';
+import 'package:chumley_navigator/screens/job_details/raise_reactive_job_page.dart';
 import 'package:chumley_navigator/screens/notifications/notification_screen.dart';
 import 'package:chumley_navigator/screens/redeemPoints/redeem_points.dart';
 import 'package:chumley_navigator/screens/vehicle_check/vehicle_form.dart';
@@ -26,13 +28,15 @@ class AppRoutes {
   static const vehicleForm = "/vehicleForm";
   static const earningsDetail = "/earningsDetail";
   static const fixedPriceScreen = "/fixedPriceScreen";
+  static const raiseReactiveJob = "/raiseReactiveJob";
+  static const raiseMultipleFixedPrice = "/raiseMultipleFixedPrice";
   static const chumleyChat = "/chumleyChat";
   static Map<String, WidgetBuilder> routes = {
     AppRoutes.splash: (context) => SplashScreen(),
     AppRoutes.login: (context) => LoginScreen(),
     AppRoutes.dashboard: (context) => const Home(),
-    AppRoutes.home : (context)=>Home(),
-    AppRoutes.notifications: (context)=>NotificationScreen(),
+    AppRoutes.home: (context) => Home(),
+    AppRoutes.notifications: (context) => NotificationScreen(),
     AppRoutes.goals: (context) => GoalsTargetsScreen(),
     AppRoutes.redeemPoints: (context) => RedeemPointsScreen(),
     AppRoutes.profile: (context) => BlocProvider(
@@ -45,12 +49,20 @@ class AppRoutes {
     ),
     AppRoutes.earningsDetail: (context) => const EarningsDetailScreen(),
     AppRoutes.fixedPriceScreen: (context) => BlocProvider(
-          create: (_) => AppDependencies.createFixedPriceCubit()..loadTrades(),
-          child: const FixedPricePage(),
-        ),
+      create: (_) => AppDependencies.createFixedPriceCubit()..loadTrades(),
+      child: const FixedPricePage(),
+    ),
+    AppRoutes.raiseReactiveJob: (context) => BlocProvider(
+      create: (_) => AppDependencies.createFixedPriceCubit()..loadTrades(),
+      child: const RaiseReactiveJobPage(jobId: ''),
+    ),
+    AppRoutes.raiseMultipleFixedPrice: (context) => BlocProvider(
+      create: (_) => AppDependencies.createFixedPriceCubit()..loadTrades(),
+      child: const RaiseMultipleFixedPricePage(jobId: ''),
+    ),
     AppRoutes.chumleyChat: (context) => BlocProvider(
-          create: (_) => AppDependencies.createChumleyChatCubit()..initialize(),
-          child: const ChumleyChatScreen(),
-        ),
+      create: (_) => AppDependencies.createChumleyChatCubit()..initialize(),
+      child: const ChumleyChatScreen(),
+    ),
   };
 }

@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class VcrWarningBanner extends StatelessWidget {
-  const VcrWarningBanner({
-    super.key,
-    required this.message,
-  });
+  const VcrWarningBanner({super.key, required this.message});
 
   final String message;
 
@@ -22,10 +19,7 @@ class VcrWarningBanner extends StatelessWidget {
           alpha: theme.isDark ? 0.35 : 1,
         ),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: AppColors.vcrWarningBorder,
-          width: 0.5,
-        ),
+        border: Border.all(color: AppColors.vcrWarningBorder, width: 0.5),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:chumley_navigator/theme/navigator_tokens.dart';
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/vehicle/vcr_dashed_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,13 +18,14 @@ class JobPhotoSlot extends StatelessWidget {
     String? path,
     ValueChanged<String?>? onChanged,
     ValueChanged<String>? onPicked,
-  })  : filePath = filePath ?? path,
-        onChanged = onChanged ??
-            (onPicked != null
-                ? ((val) {
-                    if (val != null) onPicked(val);
-                  })
-                : null);
+  }) : filePath = filePath ?? path,
+       onChanged =
+           onChanged ??
+           (onPicked != null
+               ? ((val) {
+                   if (val != null) onPicked(val);
+                 })
+               : null);
 
   final String label;
   final String? filePath;
@@ -41,7 +43,14 @@ class JobPhotoSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final captured = filePath != null && filePath!.isNotEmpty && File(filePath!).existsSync();
+    final theme = DashboardTheme.of(context);
+    final captured =
+        filePath != null &&
+        filePath!.isNotEmpty &&
+        File(filePath!).existsSync();
+    final primaryActionColor =
+        theme.isDark ? AppColors.accentBlue : NavigatorTokens.brandNavy;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -50,7 +59,7 @@ class JobPhotoSlot extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: FontWeight.w700,
-            color: NavigatorTokens.textSecondary,
+            color: theme.textMuted,
           ),
         ),
         SizedBox(height: 8.h),
@@ -64,14 +73,14 @@ class JobPhotoSlot extends StatelessWidget {
           },
           borderRadius: BorderRadius.circular(12.r),
           child: VcrDashedBorder(
-            color: const Color(0xFFC9DCF7),
+            color: theme.isDark ? theme.border : const Color(0xFFC9DCF7),
             borderRadius: 12.r,
             child: Container(
               width: double.infinity,
               height: 84.h,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: theme.surfaceDeep,
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: captured
@@ -85,6 +94,7 @@ class JobPhotoSlot extends StatelessWidget {
                             width: 68.w,
                             height: 68.h,
                             fit: BoxFit.cover,
+                            cacheWidth: 300,
                           ),
                         ),
                         SizedBox(width: 10.w),
@@ -93,7 +103,7 @@ class JobPhotoSlot extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w700,
-                            color: NavigatorTokens.brandNavy,
+                            color: primaryActionColor,
                           ),
                         ),
                       ],
@@ -104,7 +114,7 @@ class JobPhotoSlot extends StatelessWidget {
                         Icon(
                           LucideIcons.camera,
                           size: 18.sp,
-                          color: NavigatorTokens.brandNavy,
+                          color: primaryActionColor,
                         ),
                         SizedBox(width: 8.w),
                         Text(
@@ -112,7 +122,7 @@ class JobPhotoSlot extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w700,
-                            color: NavigatorTokens.brandNavy,
+                            color: primaryActionColor,
                           ),
                         ),
                       ],

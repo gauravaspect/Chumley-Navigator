@@ -118,14 +118,18 @@ class PillarClient {
         final batch = _db.batch();
         for (final sibling in siblingQuery.docs) {
           if (sibling.id == jobId) continue;
-          final sStatus = (sibling.data()['status'] ?? '').toString().toUpperCase();
+          final sStatus = (sibling.data()['status'] ?? '')
+              .toString()
+              .toUpperCase();
           if (sStatus == statusInTransit || sStatus == statusOnSite) {
             batch.update(sibling.reference, {
               'status': statusDispatched,
               'actual_start': null,
               'updated_at': FieldValue.serverTimestamp(),
             });
-            final siblingUpdateDoc = _db.collection(colStatusUpdates).doc('${sibling.id}__dispatched');
+            final siblingUpdateDoc = _db
+                .collection(colStatusUpdates)
+                .doc('${sibling.id}__dispatched');
             batch.set(siblingUpdateDoc, {
               'job_id': sibling.id,
               'status': statusDispatched,
@@ -137,7 +141,9 @@ class PillarClient {
         }
         batch.set(docRef, updatePayload, SetOptions(merge: true));
 
-        final timelineDoc = _db.collection(colStatusUpdates).doc('${jobId}__${normalizedNew.toLowerCase()}');
+        final timelineDoc = _db
+            .collection(colStatusUpdates)
+            .doc('${jobId}__${normalizedNew.toLowerCase()}');
         batch.set(timelineDoc, {
           'job_id': jobId,
           'status': normalizedNew,
@@ -149,7 +155,9 @@ class PillarClient {
       } else {
         await docRef.set(updatePayload, SetOptions(merge: true));
 
-        final timelineDoc = _db.collection(colStatusUpdates).doc('${jobId}__${normalizedNew.toLowerCase()}');
+        final timelineDoc = _db
+            .collection(colStatusUpdates)
+            .doc('${jobId}__${normalizedNew.toLowerCase()}');
         await timelineDoc.set({
           'job_id': jobId,
           'status': normalizedNew,
@@ -201,17 +209,19 @@ class PillarClient {
     });
 
     final photoUrlsList = photoSlots.values.where((v) => v.isNotEmpty).toList();
-    final compiledCompletionData = completionData ?? {
-      'form': reportType.toLowerCase(),
-      'pm_project_id': pmProjectId,
-      'answers': substantiveAnswers,
-      'photo_skips': photoSkips,
-      'photo_urls': photoSlots,
-      'answered_count': substantiveAnswers.length,
-      'photo_count': photoUrlsList.length,
-      'completed_by': engineerName,
-      'completed_at': DateTime.now().toIso8601String(),
-    };
+    final compiledCompletionData =
+        completionData ??
+        {
+          'form': reportType.toLowerCase(),
+          'pm_project_id': pmProjectId,
+          'answers': substantiveAnswers,
+          'photo_skips': photoSkips,
+          'photo_urls': photoSlots,
+          'answered_count': substantiveAnswers.length,
+          'photo_count': photoUrlsList.length,
+          'completed_by': engineerName,
+          'completed_at': DateTime.now().toIso8601String(),
+        };
 
     // Save locally
     await saveLocalStatus(jobId, statusComplete);
@@ -244,7 +254,9 @@ class PillarClient {
       batch.set(jobDoc, jobUpdate, SetOptions(merge: true));
 
       // Deterministic report document
-      final reportDoc = _db.collection(colReports).doc('${jobId}__${reportSuffix.toLowerCase()}');
+      final reportDoc = _db
+          .collection(colReports)
+          .doc('${jobId}__${reportSuffix.toLowerCase()}');
       batch.set(reportDoc, {
         'job_id': jobId,
         'report_type': reportType,
@@ -258,14 +270,18 @@ class PillarClient {
       }, SetOptions(merge: true));
 
       // Mark draft as submitted in demo_form_drafts
-      final draftDoc = _db.collection(colFormDrafts).doc('${jobId}__${reportSuffix.toLowerCase()}');
+      final draftDoc = _db
+          .collection(colFormDrafts)
+          .doc('${jobId}__${reportSuffix.toLowerCase()}');
       batch.set(draftDoc, {
         'status': 'submitted',
         'updated_at': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
       // Status update timeline doc
-      final statusDoc = _db.collection(colStatusUpdates).doc('${jobId}__complete');
+      final statusDoc = _db
+          .collection(colStatusUpdates)
+          .doc('${jobId}__complete');
       batch.set(statusDoc, {
         'job_id': jobId,
         'status': statusComplete,
@@ -277,8 +293,13 @@ class PillarClient {
       // Photos in camelCase for Customer Portal
       photoSlots.forEach((slot, url) {
         if (url.isNotEmpty) {
-          final slotSlug = slot.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
-          final photoDoc = _db.collection(colJobPhotos).doc('${jobId}__$slotSlug');
+          final slotSlug = slot.toLowerCase().replaceAll(
+            RegExp(r'[^a-z0-9]+'),
+            '_',
+          );
+          final photoDoc = _db
+              .collection(colJobPhotos)
+              .doc('${jobId}__$slotSlug');
           batch.set(photoDoc, {
             'jobId': jobId,
             'photoUrl': url,
@@ -316,7 +337,10 @@ class PillarClient {
     final docId = '${saId.trim()}__${workTypeId.trim().toLowerCase()}';
     try {
       if (!enableFirestoreWrites) {
-        Log('[TEST MODE] saveFormDraft for $docId (Answers: ${answers.length})', name: 'PillarClient');
+        Log(
+          '[TEST MODE] saveFormDraft for $docId (Answers: ${answers.length})',
+          name: 'PillarClient',
+        );
         return true;
       }
       final draftDoc = _db.collection(colFormDrafts).doc(docId);
@@ -366,19 +390,28 @@ class PillarClient {
           .get();
 
       final visits = visitsQuery.docs;
-      final completedCount = visits.where((d) => (d.data()['status'] ?? '').toString().toUpperCase() == statusComplete).length;
+      final completedCount = visits
+          .where(
+            (d) =>
+                (d.data()['status'] ?? '').toString().toUpperCase() ==
+                statusComplete,
+          )
+          .length;
 
       final projectRef = _db.collection(colPmProjects).doc(pmProjectId);
       final projectSnap = await projectRef.get();
       final projectData = projectSnap.data() ?? {};
-      final totalStages = (projectData['sa_count'] as num?)?.toInt() ?? visits.length;
+      final totalStages =
+          (projectData['sa_count'] as num?)?.toInt() ?? visits.length;
 
-      final percentComplete = totalStages > 0 ? ((completedCount / totalStages) * 100).round() : 0;
+      final percentComplete = totalStages > 0
+          ? ((completedCount / totalStages) * 100).round()
+          : 0;
       final newProjectStatus = completedCount >= totalStages
           ? 'COMPLETE'
           : completedCount > 0
-              ? 'IN_PROGRESS'
-              : 'APPROVED';
+          ? 'IN_PROGRESS'
+          : 'APPROVED';
 
       await projectRef.set({
         'stages_complete': completedCount,
@@ -387,7 +420,10 @@ class PillarClient {
         'updated_at': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      Log('advanceProject: $pmProjectId updated to $percentComplete% ($newProjectStatus)', name: 'PillarClient');
+      Log(
+        'advanceProject: $pmProjectId updated to $percentComplete% ($newProjectStatus)',
+        name: 'PillarClient',
+      );
     } catch (e) {
       Log('advanceProject error: $e', name: 'PillarClient');
     }
@@ -407,7 +443,10 @@ class PillarClient {
   }) async {
     final submissionId = 'fp-$jobId';
     if (!enableFirestoreWrites) {
-      Log('[TEST MODE: Firebase writes disabled] submitFpEstimate for $jobId ($submissionId, Gross: £$totalGross)', name: 'PillarClient');
+      Log(
+        '[TEST MODE: Firebase writes disabled] submitFpEstimate for $jobId ($submissionId, Gross: £$totalGross)',
+        name: 'PillarClient',
+      );
       return true;
     }
 
@@ -446,7 +485,8 @@ class PillarClient {
   // ---------------------------------------------------------------------------
 
   static Future<bool> raiseEnquiry({
-    required String category, // "PPM_INTEREST" | "PM_INTEREST" | "REACTIVE_ATTENDANCE" | "REFERRAL"
+    required String
+    category, // "PPM_INTEREST" | "PM_INTEREST" | "REACTIVE_ATTENDANCE" | "REFERRAL"
     required String description,
     required Map<String, dynamic> details,
     String? jobId,
@@ -457,7 +497,10 @@ class PillarClient {
     String engineerEmail = defaultEngineerEmail,
   }) async {
     // NOTE: Firebase write logic commented out as requested.
-    Log('[MOCK] raiseEnquiry category: $category for job: $jobId (Firebase write commented out)', name: 'PillarClient');
+    Log(
+      '[MOCK] raiseEnquiry category: $category for job: $jobId (Firebase write commented out)',
+      name: 'PillarClient',
+    );
     return true;
 
     /*
@@ -507,7 +550,10 @@ class PillarClient {
     return prefs.getString('pillar_job_status_$jobId');
   }
 
-  static Future<void> saveFormAnswers(String jobId, Map<String, dynamic> answers) async {
+  static Future<void> saveFormAnswers(
+    String jobId,
+    Map<String, dynamic> answers,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('pillar_form_answers_$jobId', jsonEncode(answers));
   }

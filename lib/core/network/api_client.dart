@@ -6,10 +6,10 @@ class ApiClient {
   final Dio _dio = DioClient().dio;
 
   Future<Response> get(
-      String endpoint, {
-        Map<String, dynamic>? queryParameters,
-        Options? options,
-      }) async {
+    String endpoint, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
     return await _dio.get(
       endpoint,
       queryParameters: queryParameters,

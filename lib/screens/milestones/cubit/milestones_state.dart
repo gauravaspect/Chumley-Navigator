@@ -31,10 +31,7 @@ class MilestonesLoaded extends MilestonesState {
 }
 
 class MilestonesError extends MilestonesState {
-  const MilestonesError({
-    required this.message,
-    this.cachedMilestones,
-  });
+  const MilestonesError({required this.message, this.cachedMilestones});
 
   final String message;
   final MilestonesResponse? cachedMilestones;
@@ -45,9 +42,9 @@ class MilestonesError extends MilestonesState {
 
 extension MilestonesStateX on MilestonesState {
   MilestonesResponse? get milestonesOrNull => switch (this) {
-        MilestonesLoaded(:final milestones) => milestones,
-        MilestonesLoading(:final cachedMilestones) => cachedMilestones,
-        MilestonesError(:final cachedMilestones) => cachedMilestones,
-        _ => null,
-      };
+    MilestonesLoaded(:final milestones) => milestones,
+    MilestonesLoading(:final cachedMilestones) => cachedMilestones,
+    MilestonesError(:final cachedMilestones) => cachedMilestones,
+    _ => null,
+  };
 }

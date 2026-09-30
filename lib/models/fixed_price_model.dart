@@ -60,8 +60,9 @@ class FixedPriceCategoriesResponse extends Equatable {
         ? rawCategories
               .whereType<Map>()
               .map(
-                (item) =>
-                    FixedPriceCategoryModel.fromJson(Map<String, dynamic>.from(item)),
+                (item) => FixedPriceCategoryModel.fromJson(
+                  Map<String, dynamic>.from(item),
+                ),
               )
               .toList(growable: false)
         : <FixedPriceCategoryModel>[];
@@ -102,14 +103,16 @@ class FixedPriceWorkTypesResponse extends Equatable {
   final List<FixedPriceWorkTypeModel> workTypes;
 
   factory FixedPriceWorkTypesResponse.fromJson(Map<String, dynamic> json) {
-    final rawWorkTypes = json['work_types'] ?? json['workTypes'] ?? json['data'];
+    final rawWorkTypes =
+        json['work_types'] ?? json['workTypes'] ?? json['data'];
 
     final list = rawWorkTypes is List
         ? rawWorkTypes
               .whereType<Map>()
               .map(
-                (item) =>
-                    FixedPriceWorkTypeModel.fromJson(Map<String, dynamic>.from(item)),
+                (item) => FixedPriceWorkTypeModel.fromJson(
+                  Map<String, dynamic>.from(item),
+                ),
               )
               .toList(growable: false)
         : <FixedPriceWorkTypeModel>[];

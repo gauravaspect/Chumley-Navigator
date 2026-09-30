@@ -23,10 +23,7 @@ class _ActivityItem {
 }
 
 class EarningCard extends StatefulWidget {
-  const EarningCard({
-    super.key,
-    required this.user,
-  });
+  const EarningCard({super.key, required this.user});
 
   final UserModel user;
 
@@ -38,8 +35,18 @@ class _EarningCardState extends State<EarningCard> {
   int _months = 6;
 
   static const _monthNames = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   static const _barHeightsByRange = {
@@ -83,9 +90,9 @@ class _EarningCardState extends State<EarningCard> {
     final amount = _totalEarnings;
     final whole = amount.round();
     final formatted = whole.toString().replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
     return '£$formatted';
   }
 
@@ -99,9 +106,10 @@ class _EarningCardState extends State<EarningCard> {
   }
 
   Future<void> _pickPeriod() async {
+    final theme = DashboardTheme.of(context);
     final selected = await showModalBottomSheet<int>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
@@ -110,11 +118,39 @@ class _EarningCardState extends State<EarningCard> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                margin: EdgeInsets.only(top: 8.h, bottom: 8.h),
+                width: 36.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: theme.border,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
               for (final option in const [3, 6, 12])
                 ListTile(
-                  title: Text('$option months'),
+                  title: Text(
+                    '$option months',
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: option == _months
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: option == _months
+                          ? (theme.isDark
+                              ? AppColors.accentBlue
+                              : AppColors.primaryBlue)
+                          : theme.dashTitle,
+                    ),
+                  ),
                   trailing: option == _months
-                      ? Icon(LucideIcons.check, color: AppColors.primaryBlue)
+                      ? Icon(
+                          LucideIcons.check,
+                          color: theme.isDark
+                              ? AppColors.accentBlue
+                              : AppColors.primaryBlue,
+                          size: 20.sp,
+                        )
                       : null,
                   onTap: () => Navigator.pop(context, option),
                 ),
@@ -265,7 +301,10 @@ class _EarningCardState extends State<EarningCard> {
                                     decoration: BoxDecoration(
                                       color: i == labels.length - 1
                                           ? theme.dashPrimary
-                                          : const Color(0xFFC9DCF7),
+                                          : (theme.isDark
+                                              ? AppColors.accentBlue
+                                                  .withValues(alpha: 0.25)
+                                              : const Color(0xFFC9DCF7)),
                                       borderRadius: BorderRadius.circular(10.r),
                                     ),
                                   ),
@@ -413,7 +452,19 @@ class _EarningCardState extends State<EarningCard> {
                 onTap: () {
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Withdraw — coming soon')),
+                    SnackBar(
+                      backgroundColor: theme.isDark ? theme.surface : null,
+                      content: Text(
+                        'Withdraw — coming soon',
+                        style: TextStyle(
+                          color: theme.isDark ? theme.text : null,
+                        ),
+                      ),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                    ),
                   );
                 },
                 borderRadius: BorderRadius.circular(14.r),
@@ -423,7 +474,7 @@ class _EarningCardState extends State<EarningCard> {
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w700,
-                      color: theme.dashTitle,
+                      color: AppColors.textDarkBlue,
                     ),
                   ),
                 ),
@@ -448,10 +499,8 @@ class _EarningCardState extends State<EarningCard> {
     final iconBg = item.isCredit
         ? theme.dashSuccessBg
         : (theme.isDark ? theme.dashSurfaceTint : const Color(0xFFD8E6FC));
-    final iconColor =
-        item.isCredit ? theme.dashSuccessFg : theme.dashPrimary;
-    final amountColor =
-        item.isCredit ? theme.dashSuccessFg : theme.dashTitle;
+    final iconColor = item.isCredit ? theme.dashSuccessFg : theme.dashPrimary;
+    final amountColor = item.isCredit ? theme.dashSuccessFg : theme.dashTitle;
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 7.h),
@@ -460,10 +509,7 @@ class _EarningCardState extends State<EarningCard> {
           Container(
             width: 38.w,
             height: 38.w,
-            decoration: BoxDecoration(
-              color: iconBg,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
             alignment: Alignment.center,
             child: Icon(item.icon, size: 18.sp, color: iconColor),
           ),

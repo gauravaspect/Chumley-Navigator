@@ -92,52 +92,40 @@ class NavigatorTokens {
 
   /// HTML: `0px 1px 2px rgba(11,31,58,0.04), 0px 2px 10px rgba(11,31,58,0.06)`
   static List<BoxShadow> get cardShadows => const [
-        BoxShadow(
-          color: Color(0x0A0B1F3A),
-          blurRadius: 2,
-          offset: Offset(0, 1),
-        ),
-        BoxShadow(
-          color: Color(0x0F0B1F3A),
-          blurRadius: 10,
-          offset: Offset(0, 2),
-        ),
-      ];
+    BoxShadow(color: Color(0x0A0B1F3A), blurRadius: 2, offset: Offset(0, 1)),
+    BoxShadow(color: Color(0x0F0B1F3A), blurRadius: 10, offset: Offset(0, 2)),
+  ];
 
   static List<BoxShadow> get actionBarShadows => const [
-        BoxShadow(
-          color: Color(0x0F0B1F3A),
-          blurRadius: 16,
-          offset: Offset(0, -2),
-        ),
-      ];
+    BoxShadow(color: Color(0x0F0B1F3A), blurRadius: 16, offset: Offset(0, -2)),
+  ];
 
   static TextStyle titleStyle(double sp) => TextStyle(
-        fontSize: sp,
-        fontWeight: FontWeight.w700,
-        height: 1.2,
-        letterSpacing: -0.7,
-        color: textPrimary,
-      );
+    fontSize: sp,
+    fontWeight: FontWeight.w700,
+    height: 1.2,
+    letterSpacing: -0.7,
+    color: textPrimary,
+  );
 
   static TextStyle captionStyle(double sp) => TextStyle(
-        fontSize: sp,
-        fontWeight: FontWeight.w400,
-        height: 1.42,
-        color: textTertiary,
-      );
+    fontSize: sp,
+    fontWeight: FontWeight.w400,
+    height: 1.42,
+    color: textTertiary,
+  );
 
   static TextStyle fieldLabelStyle(double sp) => TextStyle(
-        fontSize: sp,
-        fontWeight: FontWeight.w700,
-        height: 1.33,
-        color: textPrimary,
-      );
+    fontSize: sp,
+    fontWeight: FontWeight.w700,
+    height: 1.33,
+    color: textPrimary,
+  );
 
   static TextStyle buttonLabelStyle(double sp) => TextStyle(
-        fontSize: sp,
-        fontWeight: FontWeight.w700,
-        height: 1.2,
-        color: textInverse,
-      );
+    fontSize: sp,
+    fontWeight: FontWeight.w700,
+    height: 1.2,
+    color: textInverse,
+  );
 }

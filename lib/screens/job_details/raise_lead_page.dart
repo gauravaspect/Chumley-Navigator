@@ -1,5 +1,6 @@
 import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
 import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -26,11 +27,8 @@ class RaiseLeadPage extends StatefulWidget {
   }) {
     return Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => RaiseLeadPage(
-          kind: kind,
-          jobId: jobId,
-          jobNumber: jobNumber,
-        ),
+        builder: (_) =>
+            RaiseLeadPage(kind: kind, jobId: jobId, jobNumber: jobNumber),
       ),
     );
   }
@@ -106,8 +104,9 @@ class _RaiseLeadPageState extends State<RaiseLeadPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F9FF),
+      backgroundColor: theme.base,
       body: SafeArea(
         child: Column(
           children: [
@@ -124,7 +123,7 @@ class _RaiseLeadPageState extends State<RaiseLeadPage> {
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0B1F3A),
+                      color: theme.dashTitle,
                     ),
                   ),
                 ],
@@ -140,17 +139,30 @@ class _RaiseLeadPageState extends State<RaiseLeadPage> {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF5A6B85),
+                        color: theme.dashHeading,
                       ),
                     ),
                     SizedBox(height: 8.h),
                     TextField(
                       controller: _buddy,
-                      decoration: const InputDecoration(
+                      style: TextStyle(color: theme.text),
+                      decoration: InputDecoration(
                         hintText: 'Name',
+                        hintStyle: TextStyle(color: theme.textMuted),
                         filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(borderSide: BorderSide.none),
+                        fillColor: theme.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                          borderSide: theme.isDark
+                              ? BorderSide(color: theme.border, width: 0.5)
+                              : BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                          borderSide: theme.isDark
+                              ? BorderSide(color: theme.border, width: 0.5)
+                              : BorderSide.none,
+                        ),
                       ),
                     ),
                     SizedBox(height: 16.h),
@@ -162,18 +174,31 @@ class _RaiseLeadPageState extends State<RaiseLeadPage> {
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF5A6B85),
+                      color: theme.dashHeading,
                     ),
                   ),
                   SizedBox(height: 8.h),
                   TextField(
                     controller: _message,
                     maxLines: 6,
-                    decoration: const InputDecoration(
+                    style: TextStyle(color: theme.text),
+                    decoration: InputDecoration(
                       hintText: 'What should the office see?',
+                      hintStyle: TextStyle(color: theme.textMuted),
                       filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(borderSide: BorderSide.none),
+                      fillColor: theme.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: theme.isDark
+                            ? BorderSide(color: theme.border, width: 0.5)
+                            : BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: theme.isDark
+                            ? BorderSide(color: theme.border, width: 0.5)
+                            : BorderSide.none,
+                      ),
                     ),
                   ),
                   if (_error != null) ...[
@@ -200,8 +225,14 @@ class _RaiseLeadPageState extends State<RaiseLeadPage> {
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFFFF23D),
                     foregroundColor: const Color(0xFF0B1F3A),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
                   ),
-                  child: Text(_submitting ? 'Sending…' : 'Send to office'),
+                  child: Text(
+                    _submitting ? 'Sending…' : 'Send to office',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
             ),

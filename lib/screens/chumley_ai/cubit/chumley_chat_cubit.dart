@@ -16,10 +16,7 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
     emit(state.copyWith(user: user));
 
     // Always enable Chats for mobile; backend chat-token still enforces access.
-    emit(state.copyWith(
-      chumleyChatEnabled: true,
-      permissionsLoaded: true,
-    ));
+    emit(state.copyWith(chumleyChatEnabled: true, permissionsLoaded: true));
 
     await Future.wait([
       loadBriefing(),
@@ -51,10 +48,7 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
       final briefing = await _repository.fetchDailyBriefing();
       emit(state.copyWith(briefing: briefing, briefingLoading: false));
     } catch (e) {
-      emit(state.copyWith(
-        briefingLoading: false,
-        briefingError: e.toString(),
-      ));
+      emit(state.copyWith(briefingLoading: false, briefingError: e.toString()));
     }
   }
 
@@ -74,11 +68,13 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
         list = [created];
       }
       final activeId = state.activeAiConversationId ?? list.first.id;
-      emit(state.copyWith(
-        aiConversations: list,
-        activeAiConversationId: activeId,
-        aiLoading: false,
-      ));
+      emit(
+        state.copyWith(
+          aiConversations: list,
+          activeAiConversationId: activeId,
+          aiLoading: false,
+        ),
+      );
       await selectAiConversation(activeId);
     } catch (e) {
       emit(state.copyWith(aiLoading: false, aiError: e.toString()));
@@ -90,12 +86,14 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
     if (user == null || user.email.isEmpty) return;
     try {
       final created = await _repository.createAiConversation(user.email);
-      emit(state.copyWith(
-        aiConversations: [created, ...state.aiConversations],
-        activeAiConversationId: created.id,
-        aiMessages: const [],
-        showAiPastChats: false,
-      ));
+      emit(
+        state.copyWith(
+          aiConversations: [created, ...state.aiConversations],
+          activeAiConversationId: created.id,
+          aiMessages: const [],
+          showAiPastChats: false,
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(aiError: e.toString()));
     }
@@ -110,12 +108,14 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
   }
 
   Future<void> selectAiConversation(String id) async {
-    emit(state.copyWith(
-      activeAiConversationId: id,
-      aiLoading: true,
-      showAiPastChats: false,
-      clearAiError: true,
-    ));
+    emit(
+      state.copyWith(
+        activeAiConversationId: id,
+        aiLoading: true,
+        showAiPastChats: false,
+        clearAiError: true,
+      ),
+    );
     try {
       final messages = await _repository.listAiMessages(id);
       emit(state.copyWith(aiMessages: messages, aiLoading: false));
@@ -155,12 +155,14 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
       conversations[idx] = conversations[idx].copyWith(title: title);
     }
 
-    emit(state.copyWith(
-      aiMessages: [...state.aiMessages, userMsg],
-      aiConversations: conversations,
-      aiSending: true,
-      clearAiError: true,
-    ));
+    emit(
+      state.copyWith(
+        aiMessages: [...state.aiMessages, userMsg],
+        aiConversations: conversations,
+        aiSending: true,
+        clearAiError: true,
+      ),
+    );
 
     try {
       final data = await _repository.queryAi(
@@ -179,21 +181,24 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
             .toList();
       }
 
-      final answer = (data['answer'] ?? data['message'] ?? 'No response from AI.')
-          .toString();
+      final answer =
+          (data['answer'] ?? data['message'] ?? 'No response from AI.')
+              .toString();
       final recommendation = data['recommendation']?.toString();
       final content = recommendation == null || recommendation.isEmpty
           ? answer
           : '$answer\n\n**Recommendation:** $recommendation';
       final followUps = data['follow_up_prompts'] is List
-          ? (data['follow_up_prompts'] as List).map((e) => e.toString()).toList()
+          ? (data['follow_up_prompts'] as List)
+                .map((e) => e.toString())
+                .toList()
           : <String>[];
       final vizRaw = data['visualization'];
       final visualizations = vizRaw is List
           ? vizRaw
-              .whereType<Map>()
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList()
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList()
           : <Map<String, dynamic>>[];
 
       final assistant = NavigatorAiMessage(
@@ -204,26 +209,30 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
         visualizations: visualizations,
       );
 
-      emit(state.copyWith(
-        aiConversations: conversations,
-        activeAiConversationId: activeId,
-        aiMessages: [...state.aiMessages, assistant],
-        aiSending: false,
-      ));
+      emit(
+        state.copyWith(
+          aiConversations: conversations,
+          activeAiConversationId: activeId,
+          aiMessages: [...state.aiMessages, assistant],
+          aiSending: false,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        aiSending: false,
-        aiError: e.toString(),
-        aiMessages: [
-          ...state.aiMessages,
-          NavigatorAiMessage(
-            role: 'assistant',
-            content:
-                "I wasn't able to process that request. Please try again.\n\nError: $e",
-            timestamp: DateTime.now(),
-          ),
-        ],
-      ));
+      emit(
+        state.copyWith(
+          aiSending: false,
+          aiError: e.toString(),
+          aiMessages: [
+            ...state.aiMessages,
+            NavigatorAiMessage(
+              role: 'assistant',
+              content:
+                  "I wasn't able to process that request. Please try again.\n\nError: $e",
+              timestamp: DateTime.now(),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -250,23 +259,27 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
     try {
       final list = await _repository.listChumleyConversations();
       final unread = list.fold<int>(0, (sum, c) => sum + c.unreadCount);
-      emit(state.copyWith(
-        chumleyConversations: list,
-        chumleyLoading: false,
-        unreadTotal: unread,
-      ));
+      emit(
+        state.copyWith(
+          chumleyConversations: list,
+          chumleyLoading: false,
+          unreadTotal: unread,
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(chumleyLoading: false, chumleyError: e.toString()));
     }
   }
 
   Future<void> openChumleyConversation(String id) async {
-    emit(state.copyWith(
-      activeChumleyConversationId: id,
-      chumleyMessagesLoading: true,
-      clearChumleyError: true,
-      activeTab: ChumleyPanelTab.chats,
-    ));
+    emit(
+      state.copyWith(
+        activeChumleyConversationId: id,
+        chumleyMessagesLoading: true,
+        clearChumleyError: true,
+        activeTab: ChumleyPanelTab.chats,
+      ),
+    );
     try {
       final result = await _repository.listChumleyMessages(id);
       await _repository.markChumleyRead(id);
@@ -285,29 +298,35 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
         );
       }).toList();
       final unread = updated.fold<int>(0, (sum, c) => sum + c.unreadCount);
-      emit(state.copyWith(
-        chumleyMessages: result.messages,
-        chumleyMessagesLoading: false,
-        chumleyConversations: updated,
-        unreadTotal: unread,
-      ));
+      emit(
+        state.copyWith(
+          chumleyMessages: result.messages,
+          chumleyMessagesLoading: false,
+          chumleyConversations: updated,
+          unreadTotal: unread,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        chumleyMessagesLoading: false,
-        chumleyError: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          chumleyMessagesLoading: false,
+          chumleyError: e.toString(),
+        ),
+      );
     }
   }
 
   Future<void> startDm(String peerEmail) async {
     try {
       final conv = await _repository.startDm(peerEmail.trim().toLowerCase());
-      emit(state.copyWith(
-        chumleyConversations: [
-          conv,
-          ...state.chumleyConversations.where((c) => c.id != conv.id),
-        ],
-      ));
+      emit(
+        state.copyWith(
+          chumleyConversations: [
+            conv,
+            ...state.chumleyConversations.where((c) => c.id != conv.id),
+          ],
+        ),
+      );
       await openChumleyConversation(conv.id);
     } catch (e) {
       emit(state.copyWith(chumleyError: e.toString()));
@@ -332,11 +351,13 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
       pending: true,
     );
 
-    emit(state.copyWith(
-      chumleyMessages: [...state.chumleyMessages, optimistic],
-      chumleySending: true,
-      clearChumleyError: true,
-    ));
+    emit(
+      state.copyWith(
+        chumleyMessages: [...state.chumleyMessages, optimistic],
+        chumleySending: true,
+        clearChumleyError: true,
+      ),
+    );
 
     _repository.sendChumleyWsMessage(
       conversationId: conversationId,
@@ -355,9 +376,11 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
       case 'ready':
         final online = frame['online'];
         if (online is List) {
-          emit(state.copyWith(
-            onlineEmails: online.map((e) => e.toString()).toSet(),
-          ));
+          emit(
+            state.copyWith(
+              onlineEmails: online.map((e) => e.toString()).toSet(),
+            ),
+          );
         }
         if (state.activeTab != ChumleyPanelTab.chats) {
           refreshChumleyConversations();
@@ -451,10 +474,12 @@ class ChumleyChatCubit extends Cubit<ChumleyChatState> {
   }
 
   void backToChumleyList() {
-    emit(state.copyWith(
-      clearActiveChumleyConversationId: true,
-      chumleyMessages: const [],
-    ));
+    emit(
+      state.copyWith(
+        clearActiveChumleyConversationId: true,
+        chumleyMessages: const [],
+      ),
+    );
   }
 
   Future<void> onAppResumed() async {

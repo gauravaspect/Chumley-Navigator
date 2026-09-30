@@ -12,7 +12,9 @@ class VcrExamplesApiService {
 
   Future<List<VcrExamplePhoto>> fetchExamples(String section) async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.getVcrExamples(section));
+      final response = await _apiClient.get(
+        ApiEndpoints.getVcrExamples(section),
+      );
       final body = ApiResponseHelper.toMap(response.data);
 
       if (body['success'] == false) {
@@ -39,10 +41,12 @@ class VcrExamplesApiService {
       if (images is List) {
         return images
             .whereType<Map>()
-            .map((image) => _photoFromMap(
-                  Map<String, dynamic>.from(image),
-                  fallbackLabel,
-                ))
+            .map(
+              (image) => _photoFromMap(
+                Map<String, dynamic>.from(image),
+                fallbackLabel,
+              ),
+            )
             .where((photo) => photo.imageUrl.isNotEmpty)
             .toList();
       }
@@ -51,10 +55,10 @@ class VcrExamplesApiService {
     if (data is List) {
       return data
           .whereType<Map>()
-          .map((image) => _photoFromMap(
-                Map<String, dynamic>.from(image),
-                fallbackLabel,
-              ))
+          .map(
+            (image) =>
+                _photoFromMap(Map<String, dynamic>.from(image), fallbackLabel),
+          )
           .where((photo) => photo.imageUrl.isNotEmpty)
           .toList();
     }
@@ -66,16 +70,12 @@ class VcrExamplesApiService {
     Map<String, dynamic> image,
     String fallbackLabel,
   ) {
-    final label = (image['name'] ??
-            image['label'] ??
-            image['title'] ??
-            fallbackLabel)
-        .toString();
-    final imageUrl = (image['url'] ??
-            image['imageUrl'] ??
-            image['image_url'] ??
-            '')
-        .toString();
+    final label =
+        (image['name'] ?? image['label'] ?? image['title'] ?? fallbackLabel)
+            .toString();
+    final imageUrl =
+        (image['url'] ?? image['imageUrl'] ?? image['image_url'] ?? '')
+            .toString();
 
     return VcrExamplePhoto(label: label, imageUrl: imageUrl);
   }

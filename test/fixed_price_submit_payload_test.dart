@@ -45,7 +45,8 @@ Ensuring proper ventilation and moisture control is in place where necessary.'''
       collectionFeeApplicable: true,
       listPriceServiceCode: 'standard',
       operativeMaterialsCost: 35.50,
-      operativeMaterialsDescription: '2x 15mm copper couplings, 1.5m copper pipe',
+      operativeMaterialsDescription:
+          '2x 15mm copper couplings, 1.5m copper pipe',
       chargeDrainagePatches: false,
       aspectMaterialsCost: 15.00,
       aspectMaterialsDescription: 'Solder, flux, jointing compound',
@@ -166,9 +167,7 @@ Ensuring proper ventilation and moisture control is in place where necessary.'''
         durationHours: 1.5,
       );
 
-      final json = payload.toSalesforceJson(
-        context: salesforceContext,
-      );
+      final json = payload.toSalesforceJson(context: salesforceContext);
 
       expect(json['customer_decision'], 'reject');
       expect(json['drainage_patches'], 0.0);

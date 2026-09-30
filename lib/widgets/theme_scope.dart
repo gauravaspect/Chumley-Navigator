@@ -13,4 +13,10 @@ class ThemeScope extends InheritedNotifier<ThemeNotifier> {
     assert(scope != null, 'ThemeScope not found above context');
     return scope!.notifier!;
   }
+
+  static ThemeNotifier? maybeOf(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<ThemeScope>();
+    return scope?.notifier;
+  }
 }
+

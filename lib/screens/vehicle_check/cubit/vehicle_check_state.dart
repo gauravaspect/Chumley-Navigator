@@ -13,10 +13,7 @@ class VehicleCheckInitial extends VehicleCheckState {
 }
 
 class VehicleCheckLoading extends VehicleCheckState {
-  const VehicleCheckLoading({
-    this.cachedAllocations,
-    this.selectedVehicle,
-  });
+  const VehicleCheckLoading({this.cachedAllocations, this.selectedVehicle});
 
   final VehicleResponse? cachedAllocations;
   final VehicleModel? selectedVehicle;
@@ -26,10 +23,7 @@ class VehicleCheckLoading extends VehicleCheckState {
 }
 
 class VehicleCheckLoaded extends VehicleCheckState {
-  const VehicleCheckLoaded({
-    required this.allocations,
-    this.selectedVehicle,
-  });
+  const VehicleCheckLoaded({required this.allocations, this.selectedVehicle});
 
   final VehicleResponse allocations;
   final VehicleModel? selectedVehicle;

@@ -30,7 +30,7 @@ class OutlinedCtaButton extends StatelessWidget {
       scale: 0.98,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 14.h),
+        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
         decoration: BoxDecoration(
           color: ElevatedSurface.tintedFill,
           borderRadius: BorderRadius.circular(16.r),
@@ -39,17 +39,23 @@ class OutlinedCtaButton extends StatelessWidget {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
               Icon(icon, color: fg, size: 20.sp),
               SizedBox(width: 8.w),
             ],
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16.sp,
-                color: fg,
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16.sp,
+                    color: fg,
+                  ),
+                ),
               ),
             ),
           ],

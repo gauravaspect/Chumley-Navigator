@@ -46,10 +46,7 @@ class VcrExamplesCubit extends Cubit<VcrExamplesState> {
       _stepCache[stepKey] = loadedState;
       emit(loadedState);
     } catch (e) {
-      emit(VcrExamplesError(
-        sections: sections,
-        message: e.toString(),
-      ));
+      emit(VcrExamplesError(sections: sections, message: e.toString()));
     }
   }
 }

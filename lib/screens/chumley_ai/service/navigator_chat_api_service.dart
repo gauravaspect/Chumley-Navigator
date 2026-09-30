@@ -59,7 +59,9 @@ class NavigatorChatApiService {
     }
   }
 
-  Future<List<NavigatorAiConversation>> listConversations(String userEmail) async {
+  Future<List<NavigatorAiConversation>> listConversations(
+    String userEmail,
+  ) async {
     try {
       final response = await _apiClient.get(
         ApiEndpoints.navigatorConversations,
@@ -71,9 +73,10 @@ class NavigatorChatApiService {
           : (ApiResponseHelper.toMap(data)['conversations'] as List? ?? []);
       return list
           .whereType<Map>()
-          .map((e) => NavigatorAiConversation.fromJson(
-                Map<String, dynamic>.from(e),
-              ))
+          .map(
+            (e) =>
+                NavigatorAiConversation.fromJson(Map<String, dynamic>.from(e)),
+          )
           .toList();
     } on DioException catch (e) {
       throw NavigatorChatApiException(NetworkExceptions.getError(e));
@@ -132,9 +135,12 @@ class NavigatorChatApiService {
         'role': role,
         'conversation_id': conversationId,
         'user_email': userEmail,
-        if (engineerId != null && engineerId.isNotEmpty) 'engineer_id': engineerId,
-        if (tradeGroup != null && tradeGroup.isNotEmpty) 'trade_group': tradeGroup,
-        if (tradeGroups != null && tradeGroups.isNotEmpty) 'trade_groups': tradeGroups,
+        if (engineerId != null && engineerId.isNotEmpty)
+          'engineer_id': engineerId,
+        if (tradeGroup != null && tradeGroup.isNotEmpty)
+          'trade_group': tradeGroup,
+        if (tradeGroups != null && tradeGroups.isNotEmpty)
+          'trade_groups': tradeGroups,
         'date_range': 'all_time',
       });
       return ApiResponseHelper.toMap(response.data);

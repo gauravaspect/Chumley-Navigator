@@ -10,7 +10,7 @@ Widget _wrap(Widget child) {
   return MaterialApp(
     home: ScreenUtilInit(
       designSize: const Size(375, 812),
-      builder: (_, __) => child,
+      builder: (_, _) => child,
     ),
   );
 }

@@ -1,8 +1,13 @@
 import 'package:chumley_navigator/models/fixed_price_job_context.dart';
 import 'package:chumley_navigator/pillar/visit_job.dart';
 import 'package:chumley_navigator/screens/job/work_order_page.dart';
-import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
+import 'package:chumley_navigator/screens/job_details/modals/hourly_attendance_sheet.dart';
+import 'package:chumley_navigator/screens/job_details/modals/referral_modal_sheet.dart';
+import 'package:chumley_navigator/screens/job_details/raise_multiple_fixed_price_page.dart';
+import 'package:chumley_navigator/screens/job_details/raise_reactive_job_page.dart';
 import 'package:chumley_navigator/theme/navigator_tokens.dart';
+import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/utils/routes.dart';
 import 'package:chumley_navigator/widgets/ui/call_style_action_slider.dart';
 import 'package:flutter/material.dart';
@@ -44,234 +49,6 @@ class _RaiseFollowOnView extends StatelessWidget {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => FollowOnPage(job: job, phase: FollowOnPhase.jobClosed),
-      ),
-    );
-  }
-
-  void _showHourlyAttendanceSheet(BuildContext context) {
-    final noteController = TextEditingController();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => Container(
-        padding: EdgeInsets.fromLTRB(
-          20.w,
-          20.h,
-          20.w,
-          MediaQuery.of(sheetContext).viewInsets.bottom + 24.h,
-        ),
-        decoration: BoxDecoration(
-          color: NavigatorTokens.surfaceCard,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    'Raise Hourly Attendance',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                      color: NavigatorTokens.brandNavy,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(sheetContext).pop(),
-                  icon: const Icon(LucideIcons.x, size: 20),
-                ),
-              ],
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Specify urgent callback or reactive attendance details for ${job.jobNumber}.',
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: NavigatorTokens.textSecondary,
-              ),
-            ),
-            SizedBox(height: 14.h),
-            TextField(
-              controller: noteController,
-              maxLines: 3,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: NavigatorTokens.textPrimary,
-              ),
-              decoration: InputDecoration(
-                hintText:
-                    'e.g. Return required with 22mm copper pipe & fittings...',
-                hintStyle: TextStyle(
-                  fontSize: 12.sp,
-                  color: NavigatorTokens.textTertiary,
-                ),
-                filled: true,
-                fillColor: NavigatorTokens.brandNavySoft,
-                border: OutlineInputBorder(
-                  borderRadius: NavigatorTokens.fieldRadius,
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            SizedBox(height: 18.h),
-            SizedBox(
-              width: double.infinity,
-              height: 44.h,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: NavigatorTokens.brandNavy,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: NavigatorTokens.buttonRadius,
-                  ),
-                ),
-                onPressed: () async {
-                  await PillarClient.raiseEnquiry(
-                    category: 'HOURLY_ATTENDANCE',
-                    description: noteController.text.trim().isEmpty
-                        ? 'Hourly attendance callback for ${job.jobNumber}'
-                        : noteController.text.trim(),
-                    details: {'job_id': job.id, 'job_number': job.jobNumber},
-                  );
-                  if (context.mounted) {
-                    Navigator.of(sheetContext).pop();
-                    _goToJobClosed(context);
-                  }
-                },
-                child: Text(
-                  'Submit Attendance Request',
-                  style: NavigatorTokens.buttonLabelStyle(14.sp),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showReferralSheet(BuildContext context) {
-    final tradeController = TextEditingController();
-    final noteController = TextEditingController();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => Container(
-        padding: EdgeInsets.fromLTRB(
-          20.w,
-          20.h,
-          20.w,
-          MediaQuery.of(sheetContext).viewInsets.bottom + 24.h,
-        ),
-        decoration: BoxDecoration(
-          color: NavigatorTokens.surfaceCard,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    'Refer and Earn',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                      color: NavigatorTokens.brandNavy,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(sheetContext).pop(),
-                  icon: const Icon(LucideIcons.x, size: 20),
-                ),
-              ],
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Refer work outside your trade and earn points / rewards.',
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: NavigatorTokens.textSecondary,
-              ),
-            ),
-            SizedBox(height: 14.h),
-            TextField(
-              controller: tradeController,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: NavigatorTokens.textPrimary,
-              ),
-              decoration: InputDecoration(
-                labelText: 'Trade required',
-                hintText: 'e.g. Roofing, Carpentry, Electrical',
-                filled: true,
-                fillColor: NavigatorTokens.brandNavySoft,
-                border: OutlineInputBorder(
-                  borderRadius: NavigatorTokens.fieldRadius,
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            SizedBox(height: 10.h),
-            TextField(
-              controller: noteController,
-              maxLines: 2,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: NavigatorTokens.textPrimary,
-              ),
-              decoration: InputDecoration(
-                labelText: 'Customer scope / notes',
-                hintText: 'Customer needs guttering replaced...',
-                filled: true,
-                fillColor: NavigatorTokens.brandNavySoft,
-                border: OutlineInputBorder(
-                  borderRadius: NavigatorTokens.fieldRadius,
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            SizedBox(height: 18.h),
-            SizedBox(
-              width: double.infinity,
-              height: 44.h,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: NavigatorTokens.brandNavy,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: NavigatorTokens.buttonRadius,
-                  ),
-                ),
-                onPressed: () async {
-                  await PillarClient.raiseEnquiry(
-                    category: 'REFERRAL',
-                    description:
-                        'Referral for ${tradeController.text.trim()}: ${noteController.text.trim()}',
-                    details: {'job_id': job.id, 'job_number': job.jobNumber},
-                  );
-                  if (context.mounted) {
-                    Navigator.of(sheetContext).pop();
-                    _goToJobClosed(context);
-                  }
-                },
-                child: Text(
-                  'Submit Referral',
-                  style: NavigatorTokens.buttonLabelStyle(14.sp),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -393,7 +170,7 @@ class _RaiseFollowOnView extends StatelessWidget {
                 children: [
                   _OptionTile(
                     icon: LucideIcons.fileText,
-                    title: 'Create a fixed price quote',
+                    title: 'Raise a Fixed Price Job',
                     subtitle:
                         'Create a new Fixed Price work order for this site',
                     onTap: () async {
@@ -412,9 +189,56 @@ class _RaiseFollowOnView extends StatelessWidget {
                   ),
                   _OptionTile(
                     icon: LucideIcons.zap,
-                    title: 'Raise an hourly attendance',
+                    title: 'Raise a reactive job',
                     subtitle: 'Raise an urgent reactive task or callback',
-                    onTap: () => _showHourlyAttendanceSheet(context),
+                    onTap: () async {
+                      final result = await RaiseReactiveJobPage.open(
+                        context,
+                        jobId: job.id,
+                        jobNumber: job.jobNumber,
+                        customerName: job.customerName,
+                        postcode: job.siteAddress,
+                      );
+                      if (result == true && context.mounted) {
+                        _goToJobClosed(context);
+                      }
+                    },
+                  ),
+                  const Divider(
+                    height: 1,
+                    color: NavigatorTokens.borderHairline,
+                  ),
+                  _OptionTile(
+                    icon: LucideIcons.layers,
+                    title: 'Raise multiple fixed price job',
+                    subtitle: 'Raise several Fixed Price work orders for this site',
+                    onTap: () async {
+                      final result = await RaiseMultipleFixedPricePage.open(
+                        context,
+                        jobId: job.id,
+                        jobNumber: job.jobNumber,
+                        customerName: job.customerName,
+                        postcode: job.siteAddress,
+                        contextArgs: FixedPriceJobContext.fromVisitJob(job),
+                      );
+                      if (result == true && context.mounted) {
+                        _goToJobClosed(context);
+                      }
+                    },
+                  ),
+                  const Divider(
+                    height: 1,
+                    color: NavigatorTokens.borderHairline,
+                  ),
+                  _OptionTile(
+                    icon: LucideIcons.clock,
+                    title: 'Raise an hourly attendance',
+                    subtitle: 'Book an hourly attendance slot for this site',
+                    onTap: () => HourlyAttendanceSheet.show(
+                      context,
+                      job: job,
+                      onSuccess: () => _goToJobClosed(context),
+                    ),
                   ),
                   const Divider(
                     height: 1,
@@ -424,7 +248,11 @@ class _RaiseFollowOnView extends StatelessWidget {
                     icon: LucideIcons.gift,
                     title: 'Refer and earn',
                     subtitle: 'Refer work outside your trade and earn a reward',
-                    onTap: () => _showReferralSheet(context),
+                    onTap: () => ReferralModalSheet.show(
+                      context,
+                      job: job,
+                      onSuccess: () => _goToJobClosed(context),
+                    ),
                   ),
                 ],
               ),
@@ -790,7 +618,14 @@ class _JobClosedView extends StatelessWidget {
   }
 
   Widget _closedLadder() {
-    const labels = ['Dispatch','Recieved', 'Transit', 'On Site', 'Job Closure','Visit Complete'];
+    const labels = [
+      'Dispatch',
+      'Recieved',
+      'Transit',
+      'On Site',
+      'Job Closure',
+      'Visit Complete',
+    ];
     return Row(
       children: List.generate(5, (i) {
         return Expanded(
@@ -857,11 +692,12 @@ class _VisitCompleteView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
     return Scaffold(
-      backgroundColor: NavigatorTokens.surfaceChrome,
+      backgroundColor: theme.base,
       appBar: AppBar(
-        backgroundColor: NavigatorTokens.surfaceChrome,
-        foregroundColor: NavigatorTokens.brandNavy,
+        backgroundColor: theme.base,
+        foregroundColor: theme.dashTitle,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
@@ -869,11 +705,18 @@ class _VisitCompleteView extends StatelessWidget {
         ),
         title: Text(
           'Work Order',
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w700,
+            color: theme.dashTitle,
+          ),
         ),
       ),
       body: DecoratedBox(
-        decoration: const BoxDecoration(gradient: NavigatorTokens.pageGradient),
+        decoration: BoxDecoration(
+          color: theme.isDark ? theme.base : null,
+          gradient: theme.isDark ? null : NavigatorTokens.pageGradient,
+        ),
         child: ListView(
           padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 24.h),
           children: [
@@ -881,22 +724,29 @@ class _VisitCompleteView extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: NavigatorTokens.surfaceCard,
+                color: theme.surface,
                 borderRadius: NavigatorTokens.cardRadius,
-                boxShadow: NavigatorTokens.cardShadows,
+                border: theme.isDark
+                    ? Border.all(color: theme.border, width: 0.5)
+                    : null,
+                boxShadow: theme.isDark ? null : NavigatorTokens.cardShadows,
               ),
               child: Column(
                 children: [
                   Container(
                     width: 72.w,
                     height: 72.w,
-                    decoration: const BoxDecoration(
-                      color: NavigatorTokens.brandNavySoft,
+                    decoration: BoxDecoration(
+                      color: theme.isDark
+                          ? AppColors.accentBlue.withValues(alpha: 0.15)
+                          : NavigatorTokens.brandNavySoft,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       LucideIcons.check,
-                      color: NavigatorTokens.brandNavy,
+                      color: theme.isDark
+                          ? AppColors.accentBlue
+                          : NavigatorTokens.brandNavy,
                       size: 36.sp,
                     ),
                   ),
@@ -906,7 +756,7 @@ class _VisitCompleteView extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 22.sp,
                       fontWeight: FontWeight.w800,
-                      color: NavigatorTokens.brandNavy,
+                      color: theme.dashHeading,
                     ),
                   ),
                   SizedBox(height: 6.h),
@@ -915,12 +765,12 @@ class _VisitCompleteView extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13.sp,
-                      color: NavigatorTokens.textSecondary,
+                      color: theme.dashMuted,
                       height: 1.4,
                     ),
                   ),
                   SizedBox(height: 18.h),
-                  const Divider(color: NavigatorTokens.borderHairline),
+                  Divider(color: theme.border),
                   SizedBox(height: 8.h),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -932,7 +782,7 @@ class _VisitCompleteView extends StatelessWidget {
                             'Appointment',
                             style: TextStyle(
                               fontSize: 11.sp,
-                              color: NavigatorTokens.textSecondary,
+                              color: theme.dashMuted,
                             ),
                           ),
                           SizedBox(height: 2.h),
@@ -941,7 +791,7 @@ class _VisitCompleteView extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w700,
-                              color: NavigatorTokens.textPrimary,
+                              color: theme.dashTitle,
                             ),
                           ),
                         ],
@@ -950,16 +800,23 @@ class _VisitCompleteView extends StatelessWidget {
                         icon: Icon(
                           LucideIcons.copy,
                           size: 18.sp,
-                          color: NavigatorTokens.brandNavy,
+                          color: theme.isDark
+                              ? AppColors.highlightYellow
+                              : NavigatorTokens.brandNavy,
                         ),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: job.jobNumber));
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
+                              backgroundColor:
+                                  theme.isDark ? theme.surface : null,
                               content: Text(
                                 'Appointment ID copied to clipboard',
+                                style: TextStyle(
+                                  color: theme.isDark ? theme.text : null,
+                                ),
                               ),
-                              duration: Duration(seconds: 2),
+                              duration: const Duration(seconds: 2),
                             ),
                           );
                         },
@@ -976,9 +833,12 @@ class _VisitCompleteView extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: NavigatorTokens.surfaceCard,
+                color: theme.surface,
                 borderRadius: NavigatorTokens.cardRadius,
-                boxShadow: NavigatorTokens.cardShadows,
+                border: theme.isDark
+                    ? Border.all(color: theme.border, width: 0.5)
+                    : null,
+                boxShadow: theme.isDark ? null : NavigatorTokens.cardShadows,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -988,15 +848,15 @@ class _VisitCompleteView extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w700,
-                      color: NavigatorTokens.brandNavy,
+                      color: theme.dashHeading,
                     ),
                   ),
                   SizedBox(height: 16.h),
-                  _stepRow(1, 'Your report goes to the office for review'),
+                  _stepRow(theme, 1, 'Your report goes to the office for review'),
                   SizedBox(height: 14.h),
-                  _stepRow(2, 'The customer receives their visit summary'),
+                  _stepRow(theme, 2, 'The customer receives their visit summary'),
                   SizedBox(height: 14.h),
-                  _stepRow(3, 'Points for this visit land in your Points Hub'),
+                  _stepRow(theme, 3, 'Points for this visit land in your Points Hub'),
                 ],
               ),
             ),
@@ -1011,7 +871,7 @@ class _VisitCompleteView extends StatelessWidget {
             height: 48.h,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: NavigatorTokens.brandNavy,
+                backgroundColor: AppColors.primaryBlue,
                 shape: RoundedRectangleBorder(
                   borderRadius: NavigatorTokens.buttonRadius,
                 ),
@@ -1031,14 +891,16 @@ class _VisitCompleteView extends StatelessWidget {
     );
   }
 
-  Widget _stepRow(int number, String text) {
+  Widget _stepRow(DashboardTheme theme, int number, String text) {
     return Row(
       children: [
         Container(
           width: 24.w,
           height: 24.w,
-          decoration: const BoxDecoration(
-            color: NavigatorTokens.brandNavySoft,
+          decoration: BoxDecoration(
+            color: theme.isDark
+                ? theme.dashSurfaceTint
+                : NavigatorTokens.brandNavySoft,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
@@ -1047,7 +909,7 @@ class _VisitCompleteView extends StatelessWidget {
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w700,
-              color: NavigatorTokens.brandNavy,
+              color: theme.isDark ? AppColors.accentBlue : NavigatorTokens.brandNavy,
             ),
           ),
         ),
@@ -1058,7 +920,7 @@ class _VisitCompleteView extends StatelessWidget {
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.w500,
-              color: NavigatorTokens.textPrimary,
+              color: theme.dashTitle,
             ),
           ),
         ),

@@ -3,10 +3,7 @@ import 'dart:io';
 import 'package:equatable/equatable.dart';
 
 class VcrSubmitFile extends Equatable {
-  const VcrSubmitFile({
-    required this.slotId,
-    required this.file,
-  });
+  const VcrSubmitFile({required this.slotId, required this.file});
 
   final String slotId;
   final File file;

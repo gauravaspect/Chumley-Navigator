@@ -15,10 +15,10 @@ class ApiResponseHelper {
   }
 
   static String extractMessage(
-      dynamic data, {
-        String fallback = 'Something went wrong',
-        int? statusCode,
-      }) {
+    dynamic data, {
+    String fallback = 'Something went wrong',
+    int? statusCode,
+  }) {
     if (statusCode == 413) {
       return _payloadTooLargeMessage;
     }

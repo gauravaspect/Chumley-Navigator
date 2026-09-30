@@ -10,10 +10,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 const _kpiMax = 20.0;
 
 class KpiOverview extends StatelessWidget {
-  const KpiOverview({
-    super.key,
-    required this.user,
-  });
+  const KpiOverview({super.key, required this.user});
 
   final UserModel user;
 
@@ -55,11 +52,7 @@ class KpiOverview extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              Navigator.pushNamed(
-                context,
-                AppRoutes.goals,
-                arguments: user,
-              );
+              Navigator.pushNamed(context, AppRoutes.goals, arguments: user);
             },
             borderRadius: BorderRadius.circular(20.r),
             child: Container(

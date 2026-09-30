@@ -21,13 +21,12 @@ class LeaderboardResponse extends Equatable {
     final rawData = json['data'];
     final users = rawData is List
         ? rawData
-            .whereType<Map>()
-            .map(
-              (item) => LeaderboardUser.fromJson(
-                Map<String, dynamic>.from(item),
-              ),
-            )
-            .toList()
+              .whereType<Map>()
+              .map(
+                (item) =>
+                    LeaderboardUser.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .toList()
         : <LeaderboardUser>[];
 
     return LeaderboardResponse(
@@ -132,10 +131,7 @@ class LeaderboardUser extends Equatable {
 
 /// Minimal offline leaderboard cache — display fields only.
 class LeaderboardCache extends Equatable {
-  const LeaderboardCache({
-    this.users = const [],
-    this.count = 0,
-  });
+  const LeaderboardCache({this.users = const [], this.count = 0});
 
   final List<LeaderboardUserSummary> users;
   final int count;
@@ -163,19 +159,16 @@ class LeaderboardCache extends Equatable {
     final rawUsers = json['users'];
     final users = rawUsers is List
         ? rawUsers
-            .whereType<Map>()
-            .map(
-              (item) => LeaderboardUserSummary.fromJson(
-                Map<String, dynamic>.from(item),
-              ),
-            )
-            .toList()
+              .whereType<Map>()
+              .map(
+                (item) => LeaderboardUserSummary.fromJson(
+                  Map<String, dynamic>.from(item),
+                ),
+              )
+              .toList()
         : <LeaderboardUserSummary>[];
 
-    return LeaderboardCache(
-      users: users,
-      count: _readInt(json['count']),
-    );
+    return LeaderboardCache(users: users, count: _readInt(json['count']));
   }
 
   Map<String, dynamic> toJson() => {

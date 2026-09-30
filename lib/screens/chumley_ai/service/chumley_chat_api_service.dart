@@ -49,8 +49,9 @@ class ChumleyChatApiService {
   }
 
   Future<List<ChatConversation>> listConversations() async {
-    final response =
-        await _authed((o) => _dio.get<dynamic>('conversations', options: o));
+    final response = await _authed(
+      (o) => _dio.get<dynamic>('conversations', options: o),
+    );
     final body = ApiResponseHelper.toMap(response.data);
     final list = body['conversations'] as List? ?? [];
     return list

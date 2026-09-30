@@ -63,8 +63,9 @@ class VehicleCheckApiService {
     }
 
     for (final entry in payload.files) {
-      final withinLimit =
-          await ApiResponseHelper.isFileWithinUploadLimit(entry.file);
+      final withinLimit = await ApiResponseHelper.isFileWithinUploadLimit(
+        entry.file,
+      );
       if (!withinLimit) {
         throw VehicleCheckApiException(
           'Photo "${entry.slotId}" is too large. '

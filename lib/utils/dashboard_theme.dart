@@ -11,7 +11,10 @@ class DashboardTheme {
   final bool isDark;
 
   static DashboardTheme of(BuildContext context) {
-    return DashboardTheme(isDark: ThemeScope.of(context).isDark);
+    final notifier = ThemeScope.maybeOf(context);
+    final isDark = notifier?.isDark ??
+        (Theme.of(context).brightness == Brightness.dark);
+    return DashboardTheme(isDark: isDark);
   }
 
   Color get base => isDark ? AppColors.darkBase : AppColors.lightBase;
@@ -19,8 +22,7 @@ class DashboardTheme {
   Color get surfaceDeep =>
       isDark ? AppColors.darkSurfaceDeep : AppColors.lightSurfaceDeep;
   Color get border => isDark ? AppColors.darkBorder : AppColors.lightBorder;
-  Color get text =>
-      isDark ? AppColors.darkText : AppColors.lightText;
+  Color get text => isDark ? AppColors.darkText : AppColors.lightText;
   Color get textMuted =>
       isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
   Color get textBody =>
@@ -81,16 +83,14 @@ class DashboardTheme {
       isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
   Color get dashHeaderBorder =>
       isDark ? AppColors.darkBorder : AppColors.lightBorder;
-  Color get dashShadow =>
-      isDark ? Colors.transparent : AppColors.shadowSubtle;
+  Color get dashShadow => isDark ? Colors.transparent : AppColors.shadowSubtle;
   Color get dashCalendarDay =>
       isDark ? AppColors.darkTextBody : AppColors.textDarkBlue;
   Color get dashCalendarDisabled =>
       isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
-  Color get dashTodayBg =>
-      isDark
-          ? AppColors.primaryBlue.withValues(alpha: 0.2)
-          : DashboardPalette.borderLight;
+  Color get dashTodayBg => isDark
+      ? AppColors.primaryBlue.withValues(alpha: 0.2)
+      : DashboardPalette.borderLight;
   Color get dashSuccessBg =>
       isDark ? AppColors.trendUpBgDark : AppColors.successBackground;
   Color get dashSuccessFg =>
@@ -110,10 +110,9 @@ class DashboardTheme {
       isDark ? AppColors.darkSurfaceDeep : AppColors.dividerLight;
   Color get shimmerBaseDeep =>
       isDark ? AppColors.darkBorder : AppColors.borderDefault;
-  Color get shimmerHighlight =>
-      isDark
-          ? AppColors.darkTextMuted.withValues(alpha: 0.55)
-          : AppColors.white;
+  Color get shimmerHighlight => isDark
+      ? AppColors.darkTextMuted.withValues(alpha: 0.55)
+      : AppColors.white;
 
   BoxDecoration cardDecoration({double radius = 16}) {
     return BoxDecoration(

@@ -29,10 +29,10 @@ class AbsenceTimeField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
-    final fill =
-        theme.isDark ? theme.dashSurfaceTint : const Color(0xFFE9EDF5);
-    final hairline =
-        theme.isDark ? theme.dashBorderLight : const Color(0xFFE2E7F0);
+    final fill = theme.isDark ? theme.dashSurfaceTint : const Color(0xFFE9EDF5);
+    final hairline = theme.isDark
+        ? theme.dashBorderLight
+        : const Color(0xFFE2E7F0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

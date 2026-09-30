@@ -13,9 +13,9 @@ class ChumleyChatRepository {
     required ChumleyAuthProvider authProvider,
     required NavigatorChatApiService navigatorApi,
     required ChumleyChatApiService chumleyApi,
-  })  : _authProvider = authProvider,
-        _navigatorApi = navigatorApi,
-        _chumleyApi = chumleyApi;
+  }) : _authProvider = authProvider,
+       _navigatorApi = navigatorApi,
+       _chumleyApi = chumleyApi;
 
   final ChumleyAuthProvider _authProvider;
   final NavigatorChatApiService _navigatorApi;
@@ -81,8 +81,7 @@ class ChumleyChatRepository {
 
   Future<({List<ChatMessage> messages, bool hasMore})> listChumleyMessages(
     String id,
-  ) =>
-      _chumleyApi.listMessages(id);
+  ) => _chumleyApi.listMessages(id);
 
   Future<void> markChumleyRead(String id) => _chumleyApi.markRead(id);
 

@@ -81,8 +81,9 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Anything else for this site?'), findsOneWidget);
-        expect(find.text('Create a fixed price quote'), findsOneWidget);
-        expect(find.text('Raise an hourly attendance'), findsOneWidget);
+        expect(find.text('Raise a Fixed Price Job'), findsOneWidget);
+        expect(find.text('Raise a reactive job'), findsOneWidget);
+        expect(find.text('Raise multiple fixed price job'), findsOneWidget);
         expect(find.text('Refer and earn'), findsOneWidget);
         expect(find.text('No enquiry required'), findsOneWidget);
 
@@ -101,6 +102,7 @@ void main() {
 
         bool estimateCalled = false;
         bool reactiveCalled = false;
+        bool multipleFpCalled = false;
         bool referCalled = false;
 
         await tester.pumpWidget(
@@ -116,17 +118,21 @@ void main() {
               onBackToHome: () {},
               onRaiseEstimate: () => estimateCalled = true,
               onRaiseReactive: () => reactiveCalled = true,
+              onRaiseMultipleFixedPrice: () => multipleFpCalled = true,
               onReferAndEarn: () => referCalled = true,
             ),
           ),
         );
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Create a fixed price quote'));
+        await tester.tap(find.text('Raise a Fixed Price Job'));
         expect(estimateCalled, isTrue);
 
-        await tester.tap(find.text('Raise an hourly attendance'));
+        await tester.tap(find.text('Raise a reactive job'));
         expect(reactiveCalled, isTrue);
+
+        await tester.tap(find.text('Raise multiple fixed price job'));
+        expect(multipleFpCalled, isTrue);
 
         await tester.tap(find.text('Refer and earn'));
         expect(referCalled, isTrue);
@@ -203,5 +209,43 @@ void main() {
       await tester.tap(find.text('Back to home'));
       expect(homeCalled, isTrue);
     });
+
+    testWidgets('renders visitComplete phase properly in dark mode', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(393 * 3, 1200 * 3);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ScreenUtilInit(
+          designSize: const Size(393, 1200),
+          minTextAdapt: true,
+          builder: (_, _) => MaterialApp(
+            theme: ThemeData.dark(),
+            home: Scaffold(
+              body: PostSubmitFlow(
+                phase: PostSubmitPhase.visitComplete,
+                jobNumber: 'SA-10293',
+                customerName: 'Alice Green',
+                jobType: 'Leak Detection',
+                workTypeLabel: 'Leak Survey',
+                description: 'Inspect ground floor ceiling leak.',
+                onPhaseChanged: (_) {},
+                onBackToHome: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Visit complete'), findsOneWidget);
+      expect(find.text('What happens next'), findsOneWidget);
+      expect(find.text('Back to home'), findsOneWidget);
+      expect(find.text('SA-10293'), findsWidgets);
+    });
   });
 }
+

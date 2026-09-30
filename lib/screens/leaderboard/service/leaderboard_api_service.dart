@@ -18,9 +18,7 @@ class LeaderboardApiService {
     }
 
     try {
-      final response = await _apiClient.get(
-        ApiEndpoints.getLeaderboardData,
-      );
+      final response = await _apiClient.get(ApiEndpoints.getLeaderboardData);
       final body = ApiResponseHelper.toMap(response.data);
 
       if (body['success'] == false) {

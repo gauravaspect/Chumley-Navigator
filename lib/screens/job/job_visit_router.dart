@@ -35,41 +35,33 @@ class JobVisitRouter {
   }) {
     return Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (wizardContext) => _wizardPage(
-          job,
-          initialStep,
-          () {
-            onSubmitted?.call();
-            if (wizardContext.mounted) {
-              Navigator.of(wizardContext).pop();
-            }
-          },
-        ),
+        builder: (wizardContext) => _wizardPage(job, initialStep, () {
+          onSubmitted?.call();
+          if (wizardContext.mounted) {
+            Navigator.of(wizardContext).pop();
+          }
+        }),
       ),
     );
   }
 
-  static Widget _wizardPage(
-    VisitJob job,
-    int step,
-    VoidCallback onSubmitted,
-  ) {
+  static Widget _wizardPage(VisitJob job, int step, VoidCallback onSubmitted) {
     return switch (job.kind) {
       FormKind.bath => WorksVisitWizard(
-          job: job,
-          initialStep: step,
-          onSubmitted: onSubmitted,
-        ),
+        job: job,
+        initialStep: step,
+        onSubmitted: onSubmitted,
+      ),
       FormKind.gas => Cp12VisitWizard(
-          job: job,
-          initialStep: step,
-          onSubmitted: onSubmitted,
-        ),
+        job: job,
+        initialStep: step,
+        onSubmitted: onSubmitted,
+      ),
       FormKind.leak => LdVisitWizard(
-          job: job,
-          initialStep: step,
-          onSubmitted: onSubmitted,
-        ),
+        job: job,
+        initialStep: step,
+        onSubmitted: onSubmitted,
+      ),
     };
   }
 
@@ -157,10 +149,9 @@ class _WorkOrderHostState extends State<_WorkOrderHost> {
         detail.allowedNextStatuses,
         SaStatus.inTransit,
       );
-      next ??=
-          detail.allowedNextStatuses.isNotEmpty
-              ? detail.allowedNextStatuses.first
-              : null;
+      next ??= detail.allowedNextStatuses.isNotEmpty
+          ? detail.allowedNextStatuses.first
+          : null;
       if (next == null) {
         setState(() => _error = 'No status transition available.');
         return;
@@ -195,11 +186,9 @@ class _WorkOrderHostState extends State<_WorkOrderHost> {
   }
 
   void _followOn() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => FollowOnPage(job: _job),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => FollowOnPage(job: _job)));
   }
 
   @override

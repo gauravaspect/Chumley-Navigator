@@ -57,23 +57,29 @@ class NavigatorAiMessage extends Equatable {
       role: (json['role'] ?? 'assistant').toString(),
       content: (json['content'] ?? json['answer'] ?? json['message'] ?? '')
           .toString(),
-      timestamp: DateTime.tryParse((json['timestamp'] ?? '').toString()) ??
+      timestamp:
+          DateTime.tryParse((json['timestamp'] ?? '').toString()) ??
           DateTime.now(),
       followUps: followUps is List
           ? followUps.map((e) => e.toString()).toList()
           : const [],
       visualizations: viz is List
           ? viz
-              .whereType<Map>()
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList()
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList()
           : const [],
     );
   }
 
   @override
-  List<Object?> get props =>
-      [role, content, timestamp, followUps, visualizations];
+  List<Object?> get props => [
+    role,
+    content,
+    timestamp,
+    followUps,
+    visualizations,
+  ];
 }
 
 class DailyBriefing extends Equatable {
@@ -178,8 +184,14 @@ class BriefingCapacity extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [completed, total, completionRate, today, tomorrow, summary];
+  List<Object?> get props => [
+    completed,
+    total,
+    completionRate,
+    today,
+    tomorrow,
+    summary,
+  ];
 }
 
 class BriefingCash extends Equatable {
@@ -205,8 +217,12 @@ class BriefingCash extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [collectedYesterday, outstanding, overdue30d, summary];
+  List<Object?> get props => [
+    collectedYesterday,
+    outstanding,
+    overdue30d,
+    summary,
+  ];
 }
 
 class BriefingCreditNotes extends Equatable {
@@ -238,8 +254,14 @@ class BriefingCreditNotes extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [mtd, mtdPct, topTrade, topTradeAmount, topTradePct, summary];
+  List<Object?> get props => [
+    mtd,
+    mtdPct,
+    topTrade,
+    topTradeAmount,
+    topTradePct,
+    summary,
+  ];
 }
 
 double _d(dynamic v) {

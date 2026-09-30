@@ -23,11 +23,15 @@ class FormKindResolver {
     if (jt == 'FP' || jt == 'PM') return FormKind.bath;
     if (RegExp(r'leak|detect').hasMatch(tradeBlob)) return FormKind.leak;
     if (RegExp(r'gas|boiler|heat').hasMatch(tradeBlob)) return FormKind.gas;
-    if (RegExp(r'bathroom|refurb|fitting|fixed price|project').hasMatch(tradeBlob)) {
+    if (RegExp(
+      r'bathroom|refurb|fitting|fixed price|project',
+    ).hasMatch(tradeBlob)) {
       return FormKind.bath;
     }
     if (RegExp(r'gas safety|boiler|cp12').hasMatch(desc)) return FormKind.gas;
-    if (RegExp(r'refurbishment|strip out|first fix|second fix|snagging').hasMatch(desc)) {
+    if (RegExp(
+      r'refurbishment|strip out|first fix|second fix|snagging',
+    ).hasMatch(desc)) {
       return FormKind.bath;
     }
     return FormKind.leak;

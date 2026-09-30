@@ -15,9 +15,7 @@ class LeaderboardRepository {
   Future<LeaderboardResponse> fetchLeaderboard() async {
     try {
       final response = await _apiService.fetchLeaderboard();
-      await Prefs.saveLeaderboardCache(
-        LeaderboardCache.fromResponse(response),
-      );
+      await Prefs.saveLeaderboardCache(LeaderboardCache.fromResponse(response));
       return response;
     } on LeaderBoardApiException {
       final cached = await readCachedLeaderboard();

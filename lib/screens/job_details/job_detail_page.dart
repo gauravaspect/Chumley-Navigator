@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:io' show Platform;
+import 'dart:math' as math;
 
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
-import 'package:chumley_navigator/core/app_constants.dart';
 import 'package:chumley_navigator/core/log.dart';
 import 'package:chumley_navigator/models/fixed_price_job_context.dart';
 import 'package:chumley_navigator/models/sa_status.dart';
@@ -14,23 +13,27 @@ import 'package:chumley_navigator/pillar/on_site_forms_session.dart';
 import 'package:chumley_navigator/screens/job_details/on_site_wizard.dart';
 import 'package:chumley_navigator/screens/job_details/post_submit_flow.dart';
 import 'package:chumley_navigator/screens/job_details/raise_lead_page.dart';
+import 'package:chumley_navigator/screens/job_details/raise_multiple_fixed_price_page.dart';
+import 'package:chumley_navigator/screens/job_details/raise_reactive_job_page.dart';
 import 'package:chumley_navigator/screens/job_details/service/appointments_api_service.dart';
-import 'package:chumley_navigator/utils/colors.dart';
+import 'package:chumley_navigator/screens/job_details/service/geocoding_service.dart';
+import 'package:chumley_navigator/screens/job_details/service/location_service.dart';
+import 'package:chumley_navigator/screens/job_details/service/map_navigation_service.dart';
+import 'package:chumley_navigator/screens/job_details/widgets/job_actions_panel.dart';
+import 'package:chumley_navigator/screens/job_details/widgets/job_details_card.dart';
+import 'package:chumley_navigator/screens/job_details/widgets/job_raise_jobs_card.dart';
+import 'package:chumley_navigator/screens/job_details/widgets/job_schedule_card.dart';
+import 'package:chumley_navigator/screens/job_details/widgets/job_site_card.dart';
+import 'package:chumley_navigator/screens/job_details/widgets/job_status_header.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/utils/routes.dart';
-import 'package:chumley_navigator/widgets/ui/call_style_action_slider.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-import 'dart:math' as math;
 
 class JobDetailPage extends StatefulWidget {
   final Appointment appointment;
@@ -155,8 +158,9 @@ class _JobDetailPageState extends State<JobDetailPage>
     );
   }
 
-  int get _progressIndex => SaStatus.progressIndex(_currentStatus)
-      .clamp(0, SaStatus.progressLabels.length - 1);
+  int get _progressIndex => SaStatus.progressIndex(
+    _currentStatus,
+  ).clamp(0, SaStatus.progressLabels.length - 1);
 
   Color get _currentStatusColor => _statusColors[_progressIndex];
 
@@ -213,9 +217,7 @@ class _JobDetailPageState extends State<JobDetailPage>
         ),
         backgroundColor: const Color(0xFFEF4444),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.r),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
       ),
     );
   }
@@ -230,14 +232,14 @@ class _JobDetailPageState extends State<JobDetailPage>
 
     setState(() => _statusUpdating = true);
     try {
-      // Local state progression without external API dependency
       final result = await _jobs.setStatus(saId: _jobId, status: targetStatus);
       if (!mounted) return;
       setState(() {
         _statusUpdating = false;
         if (result.appointment != null) {
-          _appointment =
-              _appointment.mergePreservingWorkOrderContext(result.appointment!);
+          _appointment = _appointment.mergePreservingWorkOrderContext(
+            result.appointment!,
+          );
         } else {
           _appointment = _appointment.copyWith(
             status: result.status,
@@ -283,8 +285,9 @@ class _JobDetailPageState extends State<JobDetailPage>
       if (result != null && mounted) {
         setState(() {
           if (result.appointment != null) {
-            _appointment = _appointment
-                .mergePreservingWorkOrderContext(result.appointment!);
+            _appointment = _appointment.mergePreservingWorkOrderContext(
+              result.appointment!,
+            );
           } else {
             _appointment = _appointment.copyWith(
               status: result.status,
@@ -321,8 +324,9 @@ class _JobDetailPageState extends State<JobDetailPage>
         _loadingDetail = false;
         _formsDismissed = dismissed;
         if (detail.appointment != null) {
-          _appointment = _appointment
-              .mergePreservingWorkOrderContext(detail.appointment!);
+          _appointment = _appointment.mergePreservingWorkOrderContext(
+            detail.appointment!,
+          );
         }
         _applyStatusResponse(
           status: detail.status.isNotEmpty ? detail.status : _currentStatus,
@@ -364,10 +368,7 @@ class _JobDetailPageState extends State<JobDetailPage>
   }
 
   Future<void> _initializeMapAndLocation() async {
-    // 1. Resolve site position (uses dynamic check for appointment lat/lng first, then geocodes with 4s timeout)
     _resolveSitePosition();
-
-    // 2. Resolve engineer position (uses GPS with 4s timeout + stream update)
     _setupEngineerLocation();
   }
 
@@ -375,7 +376,6 @@ class _JobDetailPageState extends State<JobDetailPage>
     if (mounted) setState(() => _geocodingLoading = true);
     LatLng? resolvedPosition;
 
-    // Check if appointment has latitude and longitude dynamically
     double? apptLat;
     double? apptLng;
     try {
@@ -406,7 +406,6 @@ class _JobDetailPageState extends State<JobDetailPage>
             resolvedPosition.longitude.isFinite) {
           _sitePosition = resolvedPosition;
         } else {
-          // Fallback to London center (Trafalgar Square)
           _sitePosition = const LatLng(51.5074, -0.1278);
         }
         _geocodingLoading = false;
@@ -453,7 +452,6 @@ class _JobDetailPageState extends State<JobDetailPage>
       _setFallbackEngineerLocation();
     }
 
-    // Continuously listen to location updates while active
     try {
       _locationSubscription = _locationService.getLocationStream().listen(
         (pos) {
@@ -587,12 +585,10 @@ class _JobDetailPageState extends State<JobDetailPage>
       _engineerPosition!.longitude,
     );
 
-    // Zoom out slightly to add padding
     final centerLat = (engineerLatLng.latitude + _sitePosition!.latitude) / 2;
     final centerLng = (engineerLatLng.longitude + _sitePosition!.longitude) / 2;
     final center = LatLng(centerLat, centerLng);
 
-    // Compute appropriate zoom level based on coordinate span
     final latDelta = (engineerLatLng.latitude - _sitePosition!.latitude).abs();
     final lngDelta = (engineerLatLng.longitude - _sitePosition!.longitude)
         .abs();
@@ -629,10 +625,7 @@ class _JobDetailPageState extends State<JobDetailPage>
       _sitePosition!.longitude,
     );
 
-    // 1 meter = 0.000621371 miles
     final distanceInMiles = distanceInMeters * 0.000621371;
-
-    // Estimate travel time: assume 25 mph average speed
     final travelTimeMinutes = (distanceInMiles / 25.0 * 60.0).round();
 
     setState(() {
@@ -707,6 +700,159 @@ class _JobDetailPageState extends State<JobDetailPage>
     return _appointment.type.isNotEmpty ? _appointment.type : 'Work Order';
   }
 
+  bool get isOnSite => SaStatus.isOnSiteOrLater(_currentStatus);
+
+  void _showOnSiteRequiredSnackbar() {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(LucideIcons.lock, color: Colors.white, size: 16.sp),
+            SizedBox(width: 8.w),
+            const Expanded(
+              child: Text(
+                'Engineer must Arrive On Site to perform this action.',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFFEF4444),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+      ),
+    );
+  }
+
+  Future<void> _openFixedPrice() async {
+    final contextArgs = FixedPriceJobContext.fromAppointment(_appointment);
+    Log(
+      'Opening FP estimate: wo=${contextArgs.sourceWorkOrderId} '
+      'site=${contextArgs.siteId} account=${contextArgs.accountId}',
+      name: 'JobDetail',
+    );
+    await Navigator.pushNamed(
+      context,
+      AppRoutes.fixedPriceScreen,
+      arguments: contextArgs,
+    );
+  }
+
+  Future<void> _openLead(RaiseLeadKind kind) async {
+    await RaiseLeadPage.open(
+      context,
+      kind: kind,
+      jobId: _jobId,
+      jobNumber: _appointment.appointmentNumber,
+    );
+  }
+
+  Future<void> _openReactiveJob() async {
+    await RaiseReactiveJobPage.open(
+      context,
+      jobId: _jobId,
+      jobNumber: _appointment.appointmentNumber,
+      customerName: _appointment.customerName,
+      postcode: _appointment.sitePostcode,
+    );
+  }
+
+  Future<void> _openMultipleFixedPrice() async {
+    await RaiseMultipleFixedPricePage.open(
+      context,
+      jobId: _jobId,
+      jobNumber: _appointment.appointmentNumber,
+      customerName: _appointment.customerName,
+      postcode: _appointment.sitePostcode,
+    );
+  }
+
+  Widget _buildSectionLabel(DashboardTheme theme, String label) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 8.h),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.4,
+          color: theme.textMuted,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompletedBanner(DashboardTheme theme) {
+    const greenColor = Color(0xFF22C55E);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(20.r),
+        decoration: BoxDecoration(
+          color: greenColor.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: greenColor.withValues(alpha: 0.35),
+            width: 1.0,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(LucideIcons.badgeCheck, size: 36.sp, color: greenColor),
+            SizedBox(height: 10.h),
+            Text(
+              'Job Completed',
+              style: TextStyle(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w800,
+                color: greenColor,
+                letterSpacing: -0.4,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              'All forms submitted. This job is now closed.',
+              style: TextStyle(fontSize: 12.sp, color: theme.textMuted),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOnSiteForm(String jobNo) {
+    return OnSiteWizard(
+      jobId: _jobId,
+      jobNumber: jobNo,
+      onCancelToInTransit: () {
+        _dismissOnSiteForms();
+      },
+      onReportSubmitted: (answers, photos) async {
+        final kind = _formKind;
+        await _jobs.signOff(
+          jobId: _jobId,
+          reportType: switch (kind) {
+            FormKind.gas => 'CP12',
+            FormKind.bath => 'WORKS',
+            FormKind.leak => 'LD',
+          },
+          reportSuffix: switch (kind) {
+            FormKind.gas => 'gas_safety_record',
+            FormKind.bath => 'works_report',
+            FormKind.leak => 'leak_detection_report',
+          },
+          answers: answers,
+          photoSlots: photos,
+        );
+        await _handleFormSubmitted();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
@@ -743,7 +889,8 @@ class _JobDetailPageState extends State<JobDetailPage>
           formsDismissed: _formsDismissed,
         );
 
-    final effectivePostSubmitPhase = _postSubmitPhase ??
+    final effectivePostSubmitPhase =
+        _postSubmitPhase ??
         (isCompleted
             ? PostSubmitPhase.visitComplete
             : PostSubmitPhase.jobCompleted);
@@ -793,7 +940,7 @@ class _JobDetailPageState extends State<JobDetailPage>
 
     return Scaffold(
       backgroundColor: (showOnSiteWizard || showPostSubmit)
-          ? const Color(0xFFF4F9FF)
+          ? (theme.isDark ? theme.base : const Color(0xFFF4F9FF))
           : theme.base,
       body: SafeArea(
         child: showPostSubmit
@@ -817,31 +964,50 @@ class _JobDetailPageState extends State<JobDetailPage>
                         }
                       },
                       onCloseJob: () {
-                        setState(() => _postSubmitPhase = PostSubmitPhase.followOn);
+                        setState(
+                          () => _postSubmitPhase = PostSubmitPhase.followOn,
+                        );
                       },
                       onVisitComplete: () async {
                         await _advanceStatus(SaStatus.visitComplete);
                         if (mounted) {
-                          setState(() => _postSubmitPhase = PostSubmitPhase.visitComplete);
+                          setState(
+                            () => _postSubmitPhase =
+                                PostSubmitPhase.visitComplete,
+                          );
                         }
                       },
                       onBackToHome: () => Navigator.of(context).pop(),
                       onRaiseEstimate: () async {
                         await _openFixedPrice();
                         if (mounted) {
-                          setState(() => _postSubmitPhase = PostSubmitPhase.jobClosed);
+                          setState(
+                            () => _postSubmitPhase = PostSubmitPhase.jobClosed,
+                          );
                         }
                       },
                       onRaiseReactive: () async {
-                        await _openLead(RaiseLeadKind.reactive);
+                        await _openReactiveJob();
                         if (mounted) {
-                          setState(() => _postSubmitPhase = PostSubmitPhase.jobClosed);
+                          setState(
+                            () => _postSubmitPhase = PostSubmitPhase.jobClosed,
+                          );
+                        }
+                      },
+                      onRaiseMultipleFixedPrice: () async {
+                        await _openMultipleFixedPrice();
+                        if (mounted) {
+                          setState(
+                            () => _postSubmitPhase = PostSubmitPhase.jobClosed,
+                          );
                         }
                       },
                       onReferAndEarn: () async {
                         await _openLead(RaiseLeadKind.refer);
                         if (mounted) {
-                          setState(() => _postSubmitPhase = PostSubmitPhase.jobClosed);
+                          setState(
+                            () => _postSubmitPhase = PostSubmitPhase.jobClosed,
+                          );
                         }
                       },
                     ),
@@ -862,30 +1028,63 @@ class _JobDetailPageState extends State<JobDetailPage>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildStatusHeader(
-                                theme,
-                                currentStatus,
-                                currentStatusColor,
-                                jobNo,
-                                jobType,
+                              JobStatusHeader(
+                                theme: theme,
+                                status: currentStatus,
+                                statusColor: currentStatusColor,
+                                jobNo: jobNo,
+                                jobType: jobType,
+                                progressIndex: _progressIndex,
                               ),
-                              if (isOnSite) ...[
-                                _buildSectionLabel(theme, 'RAISE JOBS'),
-                                _buildRaiseJobsCard(theme),
-                              ],
+                              _buildSectionLabel(theme, 'RAISE JOBS'),
+                              JobRaiseJobsCard(
+                                theme: theme,
+                                isOnSite: isOnSite,
+                                onRaiseFixedPrice: _openFixedPrice,
+                                onRaiseReactive: _openReactiveJob,
+                                onRaiseMultipleFixedPrice: _openMultipleFixedPrice,
+                                onDisabledTap: _showOnSiteRequiredSnackbar,
+                              ),
                               _buildSectionLabel(theme, 'JOB DETAILS'),
-                              _buildJobDetailsCard(theme, jobNo),
+                              JobDetailsCard(
+                                theme: theme,
+                                appointment: _appointment,
+                                jobNo: jobNo,
+                                customerName: customerName,
+                                jobTitleDescription: jobTitleDescription,
+                              ),
                               _buildSectionLabel(theme, 'SCHEDULE'),
-                              _buildScheduleCard(
-                                theme,
-                                formattedDate,
-                                timeStr,
-                                timeEndStr,
-                                jobNo,
-                                currentStatus,
+                              JobScheduleCard(
+                                theme: theme,
+                                statusColor: _currentStatusColor,
+                                formattedDate: formattedDate,
+                                timeStr: timeStr,
+                                timeEndStr: timeEndStr,
                               ),
                               _buildSectionLabel(theme, 'SITE'),
-                              _buildSiteCard(theme),
+                              JobSiteCard(
+                                theme: theme,
+                                customerName: customerName,
+                                siteAddress: siteAddress,
+                                mapController: _mapController,
+                                sitePosition: _sitePosition,
+                                engineerPosition: _engineerPosition,
+                                distanceInMiles: _distanceInMiles,
+                                travelTimeMinutes: _travelTimeMinutes,
+                                locationLoading: _locationLoading,
+                                geocodingLoading: _geocodingLoading,
+                                onOpenMaps: () {
+                                  if (_sitePosition != null) {
+                                    _mapNavigationService.launchNavigation(
+                                      context: context,
+                                      destinationLat: _sitePosition!.latitude,
+                                      destinationLng: _sitePosition!.longitude,
+                                      address: siteAddress,
+                                    );
+                                  }
+                                },
+                                onFitBounds: _fitMapBounds,
+                              ),
                               if (isCompleted) _buildCompletedBanner(theme),
                               SizedBox(height: 16.h),
                             ],
@@ -894,1898 +1093,36 @@ class _JobDetailPageState extends State<JobDetailPage>
                       ),
                     ],
                   ),
-                  _buildActionsPanel(theme, currentStatusColor, isCompleted),
-                ],
-              ),
-      ),
-    );
-  }
-
-  Widget _buildStatusHeader(
-    DashboardTheme theme,
-    String status,
-    Color statusColor,
-    String jobNo,
-    String jobType,
-  ) {
-    final isDark = theme.isDark;
-    final statusIcon = _currentStatusIcon;
-
-    return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
-      padding: EdgeInsets.all(20.r),
-      decoration: BoxDecoration(
-        color: theme.surface,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: statusColor.withValues(alpha: 0.25),
-          width: 1.0,
-        ),
-        boxShadow: isDark
-            ? [
-                BoxShadow(
-                  color: statusColor.withValues(alpha: 0.08),
-                  blurRadius: 20.r,
-                  spreadRadius: 0,
-                  offset: Offset(0, 4.h),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: AppColors.shadowSoft,
-                  blurRadius: 12.r,
-                  offset: Offset(0, 4.h),
-                ),
-              ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Status chip row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Colour-coded status pill
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: isDark ? 0.18 : 0.10),
-                  borderRadius: BorderRadius.circular(100.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Icon(statusIcon, size: 12.sp, color: statusColor),
-                    Container(
-                      width: 6.w,
-                      height: 6.w,
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      status,
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w700,
-                        color: statusColor,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              // Job number top-right
-              Text(
-                jobNo,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: theme.textMuted,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 14.h),
-
-          // Large status text
-          Text(
-            status,
-            style: TextStyle(
-              fontSize: 28.sp,
-              fontWeight: FontWeight.w800,
-              color: theme.text,
-              letterSpacing: -0.8,
-              height: 1.1,
-            ),
-          ),
-          SizedBox(height: 4.h),
-          Wrap(
-            spacing: 8.w,
-            runSpacing: 6.h,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE3E9F2),
-                  borderRadius: BorderRadius.circular(100.r),
-                ),
-                child: Text(
-                  jobType,
-                  style: TextStyle(
-                    fontSize: 9.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF5A6B85),
-                  ),
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE3E9F2),
-                  borderRadius: BorderRadius.circular(100.r),
-                ),
-                child: Text(
-                  "Bathroom/Kitchen & Interfloor",
-                  style: TextStyle(
-                    fontSize: 9.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF5A6B85),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-
-          // Progress track (step dots)
-          _buildStatusProgressTrack(theme, statusColor),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusProgressTrack(DashboardTheme theme, Color statusColor) {
-    const shortLabels = [
-      'Dispatched',
-      'Received',
-      'In Transit',
-      'On site',
-      'Job Closure',
-      'Visit Complete',
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final totalWidth = constraints.maxWidth;
-        final dotSize = 8.w;
-        final activeDotSize = 12.w;
-        final colWidth = totalWidth / shortLabels.length;
-
-        final lineStart = colWidth / 2;
-        final lineEnd = totalWidth - colWidth / 2;
-        final lineLength = lineEnd - lineStart;
-
-        final progressIdx = _progressIndex.clamp(0, shortLabels.length - 1);
-        final activeFraction =
-            progressIdx / (shortLabels.length - 1);
-        final activeLength = lineLength * activeFraction;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Connector bar with dots
-            SizedBox(
-              height: 20.h,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Background connector line (inactive)
-                  Positioned(
-                    left: lineStart,
-                    right: colWidth / 2,
-                    top: 10.h - 1.h, // center vertically in the 20.h space
-                    height: 2.h,
-                    child: Container(
-                      color: theme.isDark
-                          ? AppColors.darkBorder
-                          : AppColors.borderDefault,
-                    ),
-                  ),
-                  // Active connector line
-                  Positioned(
-                    left: lineStart,
-                    width: activeLength,
-                    top: 10.h - 1.h,
-                    height: 2.h,
-                    child: Container(color: statusColor),
-                  ),
-                  // Row of dots — completed steps show a check icon
-                  Row(
-                    children: List.generate(shortLabels.length, (i) {
-                      final isActive = i <= progressIdx;
-                      final isCurrent = i == progressIdx;
-                      final isCompleted = i < progressIdx;
-                      final size = isCompleted
-                          ? 16.w
-                          : isCurrent
-                          ? activeDotSize
-                          : dotSize;
-
-                      return Expanded(
-                        child: Center(
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 400),
-                            curve: Curves.easeOutCubic,
-                            width: size,
-                            height: size,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? statusColor
-                                  : theme.isDark
-                                  ? AppColors.darkBorder
-                                  : AppColors.borderDefault,
-                              shape: BoxShape.circle,
-                              boxShadow: isCurrent && !isCompleted
-                                  ? [
-                                      BoxShadow(
-                                        color: statusColor.withValues(
-                                          alpha: 0.5,
-                                        ),
-                                        blurRadius: 6.r,
-                                        spreadRadius: 1,
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: isCompleted
-                                ? Icon(
-                                    LucideIcons.check,
-                                    size: 10.sp,
-                                    color: AppColors.white,
-                                  )
-                                : null,
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 6.h),
-            Row(
-              children: List.generate(shortLabels.length, (i) {
-                final isActive = i <= progressIdx;
-                final isCurrent = i == progressIdx;
-
-                return Expanded(
-                  child: Text(
-                    shortLabels[i],
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 8.sp,
-                      fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
-                      color: isCurrent
-                          ? statusColor
-                          : isActive
-                          ? statusColor.withValues(alpha: 0.8)
-                          : theme.textMuted,
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildMapSection(DashboardTheme theme) {
-    final engineerLatLng =
-        (_engineerPosition != null &&
-            _engineerPosition!.latitude.isFinite &&
-            _engineerPosition!.longitude.isFinite)
-        ? LatLng(_engineerPosition!.latitude, _engineerPosition!.longitude)
-        : null;
-
-    final siteLatLng =
-        (_sitePosition != null &&
-            _sitePosition!.latitude.isFinite &&
-            _sitePosition!.longitude.isFinite)
-        ? _sitePosition
-        : null;
-
-    return Padding(
-      padding: EdgeInsets.zero,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.r),
-        child: SizedBox(
-          height: 160.h,
-          width: double.infinity,
-          child: Stack(
-            children: [
-              FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(
-                  initialCenter: siteLatLng ?? const LatLng(51.5074, -0.1278),
-                  initialZoom: 14.0,
-                  interactionOptions: const InteractionOptions(
-                    flags: InteractiveFlag.all,
-                  ),
-                  onTap: (tapPosition, point) {
-                    if (_sitePosition != null) {
-                      _mapNavigationService.launchNavigation(
-                        context: context,
-                        destinationLat: _sitePosition!.latitude,
-                        destinationLng: _sitePosition!.longitude,
-                        address: siteAddress,
-                      );
-                    }
-                  },
-                ),
-                children: [
-                  theme.isDark
-                      ? ColorFiltered(
-                          colorFilter: const ColorFilter.matrix([
-                            // Invert + Navy Slate tint for map background layer
-                            -0.7, 0, 0, 0, 220,
-                            0, -0.7, 0, 0, 220,
-                            0, 0, -0.6, 0, 220,
-                            0, 0, 0, 1, 0,
-                          ]),
-                          child: TileLayer(
-                            urlTemplate:
-                                'https://api.tomtom.com/map/1/tile/basic/main/{z}/{x}/{y}.png?key=${AppConstants.tomtomApiKey}',
-                            userAgentPackageName:
-                                'com.aspect.chumley_navigator',
-                          ),
-                        )
-                      : TileLayer(
-                          urlTemplate:
-                              'https://api.tomtom.com/map/1/tile/basic/main/{z}/{x}/{y}.png?key=${AppConstants.tomtomApiKey}',
-                          userAgentPackageName: 'com.aspect.chumley_navigator',
-                        ),
-                  MarkerLayer(
-                    markers: [
-                      if (siteLatLng != null)
-                        Marker(
-                          point: siteLatLng,
-                          width: 40.w,
-                          height: 40.w,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Container(
-                                width: 24.w,
-                                height: 24.w,
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.withValues(alpha: 0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              Icon(
-                                Icons.location_on_rounded,
-                                color: Colors.blue,
-                                size: 30.sp,
-                              ),
-                            ],
-                          ),
-                        ),
-                      if (engineerLatLng != null)
-                        Marker(
-                          point: engineerLatLng,
-                          width: 40.w,
-                          height: 40.w,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Container(
-                                width: 24.w,
-                                height: 24.w,
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withValues(alpha: 0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              Icon(
-                                Icons.navigation_rounded,
-                                color: Colors.green,
-                                size: 24.sp,
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-
-              // Loading overlay when fetching location
-              if (_locationLoading || _geocodingLoading)
-                Positioned(
-                  top: 10.h,
-                  left: 10.w,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10.w,
-                      vertical: 6.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.surface.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 12.w,
-                          height: 12.w,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            color: theme.isDark
-                                ? AppColors.accentBlue
-                                : AppColors.primaryBlue,
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          _geocodingLoading
-                              ? 'Geocoding address…'
-                              : 'Locating you…',
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            color: theme.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-              // Floating Route Info Overlay (bottom-left) - Tap to open navigation
-              if (_engineerPosition != null &&
-                  _sitePosition != null &&
-                  _distanceInMiles != null &&
-                  _travelTimeMinutes != null)
-                Positioned(
-                  bottom: 10.h,
-                  left: 10.w,
-                  right: 50.w,
-                  child: GestureDetector(
-                    onTap: () {
-                      if (_sitePosition != null) {
-                        _mapNavigationService.launchNavigation(
-                          context: context,
-                          destinationLat: _sitePosition!.latitude,
-                          destinationLng: _sitePosition!.longitude,
-                          address: siteAddress,
-                        );
+                  JobActionsPanel(
+                    theme: theme,
+                    statusColor: currentStatusColor,
+                    statusIcon: _currentStatusIcon,
+                    currentStatus: _currentStatus,
+                    isCompleted: isCompleted,
+                    loadingDetail: _loadingDetail,
+                    statusUpdating: _statusUpdating,
+                    primaryNextStatus: _primaryNextStatus,
+                    skipAheadStatuses: _skipAheadStatuses,
+                    areRequiredFormsCompleted: _areRequiredFormsCompleted,
+                    onPrimaryAction: () {
+                      if (OnSiteFormsSession.shouldResumeForms(
+                        isOnSite: SaStatus.isOnSite(_currentStatus),
+                        formsCompleted: _areRequiredFormsCompleted,
+                        primaryNextStatus: _primaryNextStatus,
+                      )) {
+                        _resumeFillingForms();
+                        return;
+                      }
+                      if (_primaryNextStatus != null) {
+                        _advanceStatus(_primaryNextStatus!);
                       }
                     },
-                    child: Container(
-                      padding: EdgeInsets.all(10.r),
-                      decoration: BoxDecoration(
-                        color: theme.surface.withValues(alpha: 0.92),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: theme.border, width: 0.5),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 6,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  siteAddress,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: theme.text,
-                                  ),
-                                ),
-                              ),
-                              Icon(
-                                LucideIcons.externalLink,
-                                size: 10.sp,
-                                color: theme.textMuted,
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 2.h),
-                          Row(
-                            children: [
-                              Icon(
-                                LucideIcons.navigation,
-                                size: 10.sp,
-                                color: theme.isDark
-                                    ? AppColors.accentBlue
-                                    : AppColors.primaryBlue,
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                '${_distanceInMiles!.toStringAsFixed(1)} miles away',
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.text,
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                LucideIcons.clock,
-                                size: 10.sp,
-                                color: theme.isDark
-                                    ? AppColors.accentBlue
-                                    : AppColors.primaryBlue,
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                '$_travelTimeMinutes mins travel',
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.text,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-              // Center bounds button (top-right)
-              Positioned(
-                top: 10.h,
-                right: 10.w,
-                child: GestureDetector(
-                  onTap: _fitMapBounds,
-                  child: Container(
-                    width: 32.w,
-                    height: 32.w,
-                    decoration: BoxDecoration(
-                      color: theme.surface.withValues(alpha: 0.9),
-                      shape: BoxShape.circle,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Icon(
-                        LucideIcons.maximize2,
-                        color: theme.text,
-                        size: 14.sp,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionLabel(DashboardTheme theme, String label) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 8.h),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10.sp,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.4,
-          color: theme.textMuted,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScheduleCard(
-    DashboardTheme theme,
-    String formattedDate,
-    String timeStr,
-    String timeEndStr,
-    String jobNo,
-    String currentStatus,
-  ) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Container(
-        padding: EdgeInsets.all(16.r),
-        decoration: _cardDecoration(theme),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: _currentStatusColor.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(8.r),
-                border: Border.all(
-                  color: _currentStatusColor.withValues(alpha: 0.25),
-                  width: 1.0,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.calendar_today_outlined,
-                    size: 18.sp,
-                    color: _currentStatusColor,
+                    onResumeForms: _resumeFillingForms,
+                    onSkipAheadAction: _advanceStatus,
                   ),
                 ],
               ),
-            ),
-            SizedBox(width: 10.w),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  formattedDate,
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w900,
-                    color: theme.text,
-                  ),
-                ),
-                Text(
-                  '$timeStr – $timeEndStr',
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                    color: theme.textMuted,
-                  ),
-                ),
-              ],
-            ),
-            Spacer(),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
-              decoration: BoxDecoration(
-                color: Color(0xFFE3E9F2),
-                borderRadius: BorderRadius.circular(100.r),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 6.w,
-                    height: 6.w,
-                    decoration: BoxDecoration(
-                      color: theme.textMuted,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  SizedBox(width: 4.w),
-                  Text(
-                    '2h window',
-                    style: TextStyle(fontSize: 9.sp, color: theme.textMuted),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
-  }
-
-  Widget _buildSiteCard(DashboardTheme theme) {
-    final accentColor = theme.isDark
-        ? AppColors.accentBlue
-        : AppColors.primaryBlue;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Container(
-        padding: EdgeInsets.all(16.r),
-        decoration: _cardDecoration(theme),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Customer
-            Row(
-              children: [
-                Container(
-                  width: 32.w,
-                  height: 32.w,
-                  decoration: BoxDecoration(
-                    color: theme.isDark
-                        ? AppColors.darkBorder
-                        : AppColors.surfaceBlueTint,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Icon(
-                    LucideIcons.user,
-                    size: 16.sp,
-                    color: accentColor,
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        customerName,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
-                          color: theme.text,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        'Site Contact',
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          color: theme.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            Divider(height: 20.h, color: theme.border, thickness: 0.5),
-            // Address
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(LucideIcons.mapPin, size: 14.sp, color: accentColor),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    siteAddress,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w500,
-                      color: theme.text,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            _buildMapSection(theme),
-            SizedBox(height: 12.h),
-            // Navigate button
-            GestureDetector(
-              onTap: () {
-                if (_sitePosition != null) {
-                  _mapNavigationService.launchNavigation(
-                    context: context,
-                    destinationLat: _sitePosition!.latitude,
-                    destinationLng: _sitePosition!.longitude,
-                    address: siteAddress,
-                  );
-                }
-              },
-              child: Container(
-                width: double.infinity,
-                height: 36.h,
-                decoration: BoxDecoration(
-                  color: accentColor,
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(
-                    color: accentColor.withValues(alpha: 0.2),
-                    width: 1.0,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      LucideIcons.navigation,
-                      size: 13.sp,
-                      color: AppColors.white,
-                    ),
-                    SizedBox(width: 6.w),
-                    Text(
-                      'Open in Maps',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAccessCard(DashboardTheme theme) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Container(
-        padding: EdgeInsets.all(16.r),
-        decoration: _cardDecoration(theme),
-        child: Column(
-          children: [
-            _buildAccessRow(
-              theme,
-              LucideIcons.hardHat,
-              'Equipment',
-              'Standard ladders required. Double height limits on external fixture.',
-            ),
-            Divider(height: 16.h, color: theme.border, thickness: 0.5),
-            _buildAccessRow(
-              theme,
-              LucideIcons.keyRound,
-              'Site Entry',
-              'Keys available with the site supervisor at the main front reception office.',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAccessRow(
-    DashboardTheme theme,
-    IconData icon,
-    String label,
-    String value,
-  ) {
-    final accentColor = theme.isDark
-        ? AppColors.accentBlue
-        : AppColors.primaryBlue;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 14.sp, color: accentColor),
-        SizedBox(width: 10.w),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.4,
-                  color: theme.textMuted,
-                ),
-              ),
-              SizedBox(height: 3.h),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w500,
-                  color: theme.text,
-                  height: 1.45,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildJobDetailsCard(DashboardTheme theme, String jobNo) {
-    final items = [
-      ('Appointment ID', jobNo),
-      ('Type', _appointment.type.isNotEmpty ? _appointment.type : 'Reactive'),
-      ('Customer', customerName),
-      ('Description', jobTitleDescription),
-    ];
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Container(
-        padding: EdgeInsets.all(16.r),
-        decoration: _cardDecoration(theme),
-        child: Column(
-          children: items.asMap().entries.map((entry) {
-            final i = entry.key;
-            final item = entry.value;
-            final isDescription = item.$1 == 'Description';
-            final labelStyle = TextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w500,
-              color: theme.textMuted,
-            );
-            final valueStyle = TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: theme.text,
-              height: 1.35,
-            );
-            final valueText = item.$2.isNotEmpty ? item.$2 : '—';
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (i > 0)
-                  Divider(height: 14.h, color: theme.border, thickness: 0.5),
-                if (isDescription)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(item.$1, style: labelStyle),
-                      SizedBox(height: 6.h),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 14.w,
-                          vertical: 12.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFE3E9F2),
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
-                        child: Text(
-                          _appointment.workType.isNotEmpty
-                              ? _appointment.workType
-                              : (_appointment.title.isNotEmpty
-                                    ? _appointment.title
-                                    : jobTitleDescription),
-                          style: valueStyle,
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 100.w,
-                        child: Text(item.$1, style: labelStyle),
-                      ),
-                      Spacer(),
-                      Expanded(child: Text(valueText, style: valueStyle)),
-                    ],
-                  ),
-              ],
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRelatedDocs(DashboardTheme theme) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Container(
-        decoration: _cardDecoration(theme),
-        child: Column(
-          children: [
-            _buildDocRow(
-              theme,
-              LucideIcons.fileText,
-              'Electrical Certificate (EICR)',
-              'Required condition report. 2 tasks completed.',
-              0,
-            ),
-            Divider(height: 0, color: theme.border, thickness: 0.5),
-            _buildDocRow(
-              theme,
-              LucideIcons.shieldAlert,
-              'Risk Assessment (RAMS)',
-              'Site safety evaluation statement. Approved.',
-              1,
-            ),
-            Divider(height: 0, color: theme.border, thickness: 0.5),
-            _buildDocRow(
-              theme,
-              LucideIcons.history,
-              'Previous Job History',
-              'SA-281099 — Fitted replacement LED modules.',
-              2,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDocRow(
-    DashboardTheme theme,
-    IconData icon,
-    String title,
-    String subtitle,
-    int index,
-  ) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: null,
-        borderRadius: index == 0
-            ? BorderRadius.vertical(top: Radius.circular(16.r))
-            : index == 2
-            ? BorderRadius.vertical(bottom: Radius.circular(16.r))
-            : BorderRadius.zero,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-          child: Row(
-            children: [
-              Container(
-                width: 36.w,
-                height: 36.w,
-                decoration: BoxDecoration(
-                  color: theme.isDark
-                      ? AppColors.darkBorder
-                      : AppColors.surfaceBlueTint,
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Icon(
-                  icon,
-                  size: 16.sp,
-                  color: theme.isDark
-                      ? AppColors.accentBlue
-                      : AppColors.primaryBlue,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w700,
-                        color: theme.text,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      subtitle,
-                      style: TextStyle(fontSize: 11.sp, color: theme.textMuted),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                LucideIcons.chevronRight,
-                size: 14.sp,
-                color: theme.textMuted,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  bool get isOnSite => SaStatus.isOnSiteOrLater(_currentStatus);
-
-  void _showOnSiteRequiredSnackbar() {
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(LucideIcons.lock, color: Colors.white, size: 16.sp),
-            SizedBox(width: 8.w),
-            const Expanded(
-              child: Text(
-                'Engineer must Arrive On Site to perform this action.',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: const Color(0xFFEF4444),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-      ),
-    );
-  }
-
-  Future<void> _openFixedPrice() async {
-    final contextArgs = FixedPriceJobContext.fromAppointment(_appointment);
-    Log(
-      'Opening FP estimate: wo=${contextArgs.sourceWorkOrderId} '
-      'site=${contextArgs.siteId} account=${contextArgs.accountId}',
-      name: 'JobDetail',
-    );
-    await Navigator.pushNamed(
-      context,
-      AppRoutes.fixedPriceScreen,
-      arguments: contextArgs,
-    );
-  }
-
-  Future<void> _openLead(RaiseLeadKind kind) async {
-    await RaiseLeadPage.open(
-      context,
-      kind: kind,
-      jobId: _jobId,
-      jobNumber: _appointment.appointmentNumber,
-    );
-  }
-
-  Widget _buildOnSiteForm(String jobNo) {
-    return OnSiteWizard(
-      jobId: _jobId,
-      jobNumber: jobNo,
-      onCancelToInTransit: () {
-        _dismissOnSiteForms();
-      },
-      onReportSubmitted: (answers, photos) async {
-        final kind = _formKind;
-        await _jobs.signOff(
-          jobId: _jobId,
-          reportType: switch (kind) {
-            FormKind.gas => 'CP12',
-            FormKind.bath => 'WORKS',
-            FormKind.leak => 'LD',
-          },
-          reportSuffix: switch (kind) {
-            FormKind.gas => 'gas_safety_record',
-            FormKind.bath => 'works_report',
-            FormKind.leak => 'leak_detection_report',
-          },
-          answers: answers,
-          photoSlots: photos,
-        );
-        await _handleFormSubmitted();
-      },
-    );
-  }
-
-  Widget _buildRaiseJobItem({
-    required DashboardTheme theme,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required bool enabled,
-    required VoidCallback onTap,
-  }) {
-    final goldColor = const Color(0xFFF59E0B);
-    return Opacity(
-      opacity: enabled ? 1.0 : 0.55,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            if (!enabled) {
-              _showOnSiteRequiredSnackbar();
-              return;
-            }
-            onTap();
-          },
-          borderRadius: BorderRadius.circular(10.r),
-          child: Container(
-            padding: EdgeInsets.all(12.r),
-            decoration: BoxDecoration(
-              color: enabled
-                  ? goldColor.withValues(alpha: 0.05)
-                  : theme.isDark
-                  ? AppColors.darkSurfaceDeep
-                  : AppColors.backgroundGray,
-              borderRadius: BorderRadius.circular(10.r),
-              border: Border.all(
-                color: enabled
-                    ? goldColor.withValues(alpha: 0.25)
-                    : theme.border,
-                width: 0.75,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 32.w,
-                  height: 32.w,
-                  decoration: BoxDecoration(
-                    color: enabled
-                        ? goldColor.withValues(alpha: 0.1)
-                        : theme.isDark
-                        ? AppColors.darkBorder
-                        : AppColors.surfaceBlueTint,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 16.sp,
-                    color: enabled ? goldColor : theme.textMuted,
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w700,
-                          color: enabled ? theme.text : theme.textMuted,
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: theme.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  LucideIcons.chevronRight,
-                  size: 14.sp,
-                  color: theme.textMuted,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRaiseJobsCard(DashboardTheme theme) {
-    final goldColor = const Color(0xFFF59E0B);
-    final onSite = isOnSite;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Container(
-        padding: EdgeInsets.all(16.r),
-        decoration: BoxDecoration(
-          color: theme.surface,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: onSite ? goldColor.withValues(alpha: 0.3) : theme.border,
-            width: 1.0,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  LucideIcons.fileText,
-                  size: 16.sp,
-                  color: onSite ? goldColor : theme.textMuted,
-                ),
-                SizedBox(width: 8.w),
-                Text(
-                  'Raise Jobs',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w700,
-                    color: onSite ? theme.text : theme.textMuted,
-                  ),
-                ),
-                const Spacer(),
-                if (!onSite)
-                  Row(
-                    children: [
-                      Icon(
-                        LucideIcons.lock,
-                        size: 12.sp,
-                        color: theme.textMuted,
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        'Requires On Site',
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w600,
-                          color: theme.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            _buildRaiseJobItem(
-              theme: theme,
-              title: 'Raise a Fixed Price Job',
-              subtitle: 'Create a new Fixed Price work order for this site',
-              icon: LucideIcons.fileText,
-              enabled: onSite,
-              onTap: _openFixedPrice,
-            ),
-            SizedBox(height: 8.h),
-            _buildRaiseJobItem(
-              theme: theme,
-              title: 'Raise a reactive job',
-              subtitle: 'Raise an urgent reactive task or callback',
-              icon: LucideIcons.zap,
-              enabled: onSite,
-              onTap: () => _openLead(RaiseLeadKind.reactive),
-            ),
-            SizedBox(height: 8.h),
-            _buildRaiseJobItem(
-              theme: theme,
-              title: 'Raise multiple fixed price',
-              subtitle: 'Raise several Fixed Price work orders for this site',
-              icon: LucideIcons.layers,
-              enabled: onSite,
-              onTap: _openFixedPrice,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompletedBanner(DashboardTheme theme) {
-    final greenColor = const Color(0xFF22C55E);
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(20.r),
-        decoration: BoxDecoration(
-          color: greenColor.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: greenColor.withValues(alpha: 0.35),
-            width: 1.0,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(LucideIcons.badgeCheck, size: 36.sp, color: greenColor),
-            SizedBox(height: 10.h),
-            Text(
-              'Job Completed',
-              style: TextStyle(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.w800,
-                color: greenColor,
-                letterSpacing: -0.4,
-              ),
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              'All forms submitted. This job is now closed.',
-              style: TextStyle(fontSize: 12.sp, color: theme.textMuted),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionsPanel(
-    DashboardTheme theme,
-    Color statusColor,
-    bool isCompleted,
-  ) {
-    final primary = _primaryNextStatus;
-    final skipAhead = _skipAheadStatuses;
-
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
-        decoration: BoxDecoration(
-          color: theme.surface,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20.r),
-            topRight: Radius.circular(20.r),
-          ),
-          border: Border(top: BorderSide(color: theme.border, width: 0.5)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              offset: Offset(0, -4.h),
-              blurRadius: 16.r,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 36.w,
-              height: 4.h,
-              margin: EdgeInsets.only(bottom: 12.h),
-              decoration: BoxDecoration(
-                color: theme.textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-            if (_loadingDetail)
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                child: SizedBox(
-                  width: 20.w,
-                  height: 20.w,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: statusColor,
-                  ),
-                ),
-              )
-            else if (!isCompleted && primary != null)
-              CallStyleActionSlider(
-                text: OnSiteFormsSession.actionLabel(
-                  isOnSite: SaStatus.isOnSite(_currentStatus),
-                  formsCompleted: _areRequiredFormsCompleted,
-                  primaryNextStatus: primary,
-                  statusActionLabel: SaStatus.actionLabel,
-                ),
-                backgroundColor: statusColor,
-                icon: _currentStatusIcon,
-                isEnabled: !_statusUpdating,
-                onConfirm: () {
-                  if (OnSiteFormsSession.shouldResumeForms(
-                    isOnSite: SaStatus.isOnSite(_currentStatus),
-                    formsCompleted: _areRequiredFormsCompleted,
-                    primaryNextStatus: primary,
-                  )) {
-                    _resumeFillingForms();
-                    return;
-                  }
-                  _advanceStatus(primary);
-                },
-              )
-            else if (!isCompleted &&
-                SaStatus.isOnSite(_currentStatus) &&
-                !_areRequiredFormsCompleted)
-              CallStyleActionSlider(
-                text: OnSiteFormsSession.continueFillingForms,
-                backgroundColor: statusColor,
-                icon: LucideIcons.clipboardList,
-                isEnabled: !_statusUpdating,
-                onConfirm: _resumeFillingForms,
-              )
-            else if (isCompleted)
-              Container(
-                width: double.infinity,
-                height: 48.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF22C55E).withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(
-                    color: const Color(0xFF22C55E).withValues(alpha: 0.3),
-                    width: 1.0,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      LucideIcons.badgeCheck,
-                      size: 16.sp,
-                      color: const Color(0xFF22C55E),
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      'Visit Complete',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF22C55E),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            if (skipAhead.isNotEmpty && !isCompleted && !_loadingDetail) ...[
-              SizedBox(height: 10.h),
-              Wrap(
-                spacing: 8.w,
-                runSpacing: 8.h,
-                alignment: WrapAlignment.center,
-                children: skipAhead
-                    .map((status) {
-                      final isClosure = SaStatus.isJobClosure(status);
-                      final blocked = isClosure && !_areRequiredFormsCompleted;
-                      return OutlinedButton(
-                        onPressed: _statusUpdating
-                            ? null
-                            : () {
-                                if (blocked) {
-                                  _resumeFillingForms();
-                                  return;
-                                }
-                                _advanceStatus(status);
-                              },
-                        child: Text(
-                          blocked
-                              ? OnSiteFormsSession.continueToForms
-                              : status,
-                        ),
-                      );
-                    })
-                    .toList(growable: false),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  BoxDecoration _cardDecoration(DashboardTheme theme) {
-    return BoxDecoration(
-      color: theme.surface,
-      borderRadius: BorderRadius.circular(16.r),
-      border: Border.all(color: theme.border, width: 0.5),
-      boxShadow: theme.isDark
-          ? null
-          : [
-              BoxShadow(
-                color: AppColors.shadowSubtle,
-                blurRadius: 8.r,
-                offset: Offset(0, 2.h),
-              ),
-            ],
-    );
-  }
-}
-
-// ── SERVICES ──────────────────────────────────────────────────
-
-class LocationService {
-  Future<bool> checkAndRequestPermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return false;
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return false;
-    }
-    if (permission == LocationPermission.deniedForever) return false;
-    return true;
-  }
-
-  Future<Position?> getCurrentLocation() async {
-    try {
-      return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Stream<Position> getLocationStream() {
-    return Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
-    );
-  }
-}
-
-class GeocodingService {
-  static final Map<String, LatLng> _geocodeCache = {};
-
-  Future<LatLng?> addressToCoordinates(String address) async {
-    final cleanAddress = address.trim().toLowerCase();
-    if (cleanAddress.contains('brighton') && cleanAddress.contains('queens')) {
-      return const LatLng(50.8284, -0.1410);
-    }
-    if (cleanAddress.contains('ashby road') || cleanAddress.contains('le11')) {
-      return const LatLng(52.7658, -1.2285);
-    }
-
-    if (_geocodeCache.containsKey(address)) {
-      return _geocodeCache[address];
-    }
-    try {
-      final locations = await locationFromAddress(address);
-      if (locations.isNotEmpty) {
-        final lat = locations.first.latitude;
-        final lng = locations.first.longitude;
-        if (lat.isFinite && lng.isFinite) {
-          final loc = LatLng(lat, lng);
-          _geocodeCache[address] = loc;
-          return loc;
-        }
-      }
-    } catch (e) {
-      debugPrint('Geocoding error: $e');
-    }
-    return null;
-  }
-}
-
-class MapNavigationService {
-  Future<void> launchNavigation({
-    required BuildContext context,
-    required double destinationLat,
-    required double destinationLng,
-    required String address,
-  }) async {
-    final encodedAddress = Uri.encodeComponent(address.trim());
-
-    Future<void> openAppleMaps() async {
-      final appUrl = Uri.parse(
-        'maps://?daddr=$destinationLat,$destinationLng&q=$encodedAddress',
-      );
-      final webUrl = Uri.parse(
-        'https://maps.apple.com/?daddr=$destinationLat,$destinationLng&q=$encodedAddress',
-      );
-      if (await canLaunchUrl(appUrl)) {
-        await launchUrl(appUrl, mode: LaunchMode.externalApplication);
-      } else if (await canLaunchUrl(webUrl)) {
-        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
-      }
-    }
-
-    Future<void> openGoogleMaps() async {
-      final iosAppUrl = Uri.parse(
-        'comgooglemaps://?daddr=$destinationLat,$destinationLng&directionsmode=driving',
-      );
-      final universalUrl = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&destination=$destinationLat,$destinationLng',
-      );
-      if (Platform.isIOS && await canLaunchUrl(iosAppUrl)) {
-        await launchUrl(iosAppUrl, mode: LaunchMode.externalApplication);
-      } else if (await canLaunchUrl(universalUrl)) {
-        await launchUrl(universalUrl, mode: LaunchMode.externalApplication);
-      }
-    }
-
-    Future<void> openWaze() async {
-      final appUrl = Uri.parse(
-        'waze://?ll=$destinationLat,$destinationLng&navigate=yes',
-      );
-      final webUrl = Uri.parse(
-        'https://waze.com/ul?ll=$destinationLat,$destinationLng&navigate=yes',
-      );
-      if (await canLaunchUrl(appUrl)) {
-        await launchUrl(appUrl, mode: LaunchMode.externalApplication);
-      } else if (await canLaunchUrl(webUrl)) {
-        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
-      }
-    }
-
-    Future<void> openCitymapper() async {
-      final appUrl = Uri.parse(
-        'citymapper://directions?endcoord=$destinationLat,$destinationLng&endname=$encodedAddress',
-      );
-      final webUrl = Uri.parse(
-        'https://citymapper.com/directions?endcoord=$destinationLat,$destinationLng&endname=$encodedAddress',
-      );
-      if (await canLaunchUrl(appUrl)) {
-        await launchUrl(appUrl, mode: LaunchMode.externalApplication);
-      } else if (await canLaunchUrl(webUrl)) {
-        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
-      }
-    }
-
-    if (!context.mounted) return;
-
-    if (Platform.isIOS) {
-      showCupertinoModalPopup(
-        context: context,
-        builder: (BuildContext ctx) => CupertinoActionSheet(
-          title: const Text('Navigate Using'),
-          message: Text(
-            address.isNotEmpty ? address : 'Choose a navigation app',
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          actions: <CupertinoActionSheetAction>[
-            CupertinoActionSheetAction(
-              child: const Text('Apple Maps'),
-              onPressed: () {
-                Navigator.pop(ctx);
-                openAppleMaps();
-              },
-            ),
-            CupertinoActionSheetAction(
-              child: const Text('Google Maps'),
-              onPressed: () {
-                Navigator.pop(ctx);
-                openGoogleMaps();
-              },
-            ),
-            CupertinoActionSheetAction(
-              child: const Text('Waze'),
-              onPressed: () {
-                Navigator.pop(ctx);
-                openWaze();
-              },
-            ),
-            CupertinoActionSheetAction(
-              child: const Text('Citymapper'),
-              onPressed: () {
-                Navigator.pop(ctx);
-                openCitymapper();
-              },
-            ),
-          ],
-          cancelButton: CupertinoActionSheetAction(
-            isDefaultAction: true,
-            child: const Text('Cancel'),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-        ),
-      );
-    } else {
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-        ),
-        builder: (BuildContext ctx) {
-          return SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.h),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 36.w,
-                    height: 4.h,
-                    margin: EdgeInsets.only(bottom: 12.h),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2.r),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 4.h,
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Navigate Using',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1E293B),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Divider(height: 16.h, color: Colors.grey.shade200),
-                  ListTile(
-                    leading: Container(
-                      width: 36.w,
-                      height: 36.w,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F0FE),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        LucideIcons.mapPin,
-                        color: const Color(0xFF1A73E8),
-                        size: 20.sp,
-                      ),
-                    ),
-                    title: Text(
-                      'Google Maps',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Turn-by-turn navigation',
-                      style: TextStyle(fontSize: 11.sp, color: Colors.grey),
-                    ),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      openGoogleMaps();
-                    },
-                  ),
-                  ListTile(
-                    leading: Container(
-                      width: 36.w,
-                      height: 36.w,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0F7FA),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        LucideIcons.navigation,
-                        color: const Color(0xFF00ACC1),
-                        size: 20.sp,
-                      ),
-                    ),
-                    title: Text(
-                      'Waze',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Real-time traffic & alerts',
-                      style: TextStyle(fontSize: 11.sp, color: Colors.grey),
-                    ),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      openWaze();
-                    },
-                  ),
-                  ListTile(
-                    leading: Container(
-                      width: 36.w,
-                      height: 36.w,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        LucideIcons.compass,
-                        color: const Color(0xFF2E7D32),
-                        size: 20.sp,
-                      ),
-                    ),
-                    title: Text(
-                      'Citymapper',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Urban routing & transit',
-                      style: TextStyle(fontSize: 11.sp, color: Colors.grey),
-                    ),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      openCitymapper();
-                    },
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-    }
   }
 }

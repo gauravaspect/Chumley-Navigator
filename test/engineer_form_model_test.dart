@@ -25,10 +25,7 @@ void main() {
     });
 
     test('fromJson handles minimal fields', () {
-      final json = {
-        'work_type_id': 'PM_WORKS',
-        'status': 'submitted',
-      };
+      final json = {'work_type_id': 'PM_WORKS', 'status': 'submitted'};
 
       final summary = EngineerFormSummary.fromJson(json);
       expect(summary.workTypeId, 'PM_WORKS');
@@ -50,17 +47,12 @@ void main() {
           'schema': {
             'fields': [
               {'name': 'water_isolated', 'type': 'boolean'},
-            ]
+            ],
           },
-          'answers': {
-            'water_isolated': true,
-            'meter_type': 'G4',
-          },
-          'photo_slots': {
-            'before_photo': 'https://example.com/before.jpg',
-          },
+          'answers': {'water_isolated': true, 'meter_type': 'G4'},
+          'photo_slots': {'before_photo': 'https://example.com/before.jpg'},
           'updated_at': '2026-08-30T12:00:00.000Z',
-        }
+        },
       };
 
       final detail = EngineerFormDetail.fromJson(json);
@@ -70,7 +62,10 @@ void main() {
       expect(detail.step, 3);
       expect(detail.answers['water_isolated'], true);
       expect(detail.answers['meter_type'], 'G4');
-      expect(detail.photoSlots['before_photo'], 'https://example.com/before.jpg');
+      expect(
+        detail.photoSlots['before_photo'],
+        'https://example.com/before.jpg',
+      );
       expect(detail.schema['fields'], isNotEmpty);
 
       final draftPayload = detail.toDraftPayload();

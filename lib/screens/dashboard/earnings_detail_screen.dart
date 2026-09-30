@@ -35,8 +35,18 @@ class _EarningsDetailScreenState extends State<EarningsDetailScreen> {
   int _months = 6;
 
   static const _monthNames = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   static const _barHeightsByRange = {
@@ -114,9 +124,9 @@ class _EarningsDetailScreenState extends State<EarningsDetailScreen> {
   String _formatMoney(double amount) {
     final whole = amount.round();
     final formatted = whole.toString().replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
     return '£$formatted';
   }
 
@@ -130,9 +140,10 @@ class _EarningsDetailScreenState extends State<EarningsDetailScreen> {
   }
 
   Future<void> _pickPeriod() async {
+    final theme = DashboardTheme.of(context);
     final selected = await showModalBottomSheet<int>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
@@ -141,11 +152,39 @@ class _EarningsDetailScreenState extends State<EarningsDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                margin: EdgeInsets.only(top: 8.h, bottom: 8.h),
+                width: 36.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: theme.border,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
               for (final option in const [3, 6, 12])
                 ListTile(
-                  title: Text('$option months'),
+                  title: Text(
+                    '$option months',
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: option == _months
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: option == _months
+                          ? (theme.isDark
+                              ? AppColors.accentBlue
+                              : AppColors.primaryBlue)
+                          : theme.dashTitle,
+                    ),
+                  ),
                   trailing: option == _months
-                      ? Icon(LucideIcons.check, color: AppColors.primaryBlue)
+                      ? Icon(
+                          LucideIcons.check,
+                          color: theme.isDark
+                              ? AppColors.accentBlue
+                              : AppColors.primaryBlue,
+                          size: 20.sp,
+                        )
                       : null,
                   onTap: () => Navigator.pop(context, option),
                 ),
@@ -159,7 +198,9 @@ class _EarningsDetailScreenState extends State<EarningsDetailScreen> {
 
   void _snack(String message) {
     ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -397,7 +438,10 @@ class _EarningsDetailScreenState extends State<EarningsDetailScreen> {
                                 decoration: BoxDecoration(
                                   color: i == labels.length - 1
                                       ? theme.dashPrimary
-                                      : const Color(0xFFC9DCF7),
+                                      : (theme.isDark
+                                          ? AppColors.accentBlue
+                                              .withValues(alpha: 0.25)
+                                          : const Color(0xFFC9DCF7)),
                                   borderRadius: BorderRadius.circular(10.r),
                                 ),
                               ),
@@ -643,14 +687,10 @@ class _EarningsDetailScreenState extends State<EarningsDetailScreen> {
         chipFg = theme.dashSuccessFg;
         chipLabel = 'Paid';
       case _ActivityTone.sent:
-        iconBg = theme.isDark
-            ? theme.dashSurfaceTint
-            : const Color(0xFFD8E6FC);
+        iconBg = theme.isDark ? theme.dashSurfaceTint : const Color(0xFFD8E6FC);
         iconColor = theme.dashPrimary;
         amountColor = theme.dashTitle;
-        chipBg = theme.isDark
-            ? theme.dashSurfaceTint
-            : const Color(0xFFD8E6FC);
+        chipBg = theme.isDark ? theme.dashSurfaceTint : const Color(0xFFD8E6FC);
         chipFg = theme.dashPrimary;
         chipLabel = 'Sent';
       case _ActivityTone.deducted:
@@ -673,10 +713,7 @@ class _EarningsDetailScreenState extends State<EarningsDetailScreen> {
           Container(
             width: 38.w,
             height: 38.w,
-            decoration: BoxDecoration(
-              color: iconBg,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
             alignment: Alignment.center,
             child: Icon(item.icon, size: 18.sp, color: iconColor),
           ),

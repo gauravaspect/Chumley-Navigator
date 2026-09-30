@@ -10,10 +10,28 @@ class SessionStorage {
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
   );
 
-  static Future<String?> read() => _storage.read(key: _sessionKey);
+  static String? _inMemoryToken;
 
-  static Future<void> write(String token) =>
-      _storage.write(key: _sessionKey, value: token);
+  /// Retrieves the session token, using in-memory cache if available,
+  /// falling back to secure storage.
+  static Future<String?> read() async {
+    if (_inMemoryToken != null && _inMemoryToken!.trim().isNotEmpty) {
+      return _inMemoryToken;
+    }
+    final token = await _storage.read(key: _sessionKey);
+    _inMemoryToken = token;
+    return token;
+  }
 
-  static Future<void> delete() => _storage.delete(key: _sessionKey);
+  /// Writes session token to in-memory cache and secure storage.
+  static Future<void> write(String token) async {
+    _inMemoryToken = token;
+    await _storage.write(key: _sessionKey, value: token);
+  }
+
+  /// Clears session token from in-memory cache and secure storage.
+  static Future<void> delete() async {
+    _inMemoryToken = null;
+    await _storage.delete(key: _sessionKey);
+  }
 }

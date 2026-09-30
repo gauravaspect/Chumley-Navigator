@@ -1,18 +1,25 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/log.dart';
 import 'package:chumley_navigator/pillar/jobs_repository.dart';
+import 'package:chumley_navigator/screens/forms/damp_survey/steps/damp_additional_step.dart';
+import 'package:chumley_navigator/screens/forms/damp_survey/steps/damp_conclusion_step.dart';
+import 'package:chumley_navigator/screens/forms/damp_survey/steps/damp_customer_step.dart';
+import 'package:chumley_navigator/screens/forms/damp_survey/steps/damp_drying_step.dart';
+import 'package:chumley_navigator/screens/forms/damp_survey/steps/damp_estimate_step.dart';
+import 'package:chumley_navigator/screens/forms/damp_survey/steps/damp_info_step.dart';
+import 'package:chumley_navigator/screens/forms/damp_survey/steps/damp_repair_step.dart';
+import 'package:chumley_navigator/screens/forms/damp_survey/steps/damp_visual_step.dart';
+import 'package:chumley_navigator/screens/forms/damp_survey/widgets/damp_survey_ui_helpers.dart';
 import 'package:chumley_navigator/screens/forms/widgets/hse_risk_section.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Damp Survey Form — multi-tab inspection with repair, estimate, drying & conclusion.
+/// Damp Survey Form — modularized multi-tab inspection with repair, estimate, drying & conclusion.
 class DampSurveyFormPage extends StatefulWidget {
   const DampSurveyFormPage({
     super.key,
@@ -47,95 +54,6 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
 
   final _hse = HseRiskFormController();
 
-  static const _serviceAppointments = [
-    'SA-10021 · 12 High Street',
-    'SA-10045 · 4 Station Road',
-    'SA-10088 · Flat 2B Oak Court',
-    'SA-10102 · 19 Mill Lane',
-  ];
-
-  static const _people = [
-    'Alex Morgan',
-    'Jordan Lee',
-    'Sam Patel',
-    'Taylor Brooks',
-    'Casey Nguyen',
-  ];
-
-  static const _weatherOptions = [
-    'Sunny',
-    'Cloudy',
-    'Rainy',
-    'Windy',
-    'Foggy',
-    'Other',
-  ];
-
-  static const _accessTypeOptions = ['Internal', 'External', 'Both'];
-  static const _accessLocationOptions = [
-    'Roof space',
-    'Floor void',
-    'Wall cavity',
-    'Under stairs',
-    'Cupboard',
-    'Other',
-  ];
-  static const _whatAccessedOptions = [
-    'Pipework',
-    'Tank',
-    'Radiator',
-    'Floorboards',
-    'Ceiling',
-    'Wall',
-    'Other',
-  ];
-  static const _yesNoOptions = ['Yes', 'No'];
-  static const _yesNoPartialOptions = ['Yes', 'No', 'Partial'];
-  static const _repairKindOptions = [
-    'Temporary',
-    'Permanent',
-    'Make-safe',
-    'Other',
-  ];
-  static const _furtherWorkOptions = ['Yes', 'No', 'Monitor'];
-  static const _dryingRequiredOptions = ['Yes', 'No'];
-  static const _dryingMethodOptions = [
-    'Dehumidifier',
-    'Fans',
-    'Natural ventilation',
-    'Specialist drying',
-    'Not applicable',
-  ];
-  static const _conclusionOptions = [
-    'Rising damp',
-    'Penetrating damp',
-    'Condensation',
-    'Plumbing leak',
-    'Combination',
-    'Inconclusive',
-  ];
-  static const _furtherVisitOptions = [
-    'Yes',
-    'No',
-    'Monitor only',
-    'Other',
-  ];
-  static const _diagnosisMethodOptions = [
-    'Thermal imaging',
-    'Moisture profiling',
-    'Trace dye',
-    'Salt analysis',
-    'Camera inspection',
-    'Pressure test',
-    'Other',
-  ];
-
-  static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
-  static const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
   late final TabController _tabController;
   final _scrollController = ScrollController();
   final _collapseProgress = ValueNotifier(0.0);
@@ -144,16 +62,16 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
   static const double _brandingCollapsedHeight = 54;
   static const double _scrollThreshold = 100;
 
-  // Information
+  // Step 2: Information
   final _formNameController = TextEditingController(text: 'Damp Survey Form');
   final _pdfUrlController = TextEditingController();
   final _appointmentSearchController = TextEditingController();
 
-  // Customer
+  // Step 3: Customer Details
   final _operativeSearchController = TextEditingController();
   final _frontOfPropertyController = TextEditingController();
 
-  // Visual
+  // Step 4: Compulsory Visual Inspection
   final _visualImageDescController = TextEditingController();
   final _visualFindingsController = TextEditingController();
   final _weatherOtherController = TextEditingController();
@@ -161,7 +79,7 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
   final _whatAccessedOtherController = TextEditingController();
   final _afterAccessImageDescController = TextEditingController();
 
-  // Repair
+  // Step 5: Repair
   final _beforeRepairPhotoDescController = TextEditingController();
   final _worksUndertakenController = TextEditingController();
   final _repairDurationController = TextEditingController();
@@ -169,13 +87,13 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
   final _materialCostController = TextEditingController();
   final _afterRepairImageDescController = TextEditingController();
 
-  // Estimate
+  // Step 6: Estimate
   final _furtherWorksDescController = TextEditingController();
 
-  // Additional
+  // Step 8: Additional Comments
   final _additionalCommentsController = TextEditingController();
 
-  // Conclusion
+  // Step 9: Conclusion
   final _leakDescriptionController = TextEditingController();
   final _briefImageDescController = TextEditingController();
   final _furtherVisitOtherController = TextEditingController();
@@ -247,58 +165,74 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
             _pdfUrlController.text = answers['pdf_url'].toString();
           }
           if (answers['front_of_property'] != null) {
-            _frontOfPropertyController.text = answers['front_of_property'].toString();
+            _frontOfPropertyController.text = answers['front_of_property']
+                .toString();
           }
           if (answers['visual_image_desc'] != null) {
-            _visualImageDescController.text = answers['visual_image_desc'].toString();
+            _visualImageDescController.text = answers['visual_image_desc']
+                .toString();
           }
           if (answers['visual_findings'] != null) {
-            _visualFindingsController.text = answers['visual_findings'].toString();
+            _visualFindingsController.text = answers['visual_findings']
+                .toString();
           }
           if (answers['weather_other'] != null) {
             _weatherOtherController.text = answers['weather_other'].toString();
           }
           if (answers['access_made_other'] != null) {
-            _accessMadeOtherController.text = answers['access_made_other'].toString();
+            _accessMadeOtherController.text = answers['access_made_other']
+                .toString();
           }
           if (answers['what_accessed_other'] != null) {
-            _whatAccessedOtherController.text = answers['what_accessed_other'].toString();
+            _whatAccessedOtherController.text = answers['what_accessed_other']
+                .toString();
           }
           if (answers['after_access_image_desc'] != null) {
-            _afterAccessImageDescController.text = answers['after_access_image_desc'].toString();
+            _afterAccessImageDescController.text =
+                answers['after_access_image_desc'].toString();
           }
           if (answers['before_repair_photo_desc'] != null) {
-            _beforeRepairPhotoDescController.text = answers['before_repair_photo_desc'].toString();
+            _beforeRepairPhotoDescController.text =
+                answers['before_repair_photo_desc'].toString();
           }
           if (answers['works_undertaken'] != null) {
-            _worksUndertakenController.text = answers['works_undertaken'].toString();
+            _worksUndertakenController.text = answers['works_undertaken']
+                .toString();
           }
           if (answers['repair_duration'] != null) {
-            _repairDurationController.text = answers['repair_duration'].toString();
+            _repairDurationController.text = answers['repair_duration']
+                .toString();
           }
           if (answers['materials_used'] != null) {
-            _materialsUsedController.text = answers['materials_used'].toString();
+            _materialsUsedController.text = answers['materials_used']
+                .toString();
           }
           if (answers['material_cost'] != null) {
             _materialCostController.text = answers['material_cost'].toString();
           }
           if (answers['after_repair_image_desc'] != null) {
-            _afterRepairImageDescController.text = answers['after_repair_image_desc'].toString();
+            _afterRepairImageDescController.text =
+                answers['after_repair_image_desc'].toString();
           }
           if (answers['further_works_desc'] != null) {
-            _furtherWorksDescController.text = answers['further_works_desc'].toString();
+            _furtherWorksDescController.text = answers['further_works_desc']
+                .toString();
           }
           if (answers['additional_comments'] != null) {
-            _additionalCommentsController.text = answers['additional_comments'].toString();
+            _additionalCommentsController.text = answers['additional_comments']
+                .toString();
           }
           if (answers['leak_description'] != null) {
-            _leakDescriptionController.text = answers['leak_description'].toString();
+            _leakDescriptionController.text = answers['leak_description']
+                .toString();
           }
           if (answers['brief_image_desc'] != null) {
-            _briefImageDescController.text = answers['brief_image_desc'].toString();
+            _briefImageDescController.text = answers['brief_image_desc']
+                .toString();
           }
           if (answers['further_visit_other'] != null) {
-            _furtherVisitOtherController.text = answers['further_visit_other'].toString();
+            _furtherVisitOtherController.text = answers['further_visit_other']
+                .toString();
           }
           if (answers['leak_present'] != null) {
             _leakPresentController.text = answers['leak_present'].toString();
@@ -340,20 +274,26 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
             _dryingOption = answers['drying_option'] as String?;
           }
           if (answers['need_additional_comments'] != null) {
-            _needAdditionalComments = answers['need_additional_comments'] as String?;
+            _needAdditionalComments =
+                answers['need_additional_comments'] as String?;
           }
           if (answers['conclusion'] != null) {
             _conclusion = answers['conclusion'] as String?;
           }
           if (answers['further_visit_required'] != null) {
-            _furtherVisitRequired = answers['further_visit_required'] as String?;
+            _furtherVisitRequired =
+                answers['further_visit_required'] as String?;
           }
           if (answers['diagnosis_methods'] is List) {
             _diagnosisMethods.clear();
-            _diagnosisMethods.addAll((answers['diagnosis_methods'] as List).map((e) => e.toString()));
+            _diagnosisMethods.addAll(
+              (answers['diagnosis_methods'] as List).map((e) => e.toString()),
+            );
           }
           if (answers['survey_date_time'] != null) {
-            _surveyDateTime = DateTime.tryParse(answers['survey_date_time'].toString());
+            _surveyDateTime = DateTime.tryParse(
+              answers['survey_date_time'].toString(),
+            );
           }
           final rawHse = answers['hse'];
           if (rawHse is Map) {
@@ -365,51 +305,54 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
         });
       }
     } catch (e) {
-      Log('Failed to restore draft for Damp Survey form: $e', name: 'DampSurveyFormPage');
+      Log(
+        'Failed to restore draft for Damp Survey form: $e',
+        name: 'DampSurveyFormPage',
+      );
     }
   }
 
   Map<String, dynamic> _buildAnswersMap() => {
-        'form_name': _formNameController.text.trim(),
-        'pdf_url': _pdfUrlController.text.trim(),
-        'service_appointment': _selectedAppointment,
-        'operative': _selectedOperative,
-        'front_of_property': _frontOfPropertyController.text.trim(),
-        'weather': _weather,
-        'weather_other': _weatherOtherController.text.trim(),
-        'survey_date_time': _surveyDateTime?.toIso8601String(),
-        'access_type': _accessType,
-        'access_location': _accessLocation,
-        'access_made_other': _accessMadeOtherController.text.trim(),
-        'what_accessed': _whatAccessed,
-        'what_accessed_other': _whatAccessedOtherController.text.trim(),
-        'visual_image_desc': _visualImageDescController.text.trim(),
-        'visual_findings': _visualFindingsController.text.trim(),
-        'after_access_image_desc': _afterAccessImageDescController.text.trim(),
-        'did_make_repair': _didMakeRepair,
-        'repair_kind': _repairKind,
-        'before_repair_photo_desc': _beforeRepairPhotoDescController.text.trim(),
-        'works_undertaken': _worksUndertakenController.text.trim(),
-        'repair_duration': _repairDurationController.text.trim(),
-        'bought_materials': _boughtMaterials,
-        'materials_used': _materialsUsedController.text.trim(),
-        'material_cost': _materialCostController.text.trim(),
-        'after_repair_image_desc': _afterRepairImageDescController.text.trim(),
-        'further_work_required': _furtherWorkRequired,
-        'further_works_desc': _furtherWorksDescController.text.trim(),
-        'drying_required': _dryingRequired,
-        'drying_option': _dryingOption,
-        'need_additional_comments': _needAdditionalComments,
-        'additional_comments': _additionalCommentsController.text.trim(),
-        'conclusion': _conclusion,
-        'leak_description': _leakDescriptionController.text.trim(),
-        'brief_image_desc': _briefImageDescController.text.trim(),
-        'further_visit_required': _furtherVisitRequired,
-        'further_visit_other': _furtherVisitOtherController.text.trim(),
-        'leak_present': _leakPresentController.text.trim(),
-        'diagnosis_methods': _diagnosisMethods.toList(),
-        'hse': _hse.toMap(),
-      };
+    'form_name': _formNameController.text.trim(),
+    'pdf_url': _pdfUrlController.text.trim(),
+    'service_appointment': _selectedAppointment,
+    'operative': _selectedOperative,
+    'front_of_property': _frontOfPropertyController.text.trim(),
+    'weather': _weather,
+    'weather_other': _weatherOtherController.text.trim(),
+    'survey_date_time': _surveyDateTime?.toIso8601String(),
+    'access_type': _accessType,
+    'access_location': _accessLocation,
+    'access_made_other': _accessMadeOtherController.text.trim(),
+    'what_accessed': _whatAccessed,
+    'what_accessed_other': _whatAccessedOtherController.text.trim(),
+    'visual_image_desc': _visualImageDescController.text.trim(),
+    'visual_findings': _visualFindingsController.text.trim(),
+    'after_access_image_desc': _afterAccessImageDescController.text.trim(),
+    'did_make_repair': _didMakeRepair,
+    'repair_kind': _repairKind,
+    'before_repair_photo_desc': _beforeRepairPhotoDescController.text.trim(),
+    'works_undertaken': _worksUndertakenController.text.trim(),
+    'repair_duration': _repairDurationController.text.trim(),
+    'bought_materials': _boughtMaterials,
+    'materials_used': _materialsUsedController.text.trim(),
+    'material_cost': _materialCostController.text.trim(),
+    'after_repair_image_desc': _afterRepairImageDescController.text.trim(),
+    'further_work_required': _furtherWorkRequired,
+    'further_works_desc': _furtherWorksDescController.text.trim(),
+    'drying_required': _dryingRequired,
+    'drying_option': _dryingOption,
+    'need_additional_comments': _needAdditionalComments,
+    'additional_comments': _additionalCommentsController.text.trim(),
+    'conclusion': _conclusion,
+    'leak_description': _leakDescriptionController.text.trim(),
+    'brief_image_desc': _briefImageDescController.text.trim(),
+    'further_visit_required': _furtherVisitRequired,
+    'further_visit_other': _furtherVisitOtherController.text.trim(),
+    'leak_present': _leakPresentController.text.trim(),
+    'diagnosis_methods': _diagnosisMethods.toList(),
+    'hse': _hse.toMap(),
+  };
 
   @override
   void dispose() {
@@ -444,13 +387,9 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
     super.dispose();
   }
 
-  static double _easedCollapseProgress(double offset) {
-    final raw = (offset / _scrollThreshold).clamp(0.0, 1.0);
-    return Curves.easeOutCubic.transform(raw);
-  }
-
   void _onScroll() {
-    final progress = _easedCollapseProgress(_scrollController.offset);
+    final raw = (_scrollController.offset / _scrollThreshold).clamp(0.0, 1.0);
+    final progress = Curves.easeOutCubic.transform(raw);
     if (_collapseProgress.value != progress) {
       _collapseProgress.value = progress;
     }
@@ -458,14 +397,6 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
 
   bool _isPastDateTime(DateTime value) {
     return value.isBefore(DateTime.now().subtract(const Duration(seconds: 30)));
-  }
-
-  String _formatDate(DateTime dt) {
-    return '${_weekdays[dt.weekday - 1]}, ${dt.day} ${_months[dt.month - 1]} ${dt.year}';
-  }
-
-  String _formatTime(DateTime dt) {
-    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   Future<void> _pickSurveyDate() async {
@@ -731,7 +662,6 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
     final answers = _buildAnswersMap();
 
     if (andNew) {
-      // Save Draft mode
       if (saId.isNotEmpty) {
         await _jobs.saveFormDraft(
           saId: saId,
@@ -753,7 +683,6 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
       );
       _resetForm();
     } else {
-      // Submit mode
       if (!_validateForSave()) return;
       if (saId.isNotEmpty) {
         try {
@@ -808,7 +737,7 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
                           SliverToBoxAdapter(child: _buildTitle(theme)),
                           SliverPersistentHeader(
                             pinned: true,
-                            delegate: _TabBarDelegate(
+                            delegate: DampSurveyTabBarDelegate(
                               theme: theme,
                               child: TabBar(
                                 controller: _tabController,
@@ -833,15 +762,145 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
                         body: TabBarView(
                           controller: _tabController,
                           children: [
-                            _scrollTab(_buildHseTab(theme)),
-                            _scrollTab(_buildInformationTab(theme)),
-                            _scrollTab(_buildCustomerTab(theme)),
-                            _scrollTab(_buildVisualTab(theme)),
-                            _scrollTab(_buildRepairTab(theme)),
-                            _scrollTab(_buildEstimateTab(theme)),
-                            _scrollTab(_buildDryingTab(theme)),
-                            _scrollTab(_buildAdditionalTab(theme)),
-                            _scrollTab(_buildConclusionTab(theme)),
+                            ListView(
+                              padding: EdgeInsets.fromLTRB(
+                                16.w,
+                                16.h,
+                                16.w,
+                                24.h,
+                              ),
+                              children: [
+                                HseRiskSection(
+                                  theme: theme,
+                                  controller: _hse,
+                                  onChanged: () => setState(() {}),
+                                ),
+                              ],
+                            ),
+                            DampInfoStep(
+                              theme: theme,
+                              formNameController: _formNameController,
+                              workOrderDisplay: _workOrderDisplay,
+                              pdfUrlController: _pdfUrlController,
+                              selectedAppointment: _selectedAppointment,
+                              appointmentSearchController:
+                                  _appointmentSearchController,
+                              onAppointmentChanged: (v) =>
+                                  setState(() => _selectedAppointment = v),
+                            ),
+                            DampCustomerStep(
+                              theme: theme,
+                              selectedOperative: _selectedOperative,
+                              operativeSearchController:
+                                  _operativeSearchController,
+                              frontOfPropertyController:
+                                  _frontOfPropertyController,
+                              surveyDateTime: _surveyDateTime,
+                              dateTimeError: _dateTimeError,
+                              onOperativeChanged: (v) =>
+                                  setState(() => _selectedOperative = v),
+                              onPickDate: _pickSurveyDate,
+                              onPickTime: _pickSurveyTime,
+                            ),
+                            DampVisualStep(
+                              theme: theme,
+                              visualImageDescController:
+                                  _visualImageDescController,
+                              visualFindingsController:
+                                  _visualFindingsController,
+                              weather: _weather,
+                              weatherOtherController: _weatherOtherController,
+                              accessType: _accessType,
+                              accessLocation: _accessLocation,
+                              accessMadeOtherController:
+                                  _accessMadeOtherController,
+                              whatAccessed: _whatAccessed,
+                              whatAccessedOtherController:
+                                  _whatAccessedOtherController,
+                              afterAccessImageDescController:
+                                  _afterAccessImageDescController,
+                              onWeatherChanged: (v) =>
+                                  setState(() => _weather = v),
+                              onAccessTypeChanged: (v) =>
+                                  setState(() => _accessType = v),
+                              onAccessLocationChanged: (v) =>
+                                  setState(() => _accessLocation = v),
+                              onWhatAccessedChanged: (v) =>
+                                  setState(() => _whatAccessed = v),
+                            ),
+                            DampRepairStep(
+                              theme: theme,
+                              didMakeRepair: _didMakeRepair,
+                              beforeRepairPhotoDescController:
+                                  _beforeRepairPhotoDescController,
+                              repairKind: _repairKind,
+                              worksUndertakenController:
+                                  _worksUndertakenController,
+                              repairDurationController:
+                                  _repairDurationController,
+                              materialsUsedController: _materialsUsedController,
+                              boughtMaterials: _boughtMaterials,
+                              materialCostController: _materialCostController,
+                              afterRepairImageDescController:
+                                  _afterRepairImageDescController,
+                              onDidMakeRepairChanged: (v) =>
+                                  setState(() => _didMakeRepair = v),
+                              onRepairKindChanged: (v) =>
+                                  setState(() => _repairKind = v),
+                              onBoughtMaterialsChanged: (v) =>
+                                  setState(() => _boughtMaterials = v),
+                            ),
+                            DampEstimateStep(
+                              theme: theme,
+                              furtherWorkRequired: _furtherWorkRequired,
+                              furtherWorksDescController:
+                                  _furtherWorksDescController,
+                              onFurtherWorkRequiredChanged: (v) =>
+                                  setState(() => _furtherWorkRequired = v),
+                            ),
+                            DampDryingStep(
+                              theme: theme,
+                              dryingRequired: _dryingRequired,
+                              dryingOption: _dryingOption,
+                              onDryingRequiredChanged: (v) =>
+                                  setState(() => _dryingRequired = v),
+                              onDryingOptionChanged: (v) =>
+                                  setState(() => _dryingOption = v),
+                            ),
+                            DampAdditionalStep(
+                              theme: theme,
+                              needAdditionalComments: _needAdditionalComments,
+                              additionalCommentsController:
+                                  _additionalCommentsController,
+                              onNeedAdditionalCommentsChanged: (v) =>
+                                  setState(() => _needAdditionalComments = v),
+                            ),
+                            DampConclusionStep(
+                              theme: theme,
+                              conclusion: _conclusion,
+                              leakDescriptionController:
+                                  _leakDescriptionController,
+                              briefImageDescController:
+                                  _briefImageDescController,
+                              furtherVisitRequired: _furtherVisitRequired,
+                              furtherVisitOtherController:
+                                  _furtherVisitOtherController,
+                              leakPresentController: _leakPresentController,
+                              diagnosisMethods: _diagnosisMethods,
+                              onConclusionChanged: (v) =>
+                                  setState(() => _conclusion = v),
+                              onFurtherVisitRequiredChanged: (v) =>
+                                  setState(() => _furtherVisitRequired = v),
+                              onToggleDiagnosisMethod: (option) {
+                                setState(() {
+                                  if (_diagnosisMethods.contains(option)) {
+                                    _diagnosisMethods.remove(option);
+                                  } else {
+                                    _diagnosisMethods.add(option);
+                                  }
+                                });
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -888,13 +947,6 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
     );
   }
 
-  Widget _scrollTab(List<Widget> children) {
-    return ListView(
-      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-      children: children,
-    );
-  }
-
   Widget _buildTitle(DashboardTheme theme) {
     return Padding(
       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 4.h),
@@ -917,512 +969,6 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
         ],
       ),
     );
-  }
-
-  List<Widget> _buildHseTab(DashboardTheme theme) {
-    return [
-      HseRiskSection(
-        theme: theme,
-        controller: _hse,
-        onChanged: () => setState(() {}),
-      ),
-    ];
-  }
-
-  List<Widget> _buildInformationTab(DashboardTheme theme) {
-    return [
-      _labeledField(
-        theme: theme,
-        label: 'Damp Survey Form Name',
-        child: _textField(
-          theme: theme,
-          controller: _formNameController,
-          hint: 'Enter form name',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Work Order',
-        child: _readOnlyField(theme: theme, value: _workOrderDisplay),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Generated PDF Url',
-        child: _textField(
-          theme: theme,
-          controller: _pdfUrlController,
-          hint: 'https://…',
-          keyboardType: TextInputType.url,
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Service Appointment',
-        child: _searchableDropdown(
-          theme: theme,
-          value: _selectedAppointment,
-          items: _serviceAppointments,
-          hint: 'Search Service Appointments',
-          searchController: _appointmentSearchController,
-          onChanged: (v) => setState(() => _selectedAppointment = v),
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _buildCustomerTab(DashboardTheme theme) {
-    final dateLabel = _surveyDateTime == null
-        ? 'Select date'
-        : _formatDate(_surveyDateTime!);
-    final timeLabel = _surveyDateTime == null
-        ? 'Select time'
-        : _formatTime(_surveyDateTime!);
-
-    return [
-      _labeledField(
-        theme: theme,
-        label: 'Operative Name',
-        child: _searchableDropdown(
-          theme: theme,
-          value: _selectedOperative,
-          items: _people,
-          hint: 'Search People',
-          searchController: _operativeSearchController,
-          onChanged: (v) => setState(() => _selectedOperative = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Description for image — Front of Property',
-        child: _expandableField(
-          theme: theme,
-          controller: _frontOfPropertyController,
-          hint: 'Describe the front-of-property image…',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Survey Date / Time',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: _pickerButton(
-                    theme: theme,
-                    icon: LucideIcons.calendar,
-                    label: dateLabel,
-                    onTap: _pickSurveyDate,
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: _pickerButton(
-                    theme: theme,
-                    icon: LucideIcons.clock,
-                    label: timeLabel,
-                    onTap: _pickSurveyTime,
-                  ),
-                ),
-              ],
-            ),
-            if (_dateTimeError != null) ...[
-              SizedBox(height: 8.h),
-              Text(
-                _dateTimeError!,
-                style: TextStyle(fontSize: 12.sp, color: AppColors.errorText),
-              ),
-            ],
-          ],
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _buildVisualTab(DashboardTheme theme) {
-    return [
-      _labeledField(
-        theme: theme,
-        label: 'Description for visual inspection image',
-        child: _expandableField(
-          theme: theme,
-          controller: _visualImageDescController,
-          hint: 'Describe the visual inspection image…',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Findings from visual inspection',
-        child: _expandableField(
-          theme: theme,
-          controller: _visualFindingsController,
-          hint: 'Record findings…',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'How is the weather during survey',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _weather,
-          items: _weatherOptions,
-          hint: 'Select weather',
-          onChanged: (v) => setState(() => _weather = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Weather other details',
-        child: _expandableField(
-          theme: theme,
-          controller: _weatherOtherController,
-          hint: 'Additional weather details…',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Was the access internal or external',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _accessType,
-          items: _accessTypeOptions,
-          hint: 'Select access type',
-          onChanged: (v) => setState(() => _accessType = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Where was this access made',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _accessLocation,
-          items: _accessLocationOptions,
-          hint: 'Select location',
-          onChanged: (v) => setState(() => _accessLocation = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Access made other',
-        child: _textField(
-          theme: theme,
-          controller: _accessMadeOtherController,
-          hint: 'Other access details',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'What was accessed',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _whatAccessed,
-          items: _whatAccessedOptions,
-          hint: 'Select what was accessed',
-          onChanged: (v) => setState(() => _whatAccessed = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'What was accessed other',
-        child: _textField(
-          theme: theme,
-          controller: _whatAccessedOtherController,
-          hint: 'Other details',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Description of image after access has been made',
-        child: _expandableField(
-          theme: theme,
-          controller: _afterAccessImageDescController,
-          hint: 'Describe the image after access…',
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _buildRepairTab(DashboardTheme theme) {
-    return [
-      _labeledField(
-        theme: theme,
-        label: 'Did you make the repair',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _didMakeRepair,
-          items: _yesNoPartialOptions,
-          hint: 'Select option',
-          onChanged: (v) => setState(() => _didMakeRepair = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Description for photo — Before repairs done',
-        child: _expandableField(
-          theme: theme,
-          controller: _beforeRepairPhotoDescController,
-          hint: 'Describe the before-repair photo…',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'What kind of repair was done',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _repairKind,
-          items: _repairKindOptions,
-          hint: 'Select repair type',
-          onChanged: (v) => setState(() => _repairKind = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Description of works undertaken',
-        child: _textField(
-          theme: theme,
-          controller: _worksUndertakenController,
-          hint: 'Describe works undertaken',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'How long it took to make the repairs',
-        child: _textField(
-          theme: theme,
-          controller: _repairDurationController,
-          hint: 'e.g. 2 hours',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Materials used during repairs',
-        child: _textField(
-          theme: theme,
-          controller: _materialsUsedController,
-          hint: 'List materials used',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Buy any materials to carry out repairs?',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _boughtMaterials,
-          items: _yesNoOptions,
-          hint: 'Select option',
-          onChanged: (v) => setState(() => _boughtMaterials = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'How much material costed for repairs',
-        child: _textField(
-          theme: theme,
-          controller: _materialCostController,
-          hint: '0.00',
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Description of image after repairs carried out',
-        child: _expandableField(
-          theme: theme,
-          controller: _afterRepairImageDescController,
-          hint: 'Describe the after-repair image…',
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _buildEstimateTab(DashboardTheme theme) {
-    return [
-      _labeledField(
-        theme: theme,
-        label: 'Further work required to restore area',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _furtherWorkRequired,
-          items: _furtherWorkOptions,
-          hint: 'Select option',
-          onChanged: (v) => setState(() => _furtherWorkRequired = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Description of further works required',
-        child: _expandableField(
-          theme: theme,
-          controller: _furtherWorksDescController,
-          hint: 'Describe further works…',
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _buildDryingTab(DashboardTheme theme) {
-    return [
-      _labeledField(
-        theme: theme,
-        label: 'Does the area require drying',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _dryingRequired,
-          items: _dryingRequiredOptions,
-          hint: 'Select option',
-          onChanged: (v) => setState(() => _dryingRequired = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Please select the relevant options',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _dryingOption,
-          items: _dryingMethodOptions,
-          hint: 'Select drying option',
-          onChanged: (v) => setState(() => _dryingOption = v),
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _buildAdditionalTab(DashboardTheme theme) {
-    return [
-      _labeledField(
-        theme: theme,
-        label: 'Do you need to add additional comments',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _needAdditionalComments,
-          items: _yesNoOptions,
-          hint: 'Select option',
-          onChanged: (v) => setState(() => _needAdditionalComments = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Additional feedbacks / comments',
-        child: _expandableField(
-          theme: theme,
-          controller: _additionalCommentsController,
-          hint: 'Enter additional comments…',
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _buildConclusionTab(DashboardTheme theme) {
-    return [
-      _labeledField(
-        theme: theme,
-        label: 'Following investigation what conclusion?',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _conclusion,
-          items: _conclusionOptions,
-          hint: 'Select conclusion',
-          onChanged: (v) => setState(() => _conclusion = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Description of the leak',
-        child: _expandableField(
-          theme: theme,
-          controller: _leakDescriptionController,
-          hint: 'Describe the leak…',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Brief image description',
-        child: _textField(
-          theme: theme,
-          controller: _briefImageDescController,
-          hint: 'Brief description',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Why is a further visit required',
-        child: _simpleDropdown(
-          theme: theme,
-          value: _furtherVisitRequired,
-          items: _furtherVisitOptions,
-          hint: 'Select option',
-          onChanged: (v) => setState(() => _furtherVisitRequired = v),
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Further visit required other',
-        child: _expandableField(
-          theme: theme,
-          controller: _furtherVisitOtherController,
-          hint: 'Other reasons for further visit…',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Investigation leads to a leak be present',
-        child: _expandableField(
-          theme: theme,
-          controller: _leakPresentController,
-          hint: 'Describe investigation findings…',
-        ),
-      ),
-      SizedBox(height: 14.h),
-      _labeledField(
-        theme: theme,
-        label: 'Method of diagnosis for next visit',
-        child: _multiSelectChips(
-          theme: theme,
-          options: _diagnosisMethodOptions,
-          selected: _diagnosisMethods,
-          onToggle: (option) {
-            setState(() {
-              if (_diagnosisMethods.contains(option)) {
-                _diagnosisMethods.remove(option);
-              } else {
-                _diagnosisMethods.add(option);
-              }
-            });
-          },
-        ),
-      ),
-    ];
   }
 
   Widget _buildBottomBar(DashboardTheme theme) {
@@ -1488,311 +1034,4 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
       ),
     );
   }
-
-  Widget _multiSelectChips({
-    required DashboardTheme theme,
-    required List<String> options,
-    required Set<String> selected,
-    required ValueChanged<String> onToggle,
-  }) {
-    return Wrap(
-      spacing: 8.w,
-      runSpacing: 8.h,
-      children: [
-        for (final option in options)
-          FilterChip(
-            label: Text(option, style: TextStyle(fontSize: 12.sp)),
-            selected: selected.contains(option),
-            onSelected: (_) => onToggle(option),
-            selectedColor: AppColors.primaryBlue.withValues(alpha: 0.15),
-            checkmarkColor: AppColors.primaryBlue,
-            labelStyle: TextStyle(
-              color: selected.contains(option)
-                  ? AppColors.primaryBlue
-                  : theme.text,
-            ),
-            side: BorderSide(
-              color: selected.contains(option)
-                  ? AppColors.primaryBlue
-                  : theme.border,
-            ),
-            backgroundColor: theme.surfaceDeep,
-          ),
-      ],
-    );
-  }
-
-  Widget _labeledField({
-    required DashboardTheme theme,
-    required String label,
-    required Widget child,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: theme.text,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        child,
-      ],
-    );
-  }
-
-  InputDecoration _inputDecoration(DashboardTheme theme, {String? hint}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(fontSize: 13.sp, color: theme.textMuted),
-      filled: true,
-      fillColor: theme.surfaceDeep,
-      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: theme.border, width: 0.5),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: theme.border, width: 0.5),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: theme.accent, width: 0.5),
-      ),
-    );
-  }
-
-  Widget _textField({
-    required DashboardTheme theme,
-    required TextEditingController controller,
-    String? hint,
-    TextInputType? keyboardType,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: TextStyle(fontSize: 13.sp, color: theme.text),
-      decoration: _inputDecoration(theme, hint: hint),
-    );
-  }
-
-  Widget _expandableField({
-    required DashboardTheme theme,
-    required TextEditingController controller,
-    String? hint,
-  }) {
-    return TextField(
-      controller: controller,
-      minLines: 3,
-      maxLines: 8,
-      style: TextStyle(fontSize: 13.sp, color: theme.text, height: 1.4),
-      decoration: _inputDecoration(theme, hint: hint),
-    );
-  }
-
-  Widget _readOnlyField({
-    required DashboardTheme theme,
-    required String value,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
-      decoration: BoxDecoration(
-        color: theme.surfaceDeep,
-        borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: theme.border, width: 0.5),
-      ),
-      child: Text(
-        value,
-        style: TextStyle(
-          fontSize: 13.sp,
-          color: theme.textMuted,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  Widget _pickerButton({
-    required DashboardTheme theme,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: theme.surfaceDeep,
-      borderRadius: BorderRadius.circular(10.r),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10.r),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(color: theme.border, width: 0.5),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 16.sp, color: theme.textMuted),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(fontSize: 13.sp, color: theme.text),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _simpleDropdown({
-    required DashboardTheme theme,
-    required String? value,
-    required List<String> items,
-    required String hint,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonFormField2<String>(
-      value: value,
-      isExpanded: true,
-      decoration: _inputDecoration(theme),
-      hint: Text(hint, style: TextStyle(fontSize: 13.sp, color: theme.textMuted)),
-      iconStyleData: IconStyleData(
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: theme.textMuted,
-          size: 20.sp,
-        ),
-      ),
-      dropdownStyleData: DropdownStyleData(
-        maxHeight: 280.h,
-        decoration: BoxDecoration(
-          color: theme.surface,
-          border: Border.all(color: theme.border, width: 0.5),
-          borderRadius: BorderRadius.circular(10.r),
-        ),
-      ),
-      style: TextStyle(fontSize: 13.sp, color: theme.text),
-      items: items
-          .map(
-            (item) => DropdownMenuItem<String>(
-              value: item,
-              child: Text(item, overflow: TextOverflow.ellipsis),
-            ),
-          )
-          .toList(),
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _searchableDropdown({
-    required DashboardTheme theme,
-    required String? value,
-    required List<String> items,
-    required String hint,
-    required TextEditingController searchController,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonFormField2<String>(
-      value: value,
-      isExpanded: true,
-      decoration: _inputDecoration(theme),
-      hint: Text(hint, style: TextStyle(fontSize: 13.sp, color: theme.textMuted)),
-      iconStyleData: IconStyleData(
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: theme.textMuted,
-          size: 20.sp,
-        ),
-      ),
-      dropdownStyleData: DropdownStyleData(
-        maxHeight: 280.h,
-        decoration: BoxDecoration(
-          color: theme.surface,
-          border: Border.all(color: theme.border, width: 0.5),
-          borderRadius: BorderRadius.circular(10.r),
-        ),
-      ),
-      style: TextStyle(fontSize: 13.sp, color: theme.text),
-      items: items
-          .map(
-            (item) => DropdownMenuItem<String>(
-              value: item,
-              child: Text(item, overflow: TextOverflow.ellipsis),
-            ),
-          )
-          .toList(),
-      onChanged: onChanged,
-      dropdownSearchData: DropdownSearchData(
-        searchController: searchController,
-        searchInnerWidgetHeight: 50.h,
-        searchInnerWidget: Container(
-          height: 50.h,
-          padding: EdgeInsets.fromLTRB(8.w, 8.h, 8.w, 4.h),
-          child: TextFormField(
-            expands: true,
-            maxLines: null,
-            controller: searchController,
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 10.w,
-                vertical: 8.h,
-              ),
-              hintText: hint,
-              hintStyle: TextStyle(fontSize: 12.sp, color: theme.textMuted),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-            ),
-          ),
-        ),
-        searchMatchFn: (item, searchValue) {
-          final text = item.value?.toString().toLowerCase() ?? '';
-          return text.contains(searchValue.toLowerCase());
-        },
-      ),
-      onMenuStateChange: (isOpen) {
-        if (!isOpen) searchController.clear();
-      },
-    );
-  }
-}
-
-class _TabBarDelegate extends SliverPersistentHeaderDelegate {
-  _TabBarDelegate({required this.theme, required this.child});
-
-  final DashboardTheme theme;
-  final Widget child;
-
-  @override
-  double get minExtent => 48;
-
-  @override
-  double get maxExtent => 48;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return Container(
-      color: theme.base,
-      alignment: Alignment.centerLeft,
-      child: child,
-    );
-  }
-
-  @override
-  bool shouldRebuild(covariant _TabBarDelegate oldDelegate) =>
-      theme != oldDelegate.theme || child != oldDelegate.child;
 }

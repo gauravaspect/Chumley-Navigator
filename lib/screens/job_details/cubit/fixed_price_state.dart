@@ -70,23 +70,20 @@ class FixedPriceLoaded extends FixedPriceState {
 
   @override
   List<Object?> get props => [
-        trades,
-        categories,
-        loadingCategories,
-        categoryError,
-        workTypes,
-        loadingWorkTypes,
-        workTypeError,
-        isSubmitting,
-        submitError,
-      ];
+    trades,
+    categories,
+    loadingCategories,
+    categoryError,
+    workTypes,
+    loadingWorkTypes,
+    workTypeError,
+    isSubmitting,
+    submitError,
+  ];
 }
 
 class FixedPriceError extends FixedPriceState {
-  const FixedPriceError({
-    required this.message,
-    this.cachedTrades = const [],
-  });
+  const FixedPriceError({required this.message, this.cachedTrades = const []});
 
   final String message;
   final List<FixedPriceModel> cachedTrades;
@@ -97,34 +94,34 @@ class FixedPriceError extends FixedPriceState {
 
 extension FixedPriceStateX on FixedPriceState {
   List<FixedPriceModel> get trades => switch (this) {
-        FixedPriceLoaded(:final trades) => trades,
-        FixedPriceLoading(:final cachedTrades) => cachedTrades,
-        FixedPriceError(:final cachedTrades) => cachedTrades,
-        _ => const [],
-      };
+    FixedPriceLoaded(:final trades) => trades,
+    FixedPriceLoading(:final cachedTrades) => cachedTrades,
+    FixedPriceError(:final cachedTrades) => cachedTrades,
+    _ => const [],
+  };
 
   List<FixedPriceCategoryModel> get categories => switch (this) {
-        FixedPriceLoaded(:final categories) => categories,
-        _ => const [],
-      };
+    FixedPriceLoaded(:final categories) => categories,
+    _ => const [],
+  };
 
   bool get loadingCategories => switch (this) {
-        FixedPriceLoaded(:final loadingCategories) => loadingCategories,
-        _ => false,
-      };
+    FixedPriceLoaded(:final loadingCategories) => loadingCategories,
+    _ => false,
+  };
 
   List<FixedPriceWorkTypeModel> get workTypes => switch (this) {
-        FixedPriceLoaded(:final workTypes) => workTypes,
-        _ => const [],
-      };
+    FixedPriceLoaded(:final workTypes) => workTypes,
+    _ => const [],
+  };
 
   bool get loadingWorkTypes => switch (this) {
-        FixedPriceLoaded(:final loadingWorkTypes) => loadingWorkTypes,
-        _ => false,
-      };
+    FixedPriceLoaded(:final loadingWorkTypes) => loadingWorkTypes,
+    _ => false,
+  };
 
   bool get isSubmitting => switch (this) {
-        FixedPriceLoaded(:final isSubmitting) => isSubmitting,
-        _ => false,
-      };
+    FixedPriceLoaded(:final isSubmitting) => isSubmitting,
+    _ => false,
+  };
 }

@@ -111,11 +111,7 @@ ResumeTarget openJob({
         screenId: journey.complete,
       );
     case ResumePhase.transit:
-      return ResumeTarget(
-        phase: phase,
-        formStep: 0,
-        screenId: journey.transit,
-      );
+      return ResumeTarget(phase: phase, formStep: 0, screenId: journey.transit);
     case ResumePhase.form:
       final step = clampFormStep(furthestStep, journey.form.length);
       return ResumeTarget(

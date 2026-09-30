@@ -1,6 +1,7 @@
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/absences/absence_form_card.dart';
+import 'package:chumley_navigator/widgets/calendar/aspect_calendar_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -36,36 +37,6 @@ class _AbsenceCalendarState extends State<AbsenceCalendar> {
     DateTime.now().day,
   );
 
-  static const _weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-  static const _monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-  static const _shortMonths = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -80,17 +51,13 @@ class _AbsenceCalendarState extends State<AbsenceCalendar> {
 
   void _notify() {
     if (_rangeStart == null) return;
-    widget.onRangeChanged?.call(
-      _rangeStart!,
-      _rangeEnd ?? _rangeStart!,
-    );
+    widget.onRangeChanged?.call(_rangeStart!, _rangeEnd ?? _rangeStart!);
   }
 
   void _onDayTap(DateTime date) {
     final day = _normalize(date);
     setState(() {
-      if (_rangeStart == null ||
-          (_rangeStart != null && _rangeEnd != null)) {
+      if (_rangeStart == null || (_rangeStart != null && _rangeEnd != null)) {
         _rangeStart = day;
         _rangeEnd = null;
       } else {
@@ -123,52 +90,26 @@ class _AbsenceCalendarState extends State<AbsenceCalendar> {
     final end = _rangeEnd ?? _rangeStart!;
     final count = _selectedCount;
     final dayWord = count == 1 ? 'day' : 'days';
+    final shortMonths = AspectCalendarUtils.shortMonthNames;
 
     if (start.year == end.year &&
         start.month == end.month &&
         start.day == end.day) {
-      return '${start.day} ${_shortMonths[start.month - 1]} · $count $dayWord selected';
+      return '${start.day} ${shortMonths[start.month - 1]} · $count $dayWord selected';
     }
     if (start.month == end.month && start.year == end.year) {
-      return '${start.day}–${end.day} ${_shortMonths[start.month - 1]} · $count $dayWord selected';
+      return '${start.day}–${end.day} ${shortMonths[start.month - 1]} · $count $dayWord selected';
     }
-    return '${start.day} ${_shortMonths[start.month - 1]} – ${end.day} ${_shortMonths[end.month - 1]} · $count $dayWord selected';
-  }
-
-  List<_CalendarDay> _buildDays() {
-    final first = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
-    final last = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 0);
-    final leading = first.weekday % 7;
-    final trailing = 6 - (last.weekday % 7);
-    final days = <_CalendarDay>[];
-
-    for (var i = leading; i > 0; i--) {
-      days.add(_CalendarDay(
-        date: first.subtract(Duration(days: i)),
-        isCurrentMonth: false,
-      ));
-    }
-    for (var d = 1; d <= last.day; d++) {
-      days.add(_CalendarDay(
-        date: DateTime(_focusedMonth.year, _focusedMonth.month, d),
-        isCurrentMonth: true,
-      ));
-    }
-    for (var i = 1; i <= trailing; i++) {
-      days.add(_CalendarDay(
-        date: DateTime(_focusedMonth.year, _focusedMonth.month + 1, i),
-        isCurrentMonth: false,
-      ));
-    }
-    return days;
+    return '${start.day} ${shortMonths[start.month - 1]} – ${end.day} ${shortMonths[end.month - 1]} · $count $dayWord selected';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
-    final days = _buildDays();
-    final hairline =
-        theme.isDark ? theme.dashBorderLight : const Color(0xFFE2E7F0);
+    final days = AspectCalendarUtils.buildCalendarDays(_focusedMonth);
+    final hairline = theme.isDark
+        ? theme.dashBorderLight
+        : const Color(0xFFE2E7F0);
 
     return AbsenceFormCard(
       padding: EdgeInsets.fromLTRB(18.r, 18.r, 18.r, 16.r),
@@ -178,7 +119,7 @@ class _AbsenceCalendarState extends State<AbsenceCalendar> {
             children: [
               Expanded(
                 child: Text(
-                  '${_monthNames[_focusedMonth.month - 1]} ${_focusedMonth.year}',
+                  '${AspectCalendarUtils.monthNames[_focusedMonth.month - 1]} ${_focusedMonth.year}',
                   style: TextStyle(
                     fontSize: 17.sp,
                     fontWeight: FontWeight.w700,
@@ -210,7 +151,7 @@ class _AbsenceCalendarState extends State<AbsenceCalendar> {
           ),
           SizedBox(height: 14.h),
           Row(
-            children: _weekDays.map((d) {
+            children: AspectCalendarUtils.weekDays.map((d) {
               return Expanded(
                 child: Center(
                   child: Text(
@@ -249,41 +190,49 @@ class _AbsenceCalendarState extends State<AbsenceCalendar> {
               } else if (selected) {
                 textColor = theme.dashHeading;
               } else {
-                textColor = theme.dashCalendarDay;
+                textColor = theme.dashHeading;
               }
 
-              return GestureDetector(
-                onTap: day.isCurrentMonth ? () => _onDayTap(normalized) : null,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOutCubic,
+              final isToday = day.isCurrentMonth && normalized == _today;
+
+              return InkWell(
+                onTap: day.isCurrentMonth ? () => _onDayTap(day.date) : null,
+                borderRadius: BorderRadius.circular(8.r),
+                child: Container(
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.accentLime : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12.r),
+                    color: selected
+                        ? AppColors.primaryBlue.withValues(alpha: 0.15)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: isToday
+                        ? Border.all(color: AppColors.primaryBlue, width: 1.5)
+                        : null,
                   ),
-                  alignment: Alignment.center,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
                       Text(
                         '${day.date.day}',
                         style: TextStyle(
                           fontSize: 13.sp,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: selected || isToday
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                           color: textColor,
-                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
-                      if (mark != null && day.isCurrentMonth && !selected)
-                        Container(
-                          margin: EdgeInsets.only(top: 2.h),
-                          width: 4.w,
-                          height: 4.w,
-                          decoration: BoxDecoration(
-                            color: mark == AbsenceDayMark.absence
-                                ? AppColors.errorText
-                                : AppColors.successText,
-                            shape: BoxShape.circle,
+                      if (mark != null && day.isCurrentMonth)
+                        Positioned(
+                          bottom: 4.h,
+                          child: Container(
+                            width: 4.w,
+                            height: 4.w,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: mark == AbsenceDayMark.absence
+                                  ? const Color(0xFFEF4444)
+                                  : const Color(0xFF22C55E),
+                            ),
                           ),
                         ),
                     ],
@@ -293,38 +242,49 @@ class _AbsenceCalendarState extends State<AbsenceCalendar> {
             },
           ),
           SizedBox(height: 12.h),
-          Divider(height: 1, color: hairline),
-          SizedBox(height: 12.h),
+          Container(height: 1, color: hairline),
+          SizedBox(height: 10.h),
           Row(
             children: [
-              Icon(
-                LucideIcons.calendar,
-                size: 16.sp,
-                color: theme.dashPrimary,
-              ),
-              SizedBox(width: 8.w),
               Expanded(
                 child: Text(
                   _selectionLabel,
                   style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w500,
-                    color: theme.dashPrimary,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: theme.dashHeading,
                   ),
                 ),
               ),
+              if (_rangeStart != null)
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _rangeStart = null;
+                      _rangeEnd = null;
+                    });
+                    _notify();
+                  },
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(44.w, 24.h),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Clear',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryBlue,
+                    ),
+                  ),
+                ),
             ],
           ),
         ],
       ),
     );
   }
-}
-
-class _CalendarDay {
-  const _CalendarDay({required this.date, required this.isCurrentMonth});
-  final DateTime date;
-  final bool isCurrentMonth;
 }
 
 class _NavChip extends StatelessWidget {
@@ -335,23 +295,17 @@ class _NavChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = DashboardTheme.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32.w,
-        height: 32.w,
-        decoration: BoxDecoration(
-          color: theme.isDark
-              ? theme.dashSurfaceTint
-              : const Color(0xFFE9EDF5),
-          shape: BoxShape.circle,
-        ),
-        alignment: Alignment.center,
-        child: Icon(
-          icon,
-          size: 17.sp,
-          color: theme.dashSubtitle,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6.r),
+        child: Container(
+          width: 28.w,
+          height: 28.w,
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(6.r)),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 16.sp, color: const Color(0xFF8A99B0)),
         ),
       ),
     );

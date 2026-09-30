@@ -6,23 +6,35 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 Color _tierColor(BadgeTier tier) {
   switch (tier) {
-    case BadgeTier.bronze:   return AppColors.tierBronze;
-    case BadgeTier.silver:   return AppColors.tierSilver;
-    case BadgeTier.gold:     return AppColors.tierGold;
-    case BadgeTier.platinum: return AppColors.tierPlatinum;
-    case BadgeTier.diamond:  return AppColors.tierDiamond;
-    case BadgeTier.oneOff:   return AppColors.tierOneOff;
+    case BadgeTier.bronze:
+      return AppColors.tierBronze;
+    case BadgeTier.silver:
+      return AppColors.tierSilver;
+    case BadgeTier.gold:
+      return AppColors.tierGold;
+    case BadgeTier.platinum:
+      return AppColors.tierPlatinum;
+    case BadgeTier.diamond:
+      return AppColors.tierDiamond;
+    case BadgeTier.oneOff:
+      return AppColors.tierOneOff;
   }
 }
 
 String _tierEmoji(BadgeTier tier) {
   switch (tier) {
-    case BadgeTier.bronze:   return '🥉';
-    case BadgeTier.silver:   return '🥈';
-    case BadgeTier.gold:     return '🥇';
-    case BadgeTier.platinum: return '🏆';
-    case BadgeTier.diamond:  return '💎';
-    case BadgeTier.oneOff:   return '⭐';
+    case BadgeTier.bronze:
+      return '🥉';
+    case BadgeTier.silver:
+      return '🥈';
+    case BadgeTier.gold:
+      return '🥇';
+    case BadgeTier.platinum:
+      return '🏆';
+    case BadgeTier.diamond:
+      return '💎';
+    case BadgeTier.oneOff:
+      return '⭐';
   }
 }
 
@@ -51,7 +63,8 @@ class CelebrationCard extends StatefulWidget {
   State<CelebrationCard> createState() => _CelebrationCardState();
 }
 
-class _CelebrationCardState extends State<CelebrationCard> with TickerProviderStateMixin {
+class _CelebrationCardState extends State<CelebrationCard>
+    with TickerProviderStateMixin {
   late AnimationController _iconController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _rotationAnimation;
@@ -118,7 +131,7 @@ class _CelebrationCardState extends State<CelebrationCard> with TickerProviderSt
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: tColor.withOpacity(0.25),
+                color: tColor.withValues(alpha: 0.25),
                 blurRadius: 30.r,
                 spreadRadius: 12.r,
               ),
@@ -131,7 +144,7 @@ class _CelebrationCardState extends State<CelebrationCard> with TickerProviderSt
               color: widget.theme.surface,
               borderRadius: BorderRadius.circular(20.r),
               border: Border.all(
-                color: tColor.withOpacity(0.4),
+                color: tColor.withValues(alpha: 0.4),
                 width: 1.5,
               ),
             ),

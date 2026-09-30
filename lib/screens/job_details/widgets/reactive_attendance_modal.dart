@@ -37,7 +37,8 @@ class ReactiveAttendanceModal extends StatefulWidget {
   }
 
   @override
-  State<ReactiveAttendanceModal> createState() => _ReactiveAttendanceModalState();
+  State<ReactiveAttendanceModal> createState() =>
+      _ReactiveAttendanceModalState();
 }
 
 class _ReactiveAttendanceModalState extends State<ReactiveAttendanceModal> {
@@ -102,7 +103,12 @@ class _ReactiveAttendanceModalState extends State<ReactiveAttendanceModal> {
     final isDark = theme.isDark;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, MediaQuery.of(context).viewInsets.bottom + 20.h),
+      padding: EdgeInsets.fromLTRB(
+        16.w,
+        12.h,
+        16.w,
+        MediaQuery.of(context).viewInsets.bottom + 20.h,
+      ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkBase : Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -136,7 +142,11 @@ class _ReactiveAttendanceModalState extends State<ReactiveAttendanceModal> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(LucideIcons.x, size: 20.sp, color: theme.textMuted),
+                  icon: Icon(
+                    LucideIcons.x,
+                    size: 20.sp,
+                    color: theme.textMuted,
+                  ),
                   onPressed: () => Navigator.of(context).pop(_submitted),
                 ),
               ],
@@ -144,25 +154,78 @@ class _ReactiveAttendanceModalState extends State<ReactiveAttendanceModal> {
 
             if (!_submitted) ...[
               SizedBox(height: 10.h),
-              Text('Trade / Issue Type', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: theme.text)),
+              Text(
+                'Trade / Issue Type',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: theme.text,
+                ),
+              ),
               SizedBox(height: 6.h),
               DropdownButtonFormField<String>(
-                value: _selectedTrade,
-                items: _trades.map((t) => DropdownMenuItem(value: t, child: Text(t, style: TextStyle(fontSize: 13.sp, color: theme.text)))).toList(),
-                onChanged: (v) => setState(() => _selectedTrade = v ?? _selectedTrade),
-                decoration: InputDecoration(isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                initialValue: _selectedTrade,
+                items: _trades
+                    .map(
+                      (t) => DropdownMenuItem(
+                        value: t,
+                        child: Text(
+                          t,
+                          style: TextStyle(fontSize: 13.sp, color: theme.text),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) =>
+                    setState(() => _selectedTrade = v ?? _selectedTrade),
+                decoration: InputDecoration(
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
               ),
               SizedBox(height: 12.h),
-              Text('Urgency Level', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: theme.text)),
+              Text(
+                'Urgency Level',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: theme.text,
+                ),
+              ),
               SizedBox(height: 6.h),
               DropdownButtonFormField<String>(
-                value: _selectedUrgency,
-                items: _urgencyLevels.map((u) => DropdownMenuItem(value: u, child: Text(u, style: TextStyle(fontSize: 13.sp, color: theme.text)))).toList(),
-                onChanged: (v) => setState(() => _selectedUrgency = v ?? _selectedUrgency),
-                decoration: InputDecoration(isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                initialValue: _selectedUrgency,
+                items: _urgencyLevels
+                    .map(
+                      (u) => DropdownMenuItem(
+                        value: u,
+                        child: Text(
+                          u,
+                          style: TextStyle(fontSize: 13.sp, color: theme.text),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) =>
+                    setState(() => _selectedUrgency = v ?? _selectedUrgency),
+                decoration: InputDecoration(
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
               ),
               SizedBox(height: 12.h),
-              Text('Problem Description & Scope', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: theme.text)),
+              Text(
+                'Problem Description & Scope',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: theme.text,
+                ),
+              ),
               SizedBox(height: 6.h),
               TextField(
                 controller: _descriptionController,
@@ -171,11 +234,20 @@ class _ReactiveAttendanceModalState extends State<ReactiveAttendanceModal> {
                 decoration: InputDecoration(
                   hintText: 'Describe the issue discovered during visit...',
                   hintStyle: TextStyle(color: theme.textMuted, fontSize: 12.sp),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
                 ),
               ),
               SizedBox(height: 12.h),
-              Text('Site Access & Notes', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: theme.text)),
+              Text(
+                'Site Access & Notes',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: theme.text,
+                ),
+              ),
               SizedBox(height: 6.h),
               TextField(
                 controller: _accessNotesController,
@@ -184,7 +256,9 @@ class _ReactiveAttendanceModalState extends State<ReactiveAttendanceModal> {
                 decoration: InputDecoration(
                   hintText: 'e.g. Stopcock located under kitchen sink...',
                   hintStyle: TextStyle(color: theme.textMuted, fontSize: 12.sp),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
                 ),
               ),
               SizedBox(height: 16.h),
@@ -192,23 +266,47 @@ class _ReactiveAttendanceModalState extends State<ReactiveAttendanceModal> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBlue,
                   padding: EdgeInsets.symmetric(vertical: 14.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
                 ),
                 onPressed: _isSubmitting ? null : _submit,
                 child: _isSubmitting
-                    ? SizedBox(height: 18.h, width: 18.h, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text('Submit Reactive Work Order', style: TextStyle(color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.w700)),
+                    ? SizedBox(
+                        height: 18.h,
+                        width: 18.h,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        'Submit Reactive Work Order',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
             ] else ...[
               SizedBox(height: 30.h),
               Center(
                 child: Column(
                   children: [
-                    Icon(LucideIcons.badgeCheck, size: 48.sp, color: const Color(0xFF22C55E)),
+                    Icon(
+                      LucideIcons.badgeCheck,
+                      size: 48.sp,
+                      color: const Color(0xFF22C55E),
+                    ),
                     SizedBox(height: 12.h),
                     Text(
                       'Reactive Attendance Dispatched',
-                      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: theme.text),
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w800,
+                        color: theme.text,
+                      ),
                     ),
                     SizedBox(height: 8.h),
                     Text(
@@ -220,11 +318,22 @@ class _ReactiveAttendanceModalState extends State<ReactiveAttendanceModal> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF22C55E),
-                        padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 12.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 32.w,
+                          vertical: 12.h,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
                       ),
                       onPressed: () => Navigator.of(context).pop(true),
-                      child: Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                      child: Text(
+                        'Done',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ],
                 ),

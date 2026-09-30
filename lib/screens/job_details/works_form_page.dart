@@ -1,5 +1,6 @@
 import 'package:chumley_navigator/pillar/form_draft_store.dart';
 import 'package:chumley_navigator/pillar/jobs_repository.dart';
+import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/job/job_photo_slot.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
 import 'package:flutter/material.dart';
@@ -83,21 +84,18 @@ class _WorksFormPageState extends State<WorksFormPage> {
   }
 
   Map<String, dynamic> _answers() => {
-        'form': 'pm_stage',
-        'risk': _risk,
-        'notes': _notes.text,
-        'parts': _parts.text,
-      };
+    'form': 'pm_stage',
+    'risk': _risk,
+    'notes': _notes.text,
+    'parts': _parts.text,
+  };
 
   Future<void> _persist() async {
     await _store.saveDraft(
       jobId: widget.jobId,
       step: _step,
       answers: _answers(),
-      photos: {
-        if (_beforePath != null) 'before': _beforePath!,
-        if (_afterPath != null) 'after': _afterPath!,
-      },
+      photos: {'before': ?_beforePath, 'after': ?_afterPath},
     );
   }
 
@@ -108,10 +106,7 @@ class _WorksFormPageState extends State<WorksFormPage> {
       reportType: 'WORKS',
       reportSuffix: 'bathroom_pm_stage',
       answers: _answers(),
-      photoSlots: {
-        if (_beforePath != null) 'before': _beforePath!,
-        if (_afterPath != null) 'after': _afterPath!,
-      },
+      photoSlots: {'before': ?_beforePath, 'after': ?_afterPath},
     );
     if (!mounted) return;
     if (widget.onSubmitted != null) {
@@ -123,8 +118,10 @@ class _WorksFormPageState extends State<WorksFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = DashboardTheme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F9FF),
+      backgroundColor: theme.base,
       body: SafeArea(
         child: Column(
           children: [
@@ -149,6 +146,7 @@ class _WorksFormPageState extends State<WorksFormPage> {
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
+                      color: theme.text,
                     ),
                   ),
                 ],
@@ -161,19 +159,30 @@ class _WorksFormPageState extends State<WorksFormPage> {
                   if (_step == 0)
                     DropdownButtonFormField<String>(
                       initialValue: _risk,
-                      decoration: const InputDecoration(
+                      dropdownColor: theme.surface,
+                      style: TextStyle(fontSize: 14.sp, color: theme.text),
+                      decoration: InputDecoration(
                         labelText: 'Risk assessment',
+                        labelStyle: TextStyle(color: theme.textMuted),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: theme.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                          borderSide: BorderSide(color: theme.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                          borderSide: BorderSide(color: theme.border),
+                        ),
                       ),
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: 'Standard controls',
-                          child: Text('Standard controls'),
+                          child: Text('Standard controls', style: TextStyle(color: theme.text)),
                         ),
                         DropdownMenuItem(
                           value: 'Enhanced controls',
-                          child: Text('Enhanced controls'),
+                          child: Text('Enhanced controls', style: TextStyle(color: theme.text)),
                         ),
                       ],
                       onChanged: (v) => setState(() => _risk = v),
@@ -195,28 +204,57 @@ class _WorksFormPageState extends State<WorksFormPage> {
                     TextField(
                       controller: _parts,
                       maxLines: 4,
-                      decoration: const InputDecoration(
+                      style: TextStyle(fontSize: 14.sp, color: theme.text),
+                      decoration: InputDecoration(
                         labelText: 'Parts consumed',
+                        labelStyle: TextStyle(color: theme.textMuted),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: theme.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                          borderSide: BorderSide(color: theme.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                          borderSide: BorderSide(color: theme.border),
+                        ),
                       ),
                     ),
                   if (_step == 3)
                     TextField(
                       controller: _notes,
                       maxLines: 6,
-                      decoration: const InputDecoration(
+                      style: TextStyle(fontSize: 14.sp, color: theme.text),
+                      decoration: InputDecoration(
                         labelText: 'Job notes',
+                        labelStyle: TextStyle(color: theme.textMuted),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: theme.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                          borderSide: BorderSide(color: theme.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                          borderSide: BorderSide(color: theme.border),
+                        ),
                       ),
                     ),
                   if (_step == 4) ...[
-                    Text('Ready to submit works sign-off for ${widget.jobNumber.isNotEmpty ? widget.jobNumber : widget.jobId}.'),
+                    Text(
+                      'Ready to submit works sign-off for ${widget.jobNumber.isNotEmpty ? widget.jobNumber : widget.jobId}.',
+                      style: TextStyle(fontSize: 14.sp, color: theme.text),
+                    ),
                     SizedBox(height: 12.h),
-                    Text('Risk: ${_risk ?? 'Not recorded'}'),
-                    Text('Parts: ${_parts.text.isEmpty ? 'None' : _parts.text}'),
-                    Text('Notes: ${_notes.text.isEmpty ? 'None' : _notes.text}'),
+                    Text('Risk: ${_risk ?? 'Not recorded'}', style: TextStyle(fontSize: 13.sp, color: theme.textMuted)),
+                    Text(
+                      'Parts: ${_parts.text.isEmpty ? 'None' : _parts.text}',
+                      style: TextStyle(fontSize: 13.sp, color: theme.textMuted),
+                    ),
+                    Text(
+                      'Notes: ${_notes.text.isEmpty ? 'None' : _notes.text}',
+                      style: TextStyle(fontSize: 13.sp, color: theme.textMuted),
+                    ),
                   ],
                 ],
               ),

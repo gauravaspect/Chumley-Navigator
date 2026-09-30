@@ -35,10 +35,7 @@ class VcrExamplesLoaded extends VcrExamplesState {
 }
 
 class VcrExamplesError extends VcrExamplesState {
-  const VcrExamplesError({
-    required this.sections,
-    required this.message,
-  });
+  const VcrExamplesError({required this.sections, required this.message});
 
   final List<String> sections;
   final String message;
