@@ -3,6 +3,8 @@ import 'dart:math' as math;
 
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/log.dart';
+import 'package:chumley_navigator/core/responsive/responsive_breakpoints.dart';
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
 import 'package:chumley_navigator/models/fixed_price_job_context.dart';
 import 'package:chumley_navigator/models/sa_status.dart';
 import 'package:chumley_navigator/models/user_model.dart';
@@ -948,68 +950,74 @@ class _JobDetailPageState extends State<JobDetailPage>
                 children: [
                   brandingHeader(onBack: postSubmitBack),
                   Expanded(
-                    child: PostSubmitFlow(
-                      phase: effectivePostSubmitPhase,
-                      jobNumber: jobNo,
-                      customerName: customerName,
-                      jobType: jobType,
-                      workTypeLabel: jobTitleDescription,
-                      description: jobTitleDescription,
-                      onPhaseChanged: (phase) async {
-                        if (phase == PostSubmitPhase.visitComplete) {
+                    child: ResponsiveContent.form(
+                      child: PostSubmitFlow(
+                        phase: effectivePostSubmitPhase,
+                        jobNumber: jobNo,
+                        customerName: customerName,
+                        jobType: jobType,
+                        workTypeLabel: jobTitleDescription,
+                        description: jobTitleDescription,
+                        onPhaseChanged: (phase) async {
+                          if (phase == PostSubmitPhase.visitComplete) {
+                            await _advanceStatus(SaStatus.visitComplete);
+                          }
+                          if (mounted) {
+                            setState(() => _postSubmitPhase = phase);
+                          }
+                        },
+                        onCloseJob: () {
+                          setState(
+                            () => _postSubmitPhase = PostSubmitPhase.followOn,
+                          );
+                        },
+                        onVisitComplete: () async {
                           await _advanceStatus(SaStatus.visitComplete);
-                        }
-                        if (mounted) {
-                          setState(() => _postSubmitPhase = phase);
-                        }
-                      },
-                      onCloseJob: () {
-                        setState(
-                          () => _postSubmitPhase = PostSubmitPhase.followOn,
-                        );
-                      },
-                      onVisitComplete: () async {
-                        await _advanceStatus(SaStatus.visitComplete);
-                        if (mounted) {
-                          setState(
-                            () => _postSubmitPhase =
-                                PostSubmitPhase.visitComplete,
-                          );
-                        }
-                      },
-                      onBackToHome: () => Navigator.of(context).pop(),
-                      onRaiseEstimate: () async {
-                        await _openFixedPrice();
-                        if (mounted) {
-                          setState(
-                            () => _postSubmitPhase = PostSubmitPhase.jobClosed,
-                          );
-                        }
-                      },
-                      onRaiseReactive: () async {
-                        await _openReactiveJob();
-                        if (mounted) {
-                          setState(
-                            () => _postSubmitPhase = PostSubmitPhase.jobClosed,
-                          );
-                        }
-                      },
-                      onRaiseMultipleFixedPrice: () async {
-                        await _openMultipleFixedPrice();
-                        if (mounted) {
-                          setState(
-                            () => _postSubmitPhase = PostSubmitPhase.jobClosed,
-                          );
-                        }
-                      },
-                      onReferAndEarn: () async {
-                        await _openLead(RaiseLeadKind.refer);
-                        if (mounted) {
-                          setState(
-                            () => _postSubmitPhase = PostSubmitPhase.jobClosed,
-                          );
-                        }
-                      },
+                          if (mounted) {
+                            setState(
+                              () => _postSubmitPhase =
+                                  PostSubmitPhase.visitComplete,
+                            );
+                          }
+                        },
+                        onBackToHome: () => Navigator.of(context).pop(),
+                        onRaiseEstimate: () async {
+                          await _openFixedPrice();
+                          if (mounted) {
+                            setState(
+                              () =>
+                                  _postSubmitPhase = PostSubmitPhase.jobClosed,
+                            );
+                          }
+                        },
+                        onRaiseReactive: () async {
+                          await _openReactiveJob();
+                          if (mounted) {
+                            setState(
+                              () =>
+                                  _postSubmitPhase = PostSubmitPhase.jobClosed,
+                            );
+                          }
+                        },
+                        onRaiseMultipleFixedPrice: () async {
+                          await _openMultipleFixedPrice();
+                          if (mounted) {
+                            setState(
+                              () =>
+                                  _postSubmitPhase = PostSubmitPhase.jobClosed,
+                            );
+                          }
+                        },
+                        onReferAndEarn: () async {
+                          await _openLead(RaiseLeadKind.refer);
+                          if (mounted) {
+                            setState(
+                              () =>
+                                  _postSubmitPhase = PostSubmitPhase.jobClosed,
+                            );
+                          }
+                        },
+                      ),
                     ),
                   ),
                 ],
@@ -1022,72 +1030,77 @@ class _JobDetailPageState extends State<JobDetailPage>
                     children: [
                       brandingHeader(onBack: () => Navigator.of(context).pop()),
                       Expanded(
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: EdgeInsets.only(bottom: 96.h),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              JobStatusHeader(
-                                theme: theme,
-                                status: currentStatus,
-                                statusColor: currentStatusColor,
-                                jobNo: jobNo,
-                                jobType: jobType,
-                                progressIndex: _progressIndex,
-                              ),
-                              _buildSectionLabel(theme, 'RAISE JOBS'),
-                              JobRaiseJobsCard(
-                                theme: theme,
-                                isOnSite: isOnSite,
-                                onRaiseFixedPrice: _openFixedPrice,
-                                onRaiseReactive: _openReactiveJob,
-                                onRaiseMultipleFixedPrice: _openMultipleFixedPrice,
-                                onDisabledTap: _showOnSiteRequiredSnackbar,
-                              ),
-                              _buildSectionLabel(theme, 'JOB DETAILS'),
-                              JobDetailsCard(
-                                theme: theme,
-                                appointment: _appointment,
-                                jobNo: jobNo,
-                                customerName: customerName,
-                                jobTitleDescription: jobTitleDescription,
-                              ),
-                              _buildSectionLabel(theme, 'SCHEDULE'),
-                              JobScheduleCard(
-                                theme: theme,
-                                statusColor: _currentStatusColor,
-                                formattedDate: formattedDate,
-                                timeStr: timeStr,
-                                timeEndStr: timeEndStr,
-                              ),
-                              _buildSectionLabel(theme, 'SITE'),
-                              JobSiteCard(
-                                theme: theme,
-                                customerName: customerName,
-                                siteAddress: siteAddress,
-                                mapController: _mapController,
-                                sitePosition: _sitePosition,
-                                engineerPosition: _engineerPosition,
-                                distanceInMiles: _distanceInMiles,
-                                travelTimeMinutes: _travelTimeMinutes,
-                                locationLoading: _locationLoading,
-                                geocodingLoading: _geocodingLoading,
-                                onOpenMaps: () {
-                                  if (_sitePosition != null) {
-                                    _mapNavigationService.launchNavigation(
-                                      context: context,
-                                      destinationLat: _sitePosition!.latitude,
-                                      destinationLng: _sitePosition!.longitude,
-                                      address: siteAddress,
-                                    );
-                                  }
-                                },
-                                onFitBounds: _fitMapBounds,
-                              ),
-                              if (isCompleted) _buildCompletedBanner(theme),
-                              SizedBox(height: 16.h),
-                            ],
+                        child: ResponsiveContent(
+                          maxWidth: ResponsiveBreakpoints.pageContentMax,
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: EdgeInsets.only(bottom: 96.h),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                JobStatusHeader(
+                                  theme: theme,
+                                  status: currentStatus,
+                                  statusColor: currentStatusColor,
+                                  jobNo: jobNo,
+                                  jobType: jobType,
+                                  progressIndex: _progressIndex,
+                                ),
+                                _buildSectionLabel(theme, 'RAISE JOBS'),
+                                JobRaiseJobsCard(
+                                  theme: theme,
+                                  isOnSite: isOnSite,
+                                  onRaiseFixedPrice: _openFixedPrice,
+                                  onRaiseReactive: _openReactiveJob,
+                                  onRaiseMultipleFixedPrice:
+                                      _openMultipleFixedPrice,
+                                  onDisabledTap: _showOnSiteRequiredSnackbar,
+                                ),
+                                _buildSectionLabel(theme, 'JOB DETAILS'),
+                                JobDetailsCard(
+                                  theme: theme,
+                                  appointment: _appointment,
+                                  jobNo: jobNo,
+                                  customerName: customerName,
+                                  jobTitleDescription: jobTitleDescription,
+                                ),
+                                _buildSectionLabel(theme, 'SCHEDULE'),
+                                JobScheduleCard(
+                                  theme: theme,
+                                  statusColor: _currentStatusColor,
+                                  formattedDate: formattedDate,
+                                  timeStr: timeStr,
+                                  timeEndStr: timeEndStr,
+                                ),
+                                _buildSectionLabel(theme, 'SITE'),
+                                JobSiteCard(
+                                  theme: theme,
+                                  customerName: customerName,
+                                  siteAddress: siteAddress,
+                                  mapController: _mapController,
+                                  sitePosition: _sitePosition,
+                                  engineerPosition: _engineerPosition,
+                                  distanceInMiles: _distanceInMiles,
+                                  travelTimeMinutes: _travelTimeMinutes,
+                                  locationLoading: _locationLoading,
+                                  geocodingLoading: _geocodingLoading,
+                                  onOpenMaps: () {
+                                    if (_sitePosition != null) {
+                                      _mapNavigationService.launchNavigation(
+                                        context: context,
+                                        destinationLat: _sitePosition!.latitude,
+                                        destinationLng:
+                                            _sitePosition!.longitude,
+                                        address: siteAddress,
+                                      );
+                                    }
+                                  },
+                                  onFitBounds: _fitMapBounds,
+                                ),
+                                if (isCompleted) _buildCompletedBanner(theme),
+                                SizedBox(height: 16.h),
+                              ],
+                            ),
                           ),
                         ),
                       ),

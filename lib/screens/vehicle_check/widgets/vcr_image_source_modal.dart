@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,7 +11,7 @@ class VcrImageSourceModal {
 
   static Future<ImageSource?> show(BuildContext context) {
     final theme = DashboardTheme.of(context);
-    return showModalBottomSheet<ImageSource>(
+    return showAppModalBottomSheet<ImageSource>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {

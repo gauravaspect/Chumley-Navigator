@@ -248,7 +248,9 @@ class FollowOnScreen extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 19.sp,
-                color: theme.isDark ? AppColors.accentBlue : AppColors.primaryBlue,
+                color: theme.isDark
+                    ? AppColors.accentBlue
+                    : AppColors.primaryBlue,
               ),
             ),
             SizedBox(width: 12.w),
@@ -283,4 +285,3 @@ class FollowOnScreen extends StatelessWidget {
     );
   }
 }
-

@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/pillar/visit_job.dart';
 import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
 import 'package:chumley_navigator/theme/navigator_tokens.dart';
@@ -21,7 +22,7 @@ class HourlyAttendanceSheet extends StatefulWidget {
     required VisitJob job,
     required VoidCallback onSuccess,
   }) {
-    return showModalBottomSheet<void>(
+    return showAppModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -105,26 +106,17 @@ class _HourlyAttendanceSheetState extends State<HourlyAttendanceSheet> {
           SizedBox(height: 8.h),
           Text(
             'Specify urgent callback or reactive attendance details for ${widget.job.jobNumber}.',
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: theme.textMuted,
-            ),
+            style: TextStyle(fontSize: 12.sp, color: theme.textMuted),
           ),
           SizedBox(height: 14.h),
           TextField(
             controller: _noteController,
             maxLines: 3,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: theme.text,
-            ),
+            style: TextStyle(fontSize: 13.sp, color: theme.text),
             decoration: InputDecoration(
               hintText:
                   'e.g. Return required with 22mm copper pipe & fittings...',
-              hintStyle: TextStyle(
-                fontSize: 12.sp,
-                color: theme.textMuted,
-              ),
+              hintStyle: TextStyle(fontSize: 12.sp, color: theme.textMuted),
               filled: true,
               fillColor: theme.surfaceDeep,
               border: OutlineInputBorder(

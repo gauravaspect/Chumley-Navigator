@@ -1,5 +1,6 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/log.dart';
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
 import 'package:chumley_navigator/pillar/jobs_repository.dart';
 import 'package:chumley_navigator/screens/forms/ld/steps/ld_customer_tab.dart';
 import 'package:chumley_navigator/screens/forms/ld/steps/ld_information_tab.dart';
@@ -514,126 +515,130 @@ class _LdFormPageState extends State<LdFormPage>
         return Scaffold(
           backgroundColor: theme.base,
           body: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Stack(
-                    children: [
-                      NestedScrollView(
-                        controller: _scrollController,
-                        headerSliverBuilder: (context, _) => [
-                          SliverToBoxAdapter(
-                            child: SizedBox(height: _brandingExpandedHeight.h),
-                          ),
-                          SliverToBoxAdapter(child: _buildTitle(theme)),
-                          SliverPersistentHeader(
-                            pinned: true,
-                            delegate: _TabBarDelegate(
-                              theme: theme,
-                              child: TabBar(
-                                controller: _tabController,
-                                isScrollable: true,
-                                tabAlignment: TabAlignment.start,
-                                labelColor: AppColors.primaryBlue,
-                                unselectedLabelColor: theme.textMuted,
-                                indicatorColor: AppColors.primaryBlue,
-                                labelStyle: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                                unselectedLabelStyle: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                tabs: [for (final t in _tabs) Tab(text: t)],
+            child: ResponsiveContent.form(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        NestedScrollView(
+                          controller: _scrollController,
+                          headerSliverBuilder: (context, _) => [
+                            SliverToBoxAdapter(
+                              child: SizedBox(
+                                height: _brandingExpandedHeight.h,
                               ),
                             ),
-                          ),
-                        ],
-                        body: TabBarView(
-                          controller: _tabController,
-                          children: [
-                            _buildHseTab(theme),
-                            LdInformationTab(
-                              theme: theme,
-                              formNameController: _formNameController,
-                              pdfUrlController: _pdfUrlController,
-                              appointmentSearchController:
-                                  _appointmentSearchController,
-                              workOrderDisplay: _workOrderDisplay,
-                              selectedAppointment: _selectedAppointment,
-                              serviceAppointments: _serviceAppointments,
-                              onAppointmentChanged: (v) =>
-                                  setState(() => _selectedAppointment = v),
-                            ),
-                            LdCustomerTab(
-                              theme: theme,
-                              frontOfPropertyController:
-                                  _frontOfPropertyController,
-                              operativeSearchController:
-                                  _operativeSearchController,
-                              selectedOperative: _selectedOperative,
-                              people: _people,
-                              surveyDateTime: _surveyDateTime,
-                              dateTimeError: _dateTimeError,
-                              onOperativeChanged: (v) =>
-                                  setState(() => _selectedOperative = v),
-                              onPickSurveyDate: _pickSurveyDate,
-                              onPickSurveyTime: _pickSurveyTime,
-                              formatDate: _formatDate,
-                              formatTime: _formatTime,
-                            ),
-                            LdVisualTab(
-                              theme: theme,
-                              visualImageDescController:
-                                  _visualImageDescController,
-                              visualFindingsController:
-                                  _visualFindingsController,
-                              weatherOtherController: _weatherOtherController,
-                              selectedWeather: _selectedWeather,
-                              weatherOptions: _weatherOptions,
-                              onWeatherChanged: (v) =>
-                                  setState(() => _selectedWeather = v),
+                            SliverToBoxAdapter(child: _buildTitle(theme)),
+                            SliverPersistentHeader(
+                              pinned: true,
+                              delegate: _TabBarDelegate(
+                                theme: theme,
+                                child: TabBar(
+                                  controller: _tabController,
+                                  isScrollable: true,
+                                  tabAlignment: TabAlignment.start,
+                                  labelColor: AppColors.primaryBlue,
+                                  unselectedLabelColor: theme.textMuted,
+                                  indicatorColor: AppColors.primaryBlue,
+                                  labelStyle: TextStyle(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  unselectedLabelStyle: TextStyle(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  tabs: [for (final t in _tabs) Tab(text: t)],
+                                ),
+                              ),
                             ),
                           ],
+                          body: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildHseTab(theme),
+                              LdInformationTab(
+                                theme: theme,
+                                formNameController: _formNameController,
+                                pdfUrlController: _pdfUrlController,
+                                appointmentSearchController:
+                                    _appointmentSearchController,
+                                workOrderDisplay: _workOrderDisplay,
+                                selectedAppointment: _selectedAppointment,
+                                serviceAppointments: _serviceAppointments,
+                                onAppointmentChanged: (v) =>
+                                    setState(() => _selectedAppointment = v),
+                              ),
+                              LdCustomerTab(
+                                theme: theme,
+                                frontOfPropertyController:
+                                    _frontOfPropertyController,
+                                operativeSearchController:
+                                    _operativeSearchController,
+                                selectedOperative: _selectedOperative,
+                                people: _people,
+                                surveyDateTime: _surveyDateTime,
+                                dateTimeError: _dateTimeError,
+                                onOperativeChanged: (v) =>
+                                    setState(() => _selectedOperative = v),
+                                onPickSurveyDate: _pickSurveyDate,
+                                onPickSurveyTime: _pickSurveyTime,
+                                formatDate: _formatDate,
+                                formatTime: _formatTime,
+                              ),
+                              LdVisualTab(
+                                theme: theme,
+                                visualImageDescController:
+                                    _visualImageDescController,
+                                visualFindingsController:
+                                    _visualFindingsController,
+                                weatherOtherController: _weatherOtherController,
+                                selectedWeather: _selectedWeather,
+                                weatherOptions: _weatherOptions,
+                                onWeatherChanged: (v) =>
+                                    setState(() => _selectedWeather = v),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      ValueListenableBuilder<double>(
-                        valueListenable: _collapseProgress,
-                        builder: (context, progress, _) {
-                          return Positioned(
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            child: AspectBranding(
-                              progress: progress,
-                              expandedHeight: _brandingExpandedHeight,
-                              collapsedHeight: _brandingCollapsedHeight,
-                              theme: theme,
-                              hasBackButton: true,
-                              title: Text(
-                                'LD Form',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.6,
-                                  color: theme.textBody,
+                        ValueListenableBuilder<double>(
+                          valueListenable: _collapseProgress,
+                          builder: (context, progress, _) {
+                            return Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              child: AspectBranding(
+                                progress: progress,
+                                expandedHeight: _brandingExpandedHeight,
+                                collapsedHeight: _brandingCollapsedHeight,
+                                theme: theme,
+                                hasBackButton: true,
+                                title: Text(
+                                  'LD Form',
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.6,
+                                    color: theme.textBody,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                      Positioned(
-                        top: 8.h,
-                        left: 16.w,
-                        child: CommandCentreBackButton(onTap: _onCancel),
-                      ),
-                    ],
+                            );
+                          },
+                        ),
+                        Positioned(
+                          top: 8.h,
+                          left: 16.w,
+                          child: CommandCentreBackButton(onTap: _onCancel),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                _buildBottomBar(theme),
-              ],
+                  _buildBottomBar(theme),
+                ],
+              ),
             ),
           ),
         );

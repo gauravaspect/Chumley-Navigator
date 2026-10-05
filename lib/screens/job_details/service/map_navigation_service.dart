@@ -193,10 +193,7 @@ class MapNavigationService {
                     ),
                     subtitle: Text(
                       'Turn-by-turn navigation',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: theme.dashMuted,
-                      ),
+                      style: TextStyle(fontSize: 11.sp, color: theme.dashMuted),
                     ),
                     onTap: () {
                       Navigator.pop(ctx);
@@ -230,10 +227,7 @@ class MapNavigationService {
                     ),
                     subtitle: Text(
                       'Real-time traffic & alerts',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: theme.dashMuted,
-                      ),
+                      style: TextStyle(fontSize: 11.sp, color: theme.dashMuted),
                     ),
                     onTap: () {
                       Navigator.pop(ctx);
@@ -267,10 +261,7 @@ class MapNavigationService {
                     ),
                     subtitle: Text(
                       'Urban routing & transit',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: theme.dashMuted,
-                      ),
+                      style: TextStyle(fontSize: 11.sp, color: theme.dashMuted),
                     ),
                     onTap: () {
                       Navigator.pop(ctx);

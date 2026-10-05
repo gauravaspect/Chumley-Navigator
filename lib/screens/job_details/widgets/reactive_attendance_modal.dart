@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
@@ -24,7 +25,7 @@ class ReactiveAttendanceModal extends StatefulWidget {
     String? customerName,
     String? postcode,
   }) {
-    return showModalBottomSheet<bool>(
+    return showAppModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

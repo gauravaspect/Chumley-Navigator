@@ -1,6 +1,8 @@
 import 'package:chumley_navigator/components/dashboard/kpi_overview.dart';
 import 'package:chumley_navigator/components/dashboard/points_card.dart';
 import 'package:chumley_navigator/core/app_dependencies.dart';
+import 'package:chumley_navigator/core/responsive/responsive_breakpoints.dart';
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/screens/dashboard/cubit/dashboard_cubit.dart';
 import 'package:chumley_navigator/screens/dashboard/cubit/dashboard_state.dart';
@@ -295,63 +297,69 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
       EarningCard(user: user),
     ];
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
-        child: Column(
-          children: [
-            if (state is DashboardError) ...[
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: AppColors.errorBackground,
-                  borderRadius: BorderRadius.circular(10.r),
-                  border: Border.all(color: AppColors.errorBorder),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        state.message,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.errorText,
+    return ResponsiveContent(
+      maxWidth: ResponsiveBreakpoints.pageContentMax,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          child: Column(
+            children: [
+              if (state is DashboardError) ...[
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.errorBackground,
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(color: AppColors.errorBorder),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          state.message,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.errorText,
+                          ),
                         ),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: _cubit.refresh,
-                      child: Text(
-                        'Retry',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                          color: theme.dashPrimary,
+                      TextButton(
+                        onPressed: _cubit.refresh,
+                        child: Text(
+                          'Retry',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: theme.dashPrimary,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              SizedBox(height: 12.h),
+                SizedBox(height: 12.h),
+              ],
+              for (var i = 0; i < sections.length; i++) ...[
+                FadeSlideIn(
+                  delay: Duration(milliseconds: 60 * i),
+                  offsetY: 10,
+                  duration: const Duration(milliseconds: 480),
+                  child: sections[i],
+                ),
+                if (i < sections.length - 1) SizedBox(height: _sectionGap.h),
+              ],
+              SizedBox(height: 8.h),
             ],
-            for (var i = 0; i < sections.length; i++) ...[
-              FadeSlideIn(
-                delay: Duration(milliseconds: 60 * i),
-                offsetY: 10,
-                duration: const Duration(milliseconds: 480),
-                child: sections[i],
-              ),
-              if (i < sections.length - 1) SizedBox(height: _sectionGap.h),
-            ],
-            SizedBox(height: 8.h),
-          ],
+          ),
         ),
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
@@ -88,7 +89,9 @@ class LdSectionCard extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: 18.sp,
-                    color: theme.isDark ? AppColors.accentBlue : AppColors.primaryBlue,
+                    color: theme.isDark
+                        ? AppColors.accentBlue
+                        : AppColors.primaryBlue,
                   ),
                 ),
                 SizedBox(width: 12.w),
@@ -205,7 +208,9 @@ class LdLabeled extends StatelessWidget {
                 child: Icon(
                   icon,
                   size: 12.sp,
-                  color: theme.isDark ? AppColors.accentBlue : AppColors.primaryBlue,
+                  color: theme.isDark
+                      ? AppColors.accentBlue
+                      : AppColors.primaryBlue,
                 ),
               ),
               SizedBox(width: 12.w),
@@ -268,7 +273,9 @@ class LdInfoBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.isDark ? theme.surfaceDeep : bgColor,
         borderRadius: BorderRadius.circular(12.r),
-        border: theme.isDark ? Border.all(color: theme.border, width: 0.5) : null,
+        border: theme.isDark
+            ? Border.all(color: theme.border, width: 0.5)
+            : null,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -483,7 +490,7 @@ class LdDropdown extends StatelessWidget {
 
   Future<void> _openDropdownSheet(BuildContext context) async {
     final theme = DashboardTheme.of(context);
-    final selected = await showModalBottomSheet<String>(
+    final selected = await showAppModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: theme.surface,
@@ -536,8 +543,8 @@ class LdDropdown extends StatelessWidget {
                             height: 21 / 14,
                             color: isSelected
                                 ? (theme.isDark
-                                    ? AppColors.accentBlue
-                                    : AppColors.primaryBlue)
+                                      ? AppColors.accentBlue
+                                      : AppColors.primaryBlue)
                                 : theme.dashTitle,
                           ),
                         ),

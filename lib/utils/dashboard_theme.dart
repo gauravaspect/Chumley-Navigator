@@ -12,8 +12,8 @@ class DashboardTheme {
 
   static DashboardTheme of(BuildContext context) {
     final notifier = ThemeScope.maybeOf(context);
-    final isDark = notifier?.isDark ??
-        (Theme.of(context).brightness == Brightness.dark);
+    final isDark =
+        notifier?.isDark ?? (Theme.of(context).brightness == Brightness.dark);
     return DashboardTheme(isDark: isDark);
   }
 

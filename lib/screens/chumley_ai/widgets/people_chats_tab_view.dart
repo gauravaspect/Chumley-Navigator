@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/screens/chumley_ai/cubit/chumley_chat_cubit.dart';
 import 'package:chumley_navigator/screens/chumley_ai/cubit/chumley_chat_state.dart';
 import 'package:chumley_navigator/screens/chumley_ai/widgets/chat_bubble.dart';
@@ -175,7 +176,7 @@ class PeopleChatsTabView extends StatelessWidget {
 
   Future<void> _showNewDmDialog(BuildContext context) async {
     dmEmailController.clear();
-    final email = await showDialog<String>(
+    final email = await showAppDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('New chat'),

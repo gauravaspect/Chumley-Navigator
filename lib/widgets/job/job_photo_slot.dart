@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:chumley_navigator/core/responsive/responsive_breakpoints.dart';
 import 'package:chumley_navigator/theme/navigator_tokens.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
@@ -48,8 +49,9 @@ class JobPhotoSlot extends StatelessWidget {
         filePath != null &&
         filePath!.isNotEmpty &&
         File(filePath!).existsSync();
-    final primaryActionColor =
-        theme.isDark ? AppColors.accentBlue : NavigatorTokens.brandNavy;
+    final primaryActionColor = theme.isDark
+        ? AppColors.accentBlue
+        : NavigatorTokens.brandNavy;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,70 +65,78 @@ class JobPhotoSlot extends StatelessWidget {
           ),
         ),
         SizedBox(height: 8.h),
-        InkWell(
-          onTap: () async {
-            if (captured) {
-              onChanged?.call(null);
-              return;
-            }
-            await _pick(context);
-          },
-          borderRadius: BorderRadius.circular(12.r),
-          child: VcrDashedBorder(
-            color: theme.isDark ? theme.border : const Color(0xFFC9DCF7),
-            borderRadius: 12.r,
-            child: Container(
-              width: double.infinity,
-              height: 84.h,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: theme.surfaceDeep,
-                borderRadius: BorderRadius.circular(12.r),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: ResponsiveBreakpoints.photoSlotMax,
+            ),
+            child: InkWell(
+              onTap: () async {
+                if (captured) {
+                  onChanged?.call(null);
+                  return;
+                }
+                await _pick(context);
+              },
+              borderRadius: BorderRadius.circular(12.r),
+              child: VcrDashedBorder(
+                color: theme.isDark ? theme.border : const Color(0xFFC9DCF7),
+                borderRadius: 12.r,
+                child: Container(
+                  width: double.infinity,
+                  height: 84.h,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: theme.surfaceDeep,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: captured
+                      ? Row(
+                          children: [
+                            SizedBox(width: 8.w),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8.r),
+                              child: Image.file(
+                                File(filePath!),
+                                width: 68.w,
+                                height: 68.h,
+                                fit: BoxFit.cover,
+                                cacheWidth: 300,
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              'Photo attached',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w700,
+                                color: primaryActionColor,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              LucideIcons.camera,
+                              size: 18.sp,
+                              color: primaryActionColor,
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              'Take photo',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w700,
+                                color: primaryActionColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
               ),
-              child: captured
-                  ? Row(
-                      children: [
-                        SizedBox(width: 8.w),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8.r),
-                          child: Image.file(
-                            File(filePath!),
-                            width: 68.w,
-                            height: 68.h,
-                            fit: BoxFit.cover,
-                            cacheWidth: 300,
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Text(
-                          'Photo attached',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: primaryActionColor,
-                          ),
-                        ),
-                      ],
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          LucideIcons.camera,
-                          size: 18.sp,
-                          color: primaryActionColor,
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          'Take photo',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: primaryActionColor,
-                          ),
-                        ),
-                      ],
-                    ),
             ),
           ),
         ),

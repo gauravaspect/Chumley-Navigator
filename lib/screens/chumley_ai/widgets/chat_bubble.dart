@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/core/responsive/responsive_layout.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,9 @@ class ChatBubble extends StatelessWidget {
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        constraints: BoxConstraints(maxWidth: 0.85.sw),
+        constraints: BoxConstraints(
+          maxWidth: ResponsiveLayout.chatBubbleMaxWidth(context),
+        ),
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
         decoration: BoxDecoration(
           color: isUser ? AppColors.primaryBlue : theme.surface,

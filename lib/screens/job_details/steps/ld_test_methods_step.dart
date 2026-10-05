@@ -118,11 +118,7 @@ class LdTestMethodsStep extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              LucideIcons.chevronDown,
-              size: 18.sp,
-              color: theme.textMuted,
-            ),
+            Icon(LucideIcons.chevronDown, size: 18.sp, color: theme.textMuted),
           ],
         ),
       ),

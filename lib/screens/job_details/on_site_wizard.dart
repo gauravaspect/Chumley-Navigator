@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
 import 'package:chumley_navigator/pillar/form_draft_store.dart';
 import 'package:chumley_navigator/screens/job_details/steps/ld_context_step.dart';
 import 'package:chumley_navigator/screens/job_details/steps/ld_findings_step.dart';
@@ -545,12 +546,14 @@ class _OnSiteWizardState extends State<OnSiteWizard> {
               ),
         color: theme.isDark ? theme.base : null,
       ),
-      child: Column(
-        children: [
-          _buildProgressHeader(theme),
-          Expanded(child: _buildStepBody(theme)),
-          _buildBottomBar(theme),
-        ],
+      child: ResponsiveContent.form(
+        child: Column(
+          children: [
+            _buildProgressHeader(theme),
+            Expanded(child: _buildStepBody(theme)),
+            _buildBottomBar(theme),
+          ],
+        ),
       ),
     );
   }
@@ -629,8 +632,8 @@ class _OnSiteWizardState extends State<OnSiteWizard> {
                                 color: isActive || isDone
                                     ? AppColors.primaryBlue
                                     : (theme.isDark
-                                        ? theme.border
-                                        : ldDotInactive),
+                                          ? theme.border
+                                          : ldDotInactive),
                                 borderRadius: BorderRadius.circular(4.r),
                               ),
                             ),

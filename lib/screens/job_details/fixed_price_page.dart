@@ -1,4 +1,6 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/models/fixed_price_job_context.dart';
 import 'package:chumley_navigator/models/fixed_price_model.dart';
 import 'package:chumley_navigator/models/fixed_price_submit_payload.dart';
@@ -490,7 +492,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
 
   // Modal dialog triggers
   void _showConfirmEstimateDialog() {
-    showDialog<void>(
+    showAppDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
@@ -547,7 +549,7 @@ class _FixedPricePageState extends State<FixedPricePage> {
   }
 
   void _showConfirmLabourRateDialog() {
-    showDialog<void>(
+    showAppDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
@@ -855,86 +857,88 @@ class _FixedPricePageState extends State<FixedPricePage> {
     return Scaffold(
       backgroundColor: theme.base,
       body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                AspectBranding(
-                  progress: 1.0,
-                  expandedHeight: 54.h,
-                  collapsedHeight: 54.h,
-                  theme: theme,
-                  hasBackButton: true,
-                  title: Text(
-                    'CREATE AGREEMENT',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.6,
-                      color: theme.dashTitle,
+        child: ResponsiveContent.form(
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  AspectBranding(
+                    progress: 1.0,
+                    expandedHeight: 54.h,
+                    collapsedHeight: 54.h,
+                    theme: theme,
+                    hasBackButton: true,
+                    title: Text(
+                      'CREATE AGREEMENT',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.6,
+                        color: theme.dashTitle,
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        ScreenTitleBlock(
-                          title: 'Create Onsite Agreement (Single)',
-                          subtitle: 'Step ${_currentStepDisplay()}',
-                        ),
-                        SizedBox(height: 20.h),
-                        _buildStepContent(theme, jobContext),
-                      ],
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ScreenTitleBlock(
+                            title: 'Create Onsite Agreement (Single)',
+                            subtitle: 'Step ${_currentStepDisplay()}',
+                          ),
+                          SizedBox(height: 20.h),
+                          _buildStepContent(theme, jobContext),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 12.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.surface,
-                    border: Border(
-                      top: BorderSide(color: theme.border, width: 0.5),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 12.h,
                     ),
+                    decoration: BoxDecoration(
+                      color: theme.surface,
+                      border: Border(
+                        top: BorderSide(color: theme.border, width: 0.5),
+                      ),
+                    ),
+                    child: _buildBottomButtons(theme, jobContext, isSubmitting),
                   ),
-                  child: _buildBottomButtons(theme, jobContext, isSubmitting),
+                ],
+              ),
+              if (isSubmitting)
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
                 ),
-              ],
-            ),
-            if (isSubmitting)
-              Positioned.fill(
-                child: ColoredBox(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  child: const Center(child: CircularProgressIndicator()),
+              Positioned(
+                top: 12.h,
+                left: 16.w,
+                child: CommandCentreBackButton(
+                  onTap: () {
+                    if (_currentStep == 0) {
+                      Navigator.of(context).pop();
+                    } else if (_currentStep == 3) {
+                      setState(() => _currentStep = 2);
+                    } else if (_currentStep == 4) {
+                      setState(() => _currentStep = 3);
+                    } else if (_currentStep == 5) {
+                      setState(() => _currentStep = 4);
+                    } else {
+                      setState(() => _currentStep--);
+                    }
+                  },
                 ),
               ),
-            Positioned(
-              top: 12.h,
-              left: 16.w,
-              child: CommandCentreBackButton(
-                onTap: () {
-                  if (_currentStep == 0) {
-                    Navigator.of(context).pop();
-                  } else if (_currentStep == 3) {
-                    setState(() => _currentStep = 2);
-                  } else if (_currentStep == 4) {
-                    setState(() => _currentStep = 3);
-                  } else if (_currentStep == 5) {
-                    setState(() => _currentStep = 4);
-                  } else {
-                    setState(() => _currentStep--);
-                  }
-                },
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -24,8 +24,6 @@ class JobCompletedScreen extends StatelessWidget {
   final String description;
   final VoidCallback onCloseJob;
 
-  static const _textPrimary = Color(0xFF0B1F3A);
-  static const _textSecondary = Color(0xFF5A6B85);
   static const _badgeFill = Color(0xFFD8E6FC);
   static const _successGreen = Color(0xFF15803D);
 
@@ -194,20 +192,11 @@ class JobCompletedScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _detailRow(theme, 'Appointment ID', jobNumber),
-                    Divider(
-                      height: 20,
-                      color: theme.border,
-                    ),
+                    Divider(height: 20, color: theme.border),
                     _detailRow(theme, 'Type', jobType),
-                    Divider(
-                      height: 20,
-                      color: theme.border,
-                    ),
+                    Divider(height: 20, color: theme.border),
                     _detailRow(theme, 'Customer', customerName),
-                    Divider(
-                      height: 20,
-                      color: theme.border,
-                    ),
+                    Divider(height: 20, color: theme.border),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -305,4 +294,3 @@ class JobCompletedScreen extends StatelessWidget {
     );
   }
 }
-

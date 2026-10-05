@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/pillar/visit_job.dart';
 import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
 import 'package:chumley_navigator/theme/navigator_tokens.dart';
@@ -21,7 +22,7 @@ class ReferralModalSheet extends StatefulWidget {
     required VisitJob job,
     required VoidCallback onSuccess,
   }) {
-    return showModalBottomSheet<void>(
+    return showAppModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -106,18 +107,12 @@ class _ReferralModalSheetState extends State<ReferralModalSheet> {
           SizedBox(height: 8.h),
           Text(
             'Refer work outside your trade and earn points / rewards.',
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: theme.textMuted,
-            ),
+            style: TextStyle(fontSize: 12.sp, color: theme.textMuted),
           ),
           SizedBox(height: 14.h),
           TextField(
             controller: _tradeController,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: theme.text,
-            ),
+            style: TextStyle(fontSize: 13.sp, color: theme.text),
             decoration: InputDecoration(
               labelText: 'Trade required',
               labelStyle: TextStyle(color: theme.textMuted),
@@ -139,10 +134,7 @@ class _ReferralModalSheetState extends State<ReferralModalSheet> {
           TextField(
             controller: _noteController,
             maxLines: 2,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: theme.text,
-            ),
+            style: TextStyle(fontSize: 13.sp, color: theme.text),
             decoration: InputDecoration(
               labelText: 'Customer scope / notes',
               labelStyle: TextStyle(color: theme.textMuted),

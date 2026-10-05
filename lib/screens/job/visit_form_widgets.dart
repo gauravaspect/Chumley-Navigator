@@ -35,8 +35,12 @@ class VisitStepPills extends StatelessWidget {
                 height: 4.h,
                 decoration: BoxDecoration(
                   color: active || done
-                      ? (theme.isDark ? AppColors.accentBlue : NavigatorTokens.brandNavy)
-                      : (theme.isDark ? theme.border : NavigatorTokens.brandNavyTint),
+                      ? (theme.isDark
+                            ? AppColors.accentBlue
+                            : NavigatorTokens.brandNavy)
+                      : (theme.isDark
+                            ? theme.border
+                            : NavigatorTokens.brandNavyTint),
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -61,11 +65,7 @@ class VisitFormCaption extends StatelessWidget {
       padding: EdgeInsets.only(bottom: 12.h),
       child: Text(
         text,
-        style: TextStyle(
-          fontSize: 12.sp,
-          color: theme.textMuted,
-          height: 1.35,
-        ),
+        style: TextStyle(fontSize: 12.sp, color: theme.textMuted, height: 1.35),
       ),
     );
   }
@@ -166,12 +166,16 @@ class VisitChoiceChips extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: selected
-                          ? (theme.isDark ? AppColors.accentBlue : NavigatorTokens.brandNavy)
+                          ? (theme.isDark
+                                ? AppColors.accentBlue
+                                : NavigatorTokens.brandNavy)
                           : theme.surfaceDeep,
                       borderRadius: NavigatorTokens.fieldRadius,
                       border: Border.all(
                         color: selected
-                            ? (theme.isDark ? AppColors.accentBlue : NavigatorTokens.brandNavy)
+                            ? (theme.isDark
+                                  ? AppColors.accentBlue
+                                  : NavigatorTokens.brandNavy)
                             : theme.border,
                       ),
                     ),
@@ -180,9 +184,7 @@ class VisitChoiceChips extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
-                        color: selected
-                            ? Colors.white
-                            : theme.text,
+                        color: selected ? Colors.white : theme.text,
                       ),
                     ),
                   ),
@@ -255,7 +257,9 @@ class VisitTextField extends StatelessWidget {
               focusedBorder: OutlineInputBorder(
                 borderRadius: NavigatorTokens.fieldRadius,
                 borderSide: BorderSide(
-                  color: theme.isDark ? AppColors.accentBlue : NavigatorTokens.brandNavy,
+                  color: theme.isDark
+                      ? AppColors.accentBlue
+                      : NavigatorTokens.brandNavy,
                   width: 1.5,
                 ),
               ),

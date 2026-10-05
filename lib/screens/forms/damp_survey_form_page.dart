@@ -1,5 +1,6 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/log.dart';
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
 import 'package:chumley_navigator/pillar/jobs_repository.dart';
 import 'package:chumley_navigator/screens/forms/damp_survey/steps/damp_additional_step.dart';
 import 'package:chumley_navigator/screens/forms/damp_survey/steps/damp_conclusion_step.dart';
@@ -723,223 +724,228 @@ class _DampSurveyFormPageState extends State<DampSurveyFormPage>
         return Scaffold(
           backgroundColor: theme.base,
           body: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Stack(
-                    children: [
-                      NestedScrollView(
-                        controller: _scrollController,
-                        headerSliverBuilder: (context, _) => [
-                          SliverToBoxAdapter(
-                            child: SizedBox(height: _brandingExpandedHeight.h),
-                          ),
-                          SliverToBoxAdapter(child: _buildTitle(theme)),
-                          SliverPersistentHeader(
-                            pinned: true,
-                            delegate: DampSurveyTabBarDelegate(
-                              theme: theme,
-                              child: TabBar(
-                                controller: _tabController,
-                                isScrollable: true,
-                                tabAlignment: TabAlignment.start,
-                                labelColor: AppColors.primaryBlue,
-                                unselectedLabelColor: theme.textMuted,
-                                indicatorColor: AppColors.primaryBlue,
-                                labelStyle: TextStyle(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                                unselectedLabelStyle: TextStyle(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                tabs: [for (final t in _tabs) Tab(text: t)],
+            child: ResponsiveContent.form(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        NestedScrollView(
+                          controller: _scrollController,
+                          headerSliverBuilder: (context, _) => [
+                            SliverToBoxAdapter(
+                              child: SizedBox(
+                                height: _brandingExpandedHeight.h,
                               ),
                             ),
-                          ),
-                        ],
-                        body: TabBarView(
-                          controller: _tabController,
-                          children: [
-                            ListView(
-                              padding: EdgeInsets.fromLTRB(
-                                16.w,
-                                16.h,
-                                16.w,
-                                24.h,
-                              ),
-                              children: [
-                                HseRiskSection(
-                                  theme: theme,
-                                  controller: _hse,
-                                  onChanged: () => setState(() {}),
+                            SliverToBoxAdapter(child: _buildTitle(theme)),
+                            SliverPersistentHeader(
+                              pinned: true,
+                              delegate: DampSurveyTabBarDelegate(
+                                theme: theme,
+                                child: TabBar(
+                                  controller: _tabController,
+                                  isScrollable: true,
+                                  tabAlignment: TabAlignment.start,
+                                  labelColor: AppColors.primaryBlue,
+                                  unselectedLabelColor: theme.textMuted,
+                                  indicatorColor: AppColors.primaryBlue,
+                                  labelStyle: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  unselectedLabelStyle: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  tabs: [for (final t in _tabs) Tab(text: t)],
                                 ),
-                              ],
-                            ),
-                            DampInfoStep(
-                              theme: theme,
-                              formNameController: _formNameController,
-                              workOrderDisplay: _workOrderDisplay,
-                              pdfUrlController: _pdfUrlController,
-                              selectedAppointment: _selectedAppointment,
-                              appointmentSearchController:
-                                  _appointmentSearchController,
-                              onAppointmentChanged: (v) =>
-                                  setState(() => _selectedAppointment = v),
-                            ),
-                            DampCustomerStep(
-                              theme: theme,
-                              selectedOperative: _selectedOperative,
-                              operativeSearchController:
-                                  _operativeSearchController,
-                              frontOfPropertyController:
-                                  _frontOfPropertyController,
-                              surveyDateTime: _surveyDateTime,
-                              dateTimeError: _dateTimeError,
-                              onOperativeChanged: (v) =>
-                                  setState(() => _selectedOperative = v),
-                              onPickDate: _pickSurveyDate,
-                              onPickTime: _pickSurveyTime,
-                            ),
-                            DampVisualStep(
-                              theme: theme,
-                              visualImageDescController:
-                                  _visualImageDescController,
-                              visualFindingsController:
-                                  _visualFindingsController,
-                              weather: _weather,
-                              weatherOtherController: _weatherOtherController,
-                              accessType: _accessType,
-                              accessLocation: _accessLocation,
-                              accessMadeOtherController:
-                                  _accessMadeOtherController,
-                              whatAccessed: _whatAccessed,
-                              whatAccessedOtherController:
-                                  _whatAccessedOtherController,
-                              afterAccessImageDescController:
-                                  _afterAccessImageDescController,
-                              onWeatherChanged: (v) =>
-                                  setState(() => _weather = v),
-                              onAccessTypeChanged: (v) =>
-                                  setState(() => _accessType = v),
-                              onAccessLocationChanged: (v) =>
-                                  setState(() => _accessLocation = v),
-                              onWhatAccessedChanged: (v) =>
-                                  setState(() => _whatAccessed = v),
-                            ),
-                            DampRepairStep(
-                              theme: theme,
-                              didMakeRepair: _didMakeRepair,
-                              beforeRepairPhotoDescController:
-                                  _beforeRepairPhotoDescController,
-                              repairKind: _repairKind,
-                              worksUndertakenController:
-                                  _worksUndertakenController,
-                              repairDurationController:
-                                  _repairDurationController,
-                              materialsUsedController: _materialsUsedController,
-                              boughtMaterials: _boughtMaterials,
-                              materialCostController: _materialCostController,
-                              afterRepairImageDescController:
-                                  _afterRepairImageDescController,
-                              onDidMakeRepairChanged: (v) =>
-                                  setState(() => _didMakeRepair = v),
-                              onRepairKindChanged: (v) =>
-                                  setState(() => _repairKind = v),
-                              onBoughtMaterialsChanged: (v) =>
-                                  setState(() => _boughtMaterials = v),
-                            ),
-                            DampEstimateStep(
-                              theme: theme,
-                              furtherWorkRequired: _furtherWorkRequired,
-                              furtherWorksDescController:
-                                  _furtherWorksDescController,
-                              onFurtherWorkRequiredChanged: (v) =>
-                                  setState(() => _furtherWorkRequired = v),
-                            ),
-                            DampDryingStep(
-                              theme: theme,
-                              dryingRequired: _dryingRequired,
-                              dryingOption: _dryingOption,
-                              onDryingRequiredChanged: (v) =>
-                                  setState(() => _dryingRequired = v),
-                              onDryingOptionChanged: (v) =>
-                                  setState(() => _dryingOption = v),
-                            ),
-                            DampAdditionalStep(
-                              theme: theme,
-                              needAdditionalComments: _needAdditionalComments,
-                              additionalCommentsController:
-                                  _additionalCommentsController,
-                              onNeedAdditionalCommentsChanged: (v) =>
-                                  setState(() => _needAdditionalComments = v),
-                            ),
-                            DampConclusionStep(
-                              theme: theme,
-                              conclusion: _conclusion,
-                              leakDescriptionController:
-                                  _leakDescriptionController,
-                              briefImageDescController:
-                                  _briefImageDescController,
-                              furtherVisitRequired: _furtherVisitRequired,
-                              furtherVisitOtherController:
-                                  _furtherVisitOtherController,
-                              leakPresentController: _leakPresentController,
-                              diagnosisMethods: _diagnosisMethods,
-                              onConclusionChanged: (v) =>
-                                  setState(() => _conclusion = v),
-                              onFurtherVisitRequiredChanged: (v) =>
-                                  setState(() => _furtherVisitRequired = v),
-                              onToggleDiagnosisMethod: (option) {
-                                setState(() {
-                                  if (_diagnosisMethods.contains(option)) {
-                                    _diagnosisMethods.remove(option);
-                                  } else {
-                                    _diagnosisMethods.add(option);
-                                  }
-                                });
-                              },
+                              ),
                             ),
                           ],
+                          body: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              ListView(
+                                padding: EdgeInsets.fromLTRB(
+                                  16.w,
+                                  16.h,
+                                  16.w,
+                                  24.h,
+                                ),
+                                children: [
+                                  HseRiskSection(
+                                    theme: theme,
+                                    controller: _hse,
+                                    onChanged: () => setState(() {}),
+                                  ),
+                                ],
+                              ),
+                              DampInfoStep(
+                                theme: theme,
+                                formNameController: _formNameController,
+                                workOrderDisplay: _workOrderDisplay,
+                                pdfUrlController: _pdfUrlController,
+                                selectedAppointment: _selectedAppointment,
+                                appointmentSearchController:
+                                    _appointmentSearchController,
+                                onAppointmentChanged: (v) =>
+                                    setState(() => _selectedAppointment = v),
+                              ),
+                              DampCustomerStep(
+                                theme: theme,
+                                selectedOperative: _selectedOperative,
+                                operativeSearchController:
+                                    _operativeSearchController,
+                                frontOfPropertyController:
+                                    _frontOfPropertyController,
+                                surveyDateTime: _surveyDateTime,
+                                dateTimeError: _dateTimeError,
+                                onOperativeChanged: (v) =>
+                                    setState(() => _selectedOperative = v),
+                                onPickDate: _pickSurveyDate,
+                                onPickTime: _pickSurveyTime,
+                              ),
+                              DampVisualStep(
+                                theme: theme,
+                                visualImageDescController:
+                                    _visualImageDescController,
+                                visualFindingsController:
+                                    _visualFindingsController,
+                                weather: _weather,
+                                weatherOtherController: _weatherOtherController,
+                                accessType: _accessType,
+                                accessLocation: _accessLocation,
+                                accessMadeOtherController:
+                                    _accessMadeOtherController,
+                                whatAccessed: _whatAccessed,
+                                whatAccessedOtherController:
+                                    _whatAccessedOtherController,
+                                afterAccessImageDescController:
+                                    _afterAccessImageDescController,
+                                onWeatherChanged: (v) =>
+                                    setState(() => _weather = v),
+                                onAccessTypeChanged: (v) =>
+                                    setState(() => _accessType = v),
+                                onAccessLocationChanged: (v) =>
+                                    setState(() => _accessLocation = v),
+                                onWhatAccessedChanged: (v) =>
+                                    setState(() => _whatAccessed = v),
+                              ),
+                              DampRepairStep(
+                                theme: theme,
+                                didMakeRepair: _didMakeRepair,
+                                beforeRepairPhotoDescController:
+                                    _beforeRepairPhotoDescController,
+                                repairKind: _repairKind,
+                                worksUndertakenController:
+                                    _worksUndertakenController,
+                                repairDurationController:
+                                    _repairDurationController,
+                                materialsUsedController:
+                                    _materialsUsedController,
+                                boughtMaterials: _boughtMaterials,
+                                materialCostController: _materialCostController,
+                                afterRepairImageDescController:
+                                    _afterRepairImageDescController,
+                                onDidMakeRepairChanged: (v) =>
+                                    setState(() => _didMakeRepair = v),
+                                onRepairKindChanged: (v) =>
+                                    setState(() => _repairKind = v),
+                                onBoughtMaterialsChanged: (v) =>
+                                    setState(() => _boughtMaterials = v),
+                              ),
+                              DampEstimateStep(
+                                theme: theme,
+                                furtherWorkRequired: _furtherWorkRequired,
+                                furtherWorksDescController:
+                                    _furtherWorksDescController,
+                                onFurtherWorkRequiredChanged: (v) =>
+                                    setState(() => _furtherWorkRequired = v),
+                              ),
+                              DampDryingStep(
+                                theme: theme,
+                                dryingRequired: _dryingRequired,
+                                dryingOption: _dryingOption,
+                                onDryingRequiredChanged: (v) =>
+                                    setState(() => _dryingRequired = v),
+                                onDryingOptionChanged: (v) =>
+                                    setState(() => _dryingOption = v),
+                              ),
+                              DampAdditionalStep(
+                                theme: theme,
+                                needAdditionalComments: _needAdditionalComments,
+                                additionalCommentsController:
+                                    _additionalCommentsController,
+                                onNeedAdditionalCommentsChanged: (v) =>
+                                    setState(() => _needAdditionalComments = v),
+                              ),
+                              DampConclusionStep(
+                                theme: theme,
+                                conclusion: _conclusion,
+                                leakDescriptionController:
+                                    _leakDescriptionController,
+                                briefImageDescController:
+                                    _briefImageDescController,
+                                furtherVisitRequired: _furtherVisitRequired,
+                                furtherVisitOtherController:
+                                    _furtherVisitOtherController,
+                                leakPresentController: _leakPresentController,
+                                diagnosisMethods: _diagnosisMethods,
+                                onConclusionChanged: (v) =>
+                                    setState(() => _conclusion = v),
+                                onFurtherVisitRequiredChanged: (v) =>
+                                    setState(() => _furtherVisitRequired = v),
+                                onToggleDiagnosisMethod: (option) {
+                                  setState(() {
+                                    if (_diagnosisMethods.contains(option)) {
+                                      _diagnosisMethods.remove(option);
+                                    } else {
+                                      _diagnosisMethods.add(option);
+                                    }
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      ValueListenableBuilder<double>(
-                        valueListenable: _collapseProgress,
-                        builder: (context, progress, _) {
-                          return Positioned(
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            child: AspectBranding(
-                              progress: progress,
-                              expandedHeight: _brandingExpandedHeight,
-                              collapsedHeight: _brandingCollapsedHeight,
-                              theme: theme,
-                              hasBackButton: true,
-                              title: Text(
-                                'Damp Survey',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.6,
-                                  color: theme.textBody,
+                        ValueListenableBuilder<double>(
+                          valueListenable: _collapseProgress,
+                          builder: (context, progress, _) {
+                            return Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              child: AspectBranding(
+                                progress: progress,
+                                expandedHeight: _brandingExpandedHeight,
+                                collapsedHeight: _brandingCollapsedHeight,
+                                theme: theme,
+                                hasBackButton: true,
+                                title: Text(
+                                  'Damp Survey',
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.6,
+                                    color: theme.textBody,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                      Positioned(
-                        top: 8.h,
-                        left: 16.w,
-                        child: CommandCentreBackButton(onTap: _onCancel),
-                      ),
-                    ],
+                            );
+                          },
+                        ),
+                        Positioned(
+                          top: 8.h,
+                          left: 16.w,
+                          child: CommandCentreBackButton(onTap: _onCancel),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                _buildBottomBar(theme),
-              ],
+                  _buildBottomBar(theme),
+                ],
+              ),
             ),
           ),
         );

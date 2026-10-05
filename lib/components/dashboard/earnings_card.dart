@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
@@ -107,7 +108,7 @@ class _EarningCardState extends State<EarningCard> {
 
   Future<void> _pickPeriod() async {
     final theme = DashboardTheme.of(context);
-    final selected = await showModalBottomSheet<int>(
+    final selected = await showAppModalBottomSheet<int>(
       context: context,
       backgroundColor: theme.surface,
       shape: RoundedRectangleBorder(
@@ -138,8 +139,8 @@ class _EarningCardState extends State<EarningCard> {
                           : FontWeight.w500,
                       color: option == _months
                           ? (theme.isDark
-                              ? AppColors.accentBlue
-                              : AppColors.primaryBlue)
+                                ? AppColors.accentBlue
+                                : AppColors.primaryBlue)
                           : theme.dashTitle,
                     ),
                   ),
@@ -302,9 +303,9 @@ class _EarningCardState extends State<EarningCard> {
                                       color: i == labels.length - 1
                                           ? theme.dashPrimary
                                           : (theme.isDark
-                                              ? AppColors.accentBlue
-                                                  .withValues(alpha: 0.25)
-                                              : const Color(0xFFC9DCF7)),
+                                                ? AppColors.accentBlue
+                                                      .withValues(alpha: 0.25)
+                                                : const Color(0xFFC9DCF7)),
                                       borderRadius: BorderRadius.circular(10.r),
                                     ),
                                   ),

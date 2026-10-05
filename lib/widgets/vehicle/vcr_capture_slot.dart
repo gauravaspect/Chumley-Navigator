@@ -14,6 +14,7 @@ class VcrCaptureSlot extends StatelessWidget {
     this.imageFile,
     this.onTap,
     this.isCompressing = false,
+    this.width,
   });
 
   final String label;
@@ -21,12 +22,15 @@ class VcrCaptureSlot extends StatelessWidget {
   final VoidCallback? onTap;
   final bool isCompressing;
 
+  /// When null, falls back to phone-sized `114.w`.
+  final double? width;
+
   @override
   Widget build(BuildContext context) {
     final theme = DashboardTheme.of(context);
 
     return SizedBox(
-      width: 114.w,
+      width: width ?? 114.w,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

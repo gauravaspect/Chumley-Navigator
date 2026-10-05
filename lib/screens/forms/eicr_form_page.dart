@@ -1,4 +1,5 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
 import 'package:chumley_navigator/screens/forms/eicr/models/eicr_circuit.dart';
 import 'package:chumley_navigator/screens/forms/eicr/steps/eicr_circuits_step.dart';
 import 'package:chumley_navigator/screens/forms/eicr/steps/eicr_cps_step.dart';
@@ -303,306 +304,314 @@ class _EicrFormPageState extends State<EicrFormPage>
         return Scaffold(
           backgroundColor: theme.base,
           body: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Stack(
-                    children: [
-                      NestedScrollView(
-                        controller: _scrollController,
-                        headerSliverBuilder: (context, _) => [
-                          SliverToBoxAdapter(
-                            child: SizedBox(height: _brandingExpandedHeight.h),
-                          ),
-                          SliverToBoxAdapter(child: _buildIntro(theme)),
-                          SliverPersistentHeader(
-                            pinned: true,
-                            delegate: EicrTabBarDelegate(
-                              theme: theme,
-                              child: TabBar(
-                                controller: _tabController,
-                                isScrollable: true,
-                                tabAlignment: TabAlignment.start,
-                                labelColor: _accent,
-                                unselectedLabelColor: theme.textMuted,
-                                indicatorColor: _accent,
-                                labelStyle: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w700,
+            child: ResponsiveContent.form(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        NestedScrollView(
+                          controller: _scrollController,
+                          headerSliverBuilder: (context, _) => [
+                            SliverToBoxAdapter(
+                              child: SizedBox(
+                                height: _brandingExpandedHeight.h,
+                              ),
+                            ),
+                            SliverToBoxAdapter(child: _buildIntro(theme)),
+                            SliverPersistentHeader(
+                              pinned: true,
+                              delegate: EicrTabBarDelegate(
+                                theme: theme,
+                                child: TabBar(
+                                  controller: _tabController,
+                                  isScrollable: true,
+                                  tabAlignment: TabAlignment.start,
+                                  labelColor: _accent,
+                                  unselectedLabelColor: theme.textMuted,
+                                  indicatorColor: _accent,
+                                  labelStyle: TextStyle(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  unselectedLabelStyle: TextStyle(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  tabs: [for (final t in _tabs) Tab(text: t)],
                                 ),
-                                unselectedLabelStyle: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                tabs: [for (final t in _tabs) Tab(text: t)],
                               ),
-                            ),
-                          ),
-                        ],
-                        body: TabBarView(
-                          controller: _tabController,
-                          children: [
-                            EicrRiskStep(
-                              theme: theme,
-                              riskAssessment: _riskAssessment,
-                              workAtHeight: _workAtHeight,
-                              safeIsolation: _safeIsolation,
-                              clientBriefed: _clientBriefed,
-                              vulnerable: _vulnerable,
-                              riskNoteController: _riskNoteController,
-                              onRiskAssessmentChanged: (v) =>
-                                  setState(() => _riskAssessment = v),
-                              onWorkAtHeightChanged: (v) =>
-                                  setState(() => _workAtHeight = v),
-                              onSafeIsolationChanged: (v) =>
-                                  setState(() => _safeIsolation = v),
-                              onClientBriefedChanged: (v) =>
-                                  setState(() => _clientBriefed = v),
-                              onVulnerableChanged: (v) =>
-                                  setState(() => _vulnerable = v),
-                            ),
-                            EicrCpsStep(
-                              theme: theme,
-                              cpsScheme: _cpsScheme,
-                              schemeRegController: _schemeRegController,
-                              partPController: _partPController,
-                              cpsConfirm: _cpsConfirm,
-                              reportNumberController: _reportNumberController,
-                              reasonController: _reasonController,
-                              inspectionDatesController:
-                                  _inspectionDatesController,
-                              issuerNameController: _issuerNameController,
-                              issuerPositionController:
-                                  _issuerPositionController,
-                              onCpsSchemeChanged: (v) =>
-                                  setState(() => _cpsScheme = v),
-                              onCpsConfirmChanged: (v) =>
-                                  setState(() => _cpsConfirm = v ?? false),
-                            ),
-                            EicrInstallationStep(
-                              theme: theme,
-                              wiringAgeController: _wiringAgeController,
-                              additions: _additions,
-                              recordsAvailable: _recordsAvailable,
-                              lastInspectionDateController:
-                                  _lastInspectionDateController,
-                              extentController: _extentController,
-                              limitationsAgreed: _limitationsAgreed,
-                              operationalLimitations: _operationalLimitations,
-                              agreedWithController: _agreedWithController,
-                              bs7671Controller: _bs7671Controller,
-                              supplyPolarityController:
-                                  _supplyPolarityController,
-                              spdBsController: _spdBsController,
-                              spdTypeController: _spdTypeController,
-                              spdRatedController: _spdRatedController,
-                              spdBreakingController: _spdBreakingController,
-                              mainOvercurrentType: _mainOvercurrentType,
-                              mainOvercurrentRatingController:
-                                  _mainOvercurrentRatingController,
-                              mainOvercurrentBreakingController:
-                                  _mainOvercurrentBreakingController,
-                              rcdMainBreakingController:
-                                  _rcdMainBreakingController,
-                              dbLocationController: _dbLocationController,
-                              suppliedFromController: _suppliedFromController,
-                              zdbController: _zdbController,
-                              ipfController: _ipfController,
-                              distOcpdBsController: _distOcpdBsController,
-                              distOcpdTypeController: _distOcpdTypeController,
-                              distOcpdRatingController:
-                                  _distOcpdRatingController,
-                              spdAtBoard: _spdAtBoard,
-                              generalConditionController:
-                                  _generalConditionController,
-                              furtherInspectionController:
-                                  _furtherInspectionController,
-                              recommendationReasonsController:
-                                  _recommendationReasonsController,
-                              inspectedByNameController:
-                                  _inspectedByNameController,
-                              inspectedByPositionController:
-                                  _inspectedByPositionController,
-                              authorisedByNameController:
-                                  _authorisedByNameController,
-                              authorisedByPositionController:
-                                  _authorisedByPositionController,
-                              instrumentsController: _instrumentsController,
-                              onAdditionsChanged: (v) =>
-                                  setState(() => _additions = v),
-                              onRecordsAvailableChanged: (v) =>
-                                  setState(() => _recordsAvailable = v),
-                              onLimitationsAgreedChanged: (v) =>
-                                  setState(() => _limitationsAgreed = v),
-                              onOperationalLimitationsChanged: (v) =>
-                                  setState(() => _operationalLimitations = v),
-                              onMainOvercurrentTypeChanged: (v) =>
-                                  setState(() => _mainOvercurrentType = v),
-                              onSpdAtBoardChanged: (v) =>
-                                  setState(() => _spdAtBoard = v),
-                            ),
-                            EicrSupplyStep(
-                              theme: theme,
-                              nominalVoltageController:
-                                  _nominalVoltageController,
-                              numberOfPhases: _numberOfPhases,
-                              frequencyController: _frequencyController,
-                              zeController: _zeController,
-                              psccController: _psccController,
-                              pfcController: _pfcController,
-                              earthingArrangement: _earthingArrangement,
-                              natureOfSupply: _natureOfSupply,
-                              meansOfEarthing: _meansOfEarthing,
-                              maxDemandController: _maxDemandController,
-                              earthingMaterial: _earthingMaterial,
-                              earthingCsa: _earthingCsa,
-                              earthingVerified: _earthingVerified,
-                              bondingMaterial: _bondingMaterial,
-                              bondingCsa: _bondingCsa,
-                              bondingVerified: _bondingVerified,
-                              bondWater: _bondWater,
-                              bondGas: _bondGas,
-                              bondOil: _bondOil,
-                              bondSteel: _bondSteel,
-                              bondLps: _bondLps,
-                              bondOtherController: _bondOtherController,
-                              mainSwitchLocationController:
-                                  _mainSwitchLocationController,
-                              mainSwitchBsController: _mainSwitchBsController,
-                              mainSwitchPoles: _mainSwitchPoles,
-                              mainSwitchCurrent: _mainSwitchCurrent,
-                              mainSwitchVoltageController:
-                                  _mainSwitchVoltageController,
-                              mainSwitchKind: _mainSwitchKind,
-                              onNumberOfPhasesChanged: (v) =>
-                                  setState(() => _numberOfPhases = v),
-                              onEarthingArrangementChanged: (v) =>
-                                  setState(() => _earthingArrangement = v),
-                              onNatureOfSupplyChanged: (v) =>
-                                  setState(() => _natureOfSupply = v),
-                              onMeansOfEarthingChanged: (v) =>
-                                  setState(() => _meansOfEarthing = v),
-                              onEarthingMaterialChanged: (v) =>
-                                  setState(() => _earthingMaterial = v),
-                              onEarthingCsaChanged: (v) =>
-                                  setState(() => _earthingCsa = v),
-                              onEarthingVerifiedChanged: (v) =>
-                                  setState(() => _earthingVerified = v),
-                              onBondingMaterialChanged: (v) =>
-                                  setState(() => _bondingMaterial = v),
-                              onBondingCsaChanged: (v) =>
-                                  setState(() => _bondingCsa = v),
-                              onBondingVerifiedChanged: (v) =>
-                                  setState(() => _bondingVerified = v),
-                              onBondWaterChanged: (v) =>
-                                  setState(() => _bondWater = v),
-                              onBondGasChanged: (v) =>
-                                  setState(() => _bondGas = v),
-                              onBondOilChanged: (v) =>
-                                  setState(() => _bondOil = v),
-                              onBondSteelChanged: (v) =>
-                                  setState(() => _bondSteel = v),
-                              onBondLpsChanged: (v) =>
-                                  setState(() => _bondLps = v),
-                              onMainSwitchPolesChanged: (v) =>
-                                  setState(() => _mainSwitchPoles = v),
-                              onMainSwitchCurrentChanged: (v) =>
-                                  setState(() => _mainSwitchCurrent = v),
-                              onMainSwitchKindChanged: (v) =>
-                                  setState(() => _mainSwitchKind = v),
-                            ),
-                            EicrCircuitsStep(
-                              theme: theme,
-                              circuits: _circuits,
-                              onAddCircuit: () =>
-                                  setState(() => _circuits.add(EicrCircuit())),
-                              onRemoveCircuit: (i) => setState(
-                                () => _circuits.removeAt(i).dispose(),
-                              ),
-                              onStateChanged: () => setState(() {}),
-                            ),
-                            EicrSignoffStep(
-                              theme: theme,
-                              section1Items: _section1Items,
-                              otherInspectionSections: _otherInspectionSections,
-                              section1Outcomes: _section1Outcomes,
-                              sectionOutcomes: _sectionOutcomes,
-                              partsUsed: _partsUsed,
-                              photos: _photos,
-                              officeNotesController: _officeNotesController,
-                              signatureController: _signatureController,
-                              customerPresent: _customerPresent,
-                              declReg: _declReg,
-                              declBs7671: _declBs7671,
-                              declPartP: _declPartP,
-                              onSection1OutcomeChanged: (item, v) =>
-                                  setState(() => _section1Outcomes[item] = v),
-                              onSectionOutcomeChanged: (section, v) =>
-                                  setState(() => _sectionOutcomes[section] = v),
-                              onPartsUsedChanged: (v) =>
-                                  setState(() => _partsUsed = v),
-                              onPhotoChanged: (title, path) {
-                                setState(() {
-                                  if (path == null) {
-                                    _photos.remove(title);
-                                  } else {
-                                    _photos[title] = path;
-                                  }
-                                });
-                              },
-                              onCustomerPresentChanged: (v) =>
-                                  setState(() => _customerPresent = v),
-                              onDeclRegChanged: (v) =>
-                                  setState(() => _declReg = v ?? false),
-                              onDeclBs7671Changed: (v) =>
-                                  setState(() => _declBs7671 = v ?? false),
-                              onDeclPartPChanged: (v) =>
-                                  setState(() => _declPartP = v ?? false),
-                              onAddManualObservation: () => _snack(
-                                'Manual observations coming in a follow-up.',
-                              ),
-                              onAddPhotoSlot: () =>
-                                  _snack('Additional photo slot reserved.'),
                             ),
                           ],
+                          body: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              EicrRiskStep(
+                                theme: theme,
+                                riskAssessment: _riskAssessment,
+                                workAtHeight: _workAtHeight,
+                                safeIsolation: _safeIsolation,
+                                clientBriefed: _clientBriefed,
+                                vulnerable: _vulnerable,
+                                riskNoteController: _riskNoteController,
+                                onRiskAssessmentChanged: (v) =>
+                                    setState(() => _riskAssessment = v),
+                                onWorkAtHeightChanged: (v) =>
+                                    setState(() => _workAtHeight = v),
+                                onSafeIsolationChanged: (v) =>
+                                    setState(() => _safeIsolation = v),
+                                onClientBriefedChanged: (v) =>
+                                    setState(() => _clientBriefed = v),
+                                onVulnerableChanged: (v) =>
+                                    setState(() => _vulnerable = v),
+                              ),
+                              EicrCpsStep(
+                                theme: theme,
+                                cpsScheme: _cpsScheme,
+                                schemeRegController: _schemeRegController,
+                                partPController: _partPController,
+                                cpsConfirm: _cpsConfirm,
+                                reportNumberController: _reportNumberController,
+                                reasonController: _reasonController,
+                                inspectionDatesController:
+                                    _inspectionDatesController,
+                                issuerNameController: _issuerNameController,
+                                issuerPositionController:
+                                    _issuerPositionController,
+                                onCpsSchemeChanged: (v) =>
+                                    setState(() => _cpsScheme = v),
+                                onCpsConfirmChanged: (v) =>
+                                    setState(() => _cpsConfirm = v ?? false),
+                              ),
+                              EicrInstallationStep(
+                                theme: theme,
+                                wiringAgeController: _wiringAgeController,
+                                additions: _additions,
+                                recordsAvailable: _recordsAvailable,
+                                lastInspectionDateController:
+                                    _lastInspectionDateController,
+                                extentController: _extentController,
+                                limitationsAgreed: _limitationsAgreed,
+                                operationalLimitations: _operationalLimitations,
+                                agreedWithController: _agreedWithController,
+                                bs7671Controller: _bs7671Controller,
+                                supplyPolarityController:
+                                    _supplyPolarityController,
+                                spdBsController: _spdBsController,
+                                spdTypeController: _spdTypeController,
+                                spdRatedController: _spdRatedController,
+                                spdBreakingController: _spdBreakingController,
+                                mainOvercurrentType: _mainOvercurrentType,
+                                mainOvercurrentRatingController:
+                                    _mainOvercurrentRatingController,
+                                mainOvercurrentBreakingController:
+                                    _mainOvercurrentBreakingController,
+                                rcdMainBreakingController:
+                                    _rcdMainBreakingController,
+                                dbLocationController: _dbLocationController,
+                                suppliedFromController: _suppliedFromController,
+                                zdbController: _zdbController,
+                                ipfController: _ipfController,
+                                distOcpdBsController: _distOcpdBsController,
+                                distOcpdTypeController: _distOcpdTypeController,
+                                distOcpdRatingController:
+                                    _distOcpdRatingController,
+                                spdAtBoard: _spdAtBoard,
+                                generalConditionController:
+                                    _generalConditionController,
+                                furtherInspectionController:
+                                    _furtherInspectionController,
+                                recommendationReasonsController:
+                                    _recommendationReasonsController,
+                                inspectedByNameController:
+                                    _inspectedByNameController,
+                                inspectedByPositionController:
+                                    _inspectedByPositionController,
+                                authorisedByNameController:
+                                    _authorisedByNameController,
+                                authorisedByPositionController:
+                                    _authorisedByPositionController,
+                                instrumentsController: _instrumentsController,
+                                onAdditionsChanged: (v) =>
+                                    setState(() => _additions = v),
+                                onRecordsAvailableChanged: (v) =>
+                                    setState(() => _recordsAvailable = v),
+                                onLimitationsAgreedChanged: (v) =>
+                                    setState(() => _limitationsAgreed = v),
+                                onOperationalLimitationsChanged: (v) =>
+                                    setState(() => _operationalLimitations = v),
+                                onMainOvercurrentTypeChanged: (v) =>
+                                    setState(() => _mainOvercurrentType = v),
+                                onSpdAtBoardChanged: (v) =>
+                                    setState(() => _spdAtBoard = v),
+                              ),
+                              EicrSupplyStep(
+                                theme: theme,
+                                nominalVoltageController:
+                                    _nominalVoltageController,
+                                numberOfPhases: _numberOfPhases,
+                                frequencyController: _frequencyController,
+                                zeController: _zeController,
+                                psccController: _psccController,
+                                pfcController: _pfcController,
+                                earthingArrangement: _earthingArrangement,
+                                natureOfSupply: _natureOfSupply,
+                                meansOfEarthing: _meansOfEarthing,
+                                maxDemandController: _maxDemandController,
+                                earthingMaterial: _earthingMaterial,
+                                earthingCsa: _earthingCsa,
+                                earthingVerified: _earthingVerified,
+                                bondingMaterial: _bondingMaterial,
+                                bondingCsa: _bondingCsa,
+                                bondingVerified: _bondingVerified,
+                                bondWater: _bondWater,
+                                bondGas: _bondGas,
+                                bondOil: _bondOil,
+                                bondSteel: _bondSteel,
+                                bondLps: _bondLps,
+                                bondOtherController: _bondOtherController,
+                                mainSwitchLocationController:
+                                    _mainSwitchLocationController,
+                                mainSwitchBsController: _mainSwitchBsController,
+                                mainSwitchPoles: _mainSwitchPoles,
+                                mainSwitchCurrent: _mainSwitchCurrent,
+                                mainSwitchVoltageController:
+                                    _mainSwitchVoltageController,
+                                mainSwitchKind: _mainSwitchKind,
+                                onNumberOfPhasesChanged: (v) =>
+                                    setState(() => _numberOfPhases = v),
+                                onEarthingArrangementChanged: (v) =>
+                                    setState(() => _earthingArrangement = v),
+                                onNatureOfSupplyChanged: (v) =>
+                                    setState(() => _natureOfSupply = v),
+                                onMeansOfEarthingChanged: (v) =>
+                                    setState(() => _meansOfEarthing = v),
+                                onEarthingMaterialChanged: (v) =>
+                                    setState(() => _earthingMaterial = v),
+                                onEarthingCsaChanged: (v) =>
+                                    setState(() => _earthingCsa = v),
+                                onEarthingVerifiedChanged: (v) =>
+                                    setState(() => _earthingVerified = v),
+                                onBondingMaterialChanged: (v) =>
+                                    setState(() => _bondingMaterial = v),
+                                onBondingCsaChanged: (v) =>
+                                    setState(() => _bondingCsa = v),
+                                onBondingVerifiedChanged: (v) =>
+                                    setState(() => _bondingVerified = v),
+                                onBondWaterChanged: (v) =>
+                                    setState(() => _bondWater = v),
+                                onBondGasChanged: (v) =>
+                                    setState(() => _bondGas = v),
+                                onBondOilChanged: (v) =>
+                                    setState(() => _bondOil = v),
+                                onBondSteelChanged: (v) =>
+                                    setState(() => _bondSteel = v),
+                                onBondLpsChanged: (v) =>
+                                    setState(() => _bondLps = v),
+                                onMainSwitchPolesChanged: (v) =>
+                                    setState(() => _mainSwitchPoles = v),
+                                onMainSwitchCurrentChanged: (v) =>
+                                    setState(() => _mainSwitchCurrent = v),
+                                onMainSwitchKindChanged: (v) =>
+                                    setState(() => _mainSwitchKind = v),
+                              ),
+                              EicrCircuitsStep(
+                                theme: theme,
+                                circuits: _circuits,
+                                onAddCircuit: () => setState(
+                                  () => _circuits.add(EicrCircuit()),
+                                ),
+                                onRemoveCircuit: (i) => setState(
+                                  () => _circuits.removeAt(i).dispose(),
+                                ),
+                                onStateChanged: () => setState(() {}),
+                              ),
+                              EicrSignoffStep(
+                                theme: theme,
+                                section1Items: _section1Items,
+                                otherInspectionSections:
+                                    _otherInspectionSections,
+                                section1Outcomes: _section1Outcomes,
+                                sectionOutcomes: _sectionOutcomes,
+                                partsUsed: _partsUsed,
+                                photos: _photos,
+                                officeNotesController: _officeNotesController,
+                                signatureController: _signatureController,
+                                customerPresent: _customerPresent,
+                                declReg: _declReg,
+                                declBs7671: _declBs7671,
+                                declPartP: _declPartP,
+                                onSection1OutcomeChanged: (item, v) =>
+                                    setState(() => _section1Outcomes[item] = v),
+                                onSectionOutcomeChanged: (section, v) =>
+                                    setState(
+                                      () => _sectionOutcomes[section] = v,
+                                    ),
+                                onPartsUsedChanged: (v) =>
+                                    setState(() => _partsUsed = v),
+                                onPhotoChanged: (title, path) {
+                                  setState(() {
+                                    if (path == null) {
+                                      _photos.remove(title);
+                                    } else {
+                                      _photos[title] = path;
+                                    }
+                                  });
+                                },
+                                onCustomerPresentChanged: (v) =>
+                                    setState(() => _customerPresent = v),
+                                onDeclRegChanged: (v) =>
+                                    setState(() => _declReg = v ?? false),
+                                onDeclBs7671Changed: (v) =>
+                                    setState(() => _declBs7671 = v ?? false),
+                                onDeclPartPChanged: (v) =>
+                                    setState(() => _declPartP = v ?? false),
+                                onAddManualObservation: () => _snack(
+                                  'Manual observations coming in a follow-up.',
+                                ),
+                                onAddPhotoSlot: () =>
+                                    _snack('Additional photo slot reserved.'),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      ValueListenableBuilder<double>(
-                        valueListenable: _collapseProgress,
-                        builder: (context, progress, _) {
-                          return Positioned(
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            child: AspectBranding(
-                              progress: progress,
-                              expandedHeight: _brandingExpandedHeight,
-                              collapsedHeight: _brandingCollapsedHeight,
-                              theme: theme,
-                              hasBackButton: true,
-                              title: Text(
-                                'EICR Form',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.6,
-                                  color: theme.textBody,
+                        ValueListenableBuilder<double>(
+                          valueListenable: _collapseProgress,
+                          builder: (context, progress, _) {
+                            return Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              child: AspectBranding(
+                                progress: progress,
+                                expandedHeight: _brandingExpandedHeight,
+                                collapsedHeight: _brandingCollapsedHeight,
+                                theme: theme,
+                                hasBackButton: true,
+                                title: Text(
+                                  'EICR Form',
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.6,
+                                    color: theme.textBody,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                      Positioned(
-                        top: 12.h,
-                        left: 16.w,
-                        child: CommandCentreBackButton(onTap: _onCancel),
-                      ),
-                    ],
+                            );
+                          },
+                        ),
+                        Positioned(
+                          top: 12.h,
+                          left: 16.w,
+                          child: CommandCentreBackButton(onTap: _onCancel),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                _buildFooter(theme),
-              ],
+                  _buildFooter(theme),
+                ],
+              ),
             ),
           ),
         );

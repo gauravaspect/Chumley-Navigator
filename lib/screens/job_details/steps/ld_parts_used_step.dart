@@ -144,11 +144,7 @@ class LdPartsUsedStep extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        LucideIcons.plus,
-                        size: 16.sp,
-                        color: accent,
-                      ),
+                      Icon(LucideIcons.plus, size: 16.sp, color: accent),
                       SizedBox(width: 8.w),
                       Text(
                         'Add part',

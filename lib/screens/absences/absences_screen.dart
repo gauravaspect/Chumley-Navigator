@@ -1,4 +1,6 @@
 import 'package:chumley_navigator/core/app_dependencies.dart';
+import 'package:chumley_navigator/core/responsive/responsive_breakpoints.dart';
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
 import 'package:chumley_navigator/models/list_absence_model.dart';
 import 'package:chumley_navigator/screens/absences/cubit/absences_cubit.dart';
 import 'package:chumley_navigator/screens/absences/cubit/absences_state.dart';
@@ -300,424 +302,435 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
                       color: theme.isDark ? theme.base : null,
                     ),
                     child: SafeArea(
-                      child: RefreshIndicator(
-                        color: theme.dashPrimary,
-                        onRefresh: _cubit.refresh,
-                        child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(
-                            parent: BouncingScrollPhysics(),
-                          ),
-                          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 100.h),
-                          children: [
-                            Text(
-                              'Absence',
-                              style: TextStyle(
-                                fontSize: 26.sp,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.7,
-                                color: theme.dashHeading,
-                              ),
+                      child: ResponsiveContent(
+                        maxWidth: ResponsiveBreakpoints.pageContentMax,
+                        child: RefreshIndicator(
+                          color: theme.dashPrimary,
+                          onRefresh: _cubit.refresh,
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
                             ),
-                            SizedBox(height: 3.h),
-                            Text(
-                              'Book time off and track requests',
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w400,
-                                color: theme.dashMuted,
-                              ),
+                            padding: EdgeInsets.fromLTRB(
+                              20.w,
+                              12.h,
+                              20.w,
+                              100.h,
                             ),
-                            SizedBox(height: 18.h),
-                            FadeSlideIn(
-                              child: AbsenceCalendar(
-                                key: ValueKey(_calendarEpoch),
-                                markedDays: calendarMarks,
-                                initialStart: _rangeStart,
-                                initialEnd: _rangeEnd,
-                                onRangeChanged: (start, end) {
-                                  setState(() {
-                                    _rangeStart = start;
-                                    _rangeEnd = end;
-                                  });
-                                },
-                              ),
-                            ),
-                            SizedBox(height: 12.h),
-                            FadeSlideIn(
-                              delay: const Duration(milliseconds: 40),
-                              child: AbsenceFormCard(
-                                padding: EdgeInsets.all(18.r),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Duration',
-                                      style: TextStyle(
-                                        fontSize: 17.sp,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: -0.2,
-                                        color: theme.dashHeading,
-                                      ),
-                                    ),
-                                    SizedBox(height: 16.h),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: AbsenceTimeField(
-                                            label: 'Start time',
-                                            time: _startTime,
-                                            enabled: !_wholeDay,
-                                            hasError:
-                                                _showErrors &&
-                                                !_wholeDay &&
-                                                (_startTime == null ||
-                                                    !_isTimeValid()),
-                                            onTap: () =>
-                                                _pickTime(isStart: true),
-                                          ),
-                                        ),
-                                        SizedBox(width: 12.w),
-                                        Expanded(
-                                          child: AbsenceTimeField(
-                                            label: 'End time',
-                                            time: _endTime,
-                                            enabled: !_wholeDay,
-                                            hasError:
-                                                _showErrors &&
-                                                !_wholeDay &&
-                                                (_endTime == null ||
-                                                    !_isTimeValid()),
-                                            onTap: () =>
-                                                _pickTime(isStart: false),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (_showErrors && !_wholeDay) ...[
-                                      if (_startTime == null ||
-                                          _endTime == null) ...[
-                                        SizedBox(height: 6.h),
-                                        Text(
-                                          'Please select both start and end times',
-                                          style: TextStyle(
-                                            color: Colors.red,
-                                            fontSize: 11.sp,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ] else if (!_isTimeValid()) ...[
-                                        SizedBox(height: 6.h),
-                                        Text(
-                                          'End time must be after start time',
-                                          style: TextStyle(
-                                            color: Colors.red,
-                                            fontSize: 11.sp,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                    SizedBox(height: 16.h),
-                                    Divider(height: 1, color: hairline),
-                                    SizedBox(height: 16.h),
-                                    AbsenceWholeDaySwitch(
-                                      value: _wholeDay,
-                                      onChanged: (val) => setState(() {
-                                        _wholeDay = val;
-                                        if (val) {
-                                          _startTime = const TimeOfDay(
-                                            hour: 0,
-                                            minute: 0,
-                                          );
-                                          _endTime = const TimeOfDay(
-                                            hour: 23,
-                                            minute: 59,
-                                          );
-                                        } else {
-                                          _startTime = _defaultStart;
-                                          _endTime = _defaultEnd;
-                                        }
-                                      }),
-                                    ),
-                                  ],
+                            children: [
+                              Text(
+                                'Absence',
+                                style: TextStyle(
+                                  fontSize: 26.sp,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.7,
+                                  color: theme.dashHeading,
                                 ),
                               ),
-                            ),
-                            SizedBox(height: 12.h),
-                            FadeSlideIn(
-                              delay: const Duration(milliseconds: 80),
-                              child: AbsenceFormCard(
-                                padding: EdgeInsets.all(18.r),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Text(
-                                      'Reason for absence',
-                                      style: TextStyle(
-                                        fontSize: 17.sp,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: -0.2,
-                                        color: theme.dashHeading,
-                                      ),
-                                    ),
-                                    SizedBox(height: 16.h),
-                                    Text(
-                                      'Type',
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.3,
-                                        color: theme.dashSubtitle,
-                                      ),
-                                    ),
-                                    SizedBox(height: 7.h),
-                                    DropdownButtonFormField2<String>(
-                                      value: _selectedReason,
-                                      isExpanded: true,
-                                      decoration: InputDecoration(
-                                        filled: true,
-                                        fillColor: fieldFill,
-                                        contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 14.w,
-                                          vertical: 4.h,
-                                        ),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12.r,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: hairline,
-                                          ),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12.r,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color:
-                                                _showErrors &&
-                                                    _selectedReason == null
-                                                ? Colors.red
-                                                : hairline,
-                                          ),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12.r,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: theme.dashPrimary,
-                                            width: 1.25,
-                                          ),
-                                        ),
-                                      ),
-                                      hint: Text(
-                                        'Select',
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          color: theme.dashHeading,
-                                        ),
-                                      ),
-                                      iconStyleData: IconStyleData(
-                                        icon: Icon(
-                                          LucideIcons.chevronDown,
-                                          color: const Color(0xFF8A99B0),
-                                          size: 18.sp,
-                                        ),
-                                      ),
-                                      dropdownStyleData: DropdownStyleData(
-                                        decoration: BoxDecoration(
-                                          color: theme.dashCardBg,
-                                          borderRadius: BorderRadius.circular(
-                                            12.r,
-                                          ),
-                                          border: Border.all(color: hairline),
-                                        ),
-                                      ),
-                                      menuItemStyleData: MenuItemStyleData(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 14.w,
-                                        ),
-                                        height: 42.h,
-                                      ),
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w400,
-                                        color: theme.dashHeading,
-                                      ),
-                                      items: _absenceReasons
-                                          .map(
-                                            (cat) => DropdownMenuItem<String>(
-                                              value: cat,
-                                              child: Text(cat),
-                                            ),
-                                          )
-                                          .toList(),
-                                      onChanged: (val) =>
-                                          setState(() => _selectedReason = val),
-                                    ),
-                                    if (_showErrors &&
-                                        _selectedReason == null) ...[
-                                      SizedBox(height: 6.h),
+                              SizedBox(height: 3.h),
+                              Text(
+                                'Book time off and track requests',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w400,
+                                  color: theme.dashMuted,
+                                ),
+                              ),
+                              SizedBox(height: 18.h),
+                              FadeSlideIn(
+                                child: AbsenceCalendar(
+                                  key: ValueKey(_calendarEpoch),
+                                  markedDays: calendarMarks,
+                                  initialStart: _rangeStart,
+                                  initialEnd: _rangeEnd,
+                                  onRangeChanged: (start, end) {
+                                    setState(() {
+                                      _rangeStart = start;
+                                      _rangeEnd = end;
+                                    });
+                                  },
+                                ),
+                              ),
+                              SizedBox(height: 12.h),
+                              FadeSlideIn(
+                                delay: const Duration(milliseconds: 40),
+                                child: AbsenceFormCard(
+                                  padding: EdgeInsets.all(18.r),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
                                       Text(
-                                        'Please select an absence reason',
+                                        'Duration',
                                         style: TextStyle(
-                                          color: Colors.red,
-                                          fontSize: 11.sp,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                    SizedBox(height: 16.h),
-                                    Text(
-                                      'Note',
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.3,
-                                        color: theme.dashSubtitle,
-                                      ),
-                                    ),
-                                    SizedBox(height: 7.h),
-                                    AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 220,
-                                      ),
-                                      curve: Curves.easeOutCubic,
-                                      decoration: BoxDecoration(
-                                        color: fieldFill,
-                                        borderRadius: BorderRadius.circular(
-                                          12.r,
-                                        ),
-                                        border: Border.all(
-                                          color: _descriptionFocused
-                                              ? theme.dashPrimary
-                                              : hairline,
-                                          width: _descriptionFocused ? 1.25 : 1,
-                                        ),
-                                      ),
-                                      child: TextField(
-                                        controller: _descriptionController,
-                                        maxLines: 3,
-                                        onTap: () => setState(
-                                          () => _descriptionFocused = true,
-                                        ),
-                                        onTapOutside: (_) => setState(
-                                          () => _descriptionFocused = false,
-                                        ),
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          height: 1.45,
+                                          fontSize: 17.sp,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -0.2,
                                           color: theme.dashHeading,
                                         ),
-                                        decoration: InputDecoration(
-                                          hintText: 'Add a note (optional)…',
-                                          hintStyle: TextStyle(
-                                            fontSize: 14.sp,
-                                            color: const Color(0xFF8A99B0),
-                                          ),
-                                          border: InputBorder.none,
-                                          contentPadding: EdgeInsets.fromLTRB(
-                                            14.w,
-                                            13.h,
-                                            14.w,
-                                            40.h,
-                                          ),
-                                        ),
                                       ),
-                                    ),
-                                    SizedBox(height: 16.h),
-                                    Opacity(
-                                      opacity: isSubmitting ? 0.55 : 1,
-                                      child: PressableScale(
-                                        onTap: isSubmitting
-                                            ? null
-                                            : () {
-                                                if (!_validate()) return;
-                                                _cubit.submitAbsence(
-                                                  type: _selectedReason!,
-                                                  description:
-                                                      _descriptionController
-                                                          .text
-                                                          .trim(),
-                                                  startDate: _rangeStart,
-                                                  endDate: _rangeEnd,
-                                                  startTime: _startTime,
-                                                  endTime: _endTime,
-                                                  wholeDay: _wholeDay,
-                                                );
-                                              },
-                                        scale: 0.98,
-                                        child: Container(
-                                          width: double.infinity,
-                                          height: 44.h,
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                            color: AppColors.accentLime,
-                                            borderRadius: BorderRadius.circular(
-                                              14.r,
+                                      SizedBox(height: 16.h),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: AbsenceTimeField(
+                                              label: 'Start time',
+                                              time: _startTime,
+                                              enabled: !_wholeDay,
+                                              hasError:
+                                                  _showErrors &&
+                                                  !_wholeDay &&
+                                                  (_startTime == null ||
+                                                      !_isTimeValid()),
+                                              onTap: () =>
+                                                  _pickTime(isStart: true),
                                             ),
                                           ),
-                                          child: Text(
-                                            isSubmitting
-                                                ? 'Submitting...'
-                                                : 'Submit absence',
+                                          SizedBox(width: 12.w),
+                                          Expanded(
+                                            child: AbsenceTimeField(
+                                              label: 'End time',
+                                              time: _endTime,
+                                              enabled: !_wholeDay,
+                                              hasError:
+                                                  _showErrors &&
+                                                  !_wholeDay &&
+                                                  (_endTime == null ||
+                                                      !_isTimeValid()),
+                                              onTap: () =>
+                                                  _pickTime(isStart: false),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (_showErrors && !_wholeDay) ...[
+                                        if (_startTime == null ||
+                                            _endTime == null) ...[
+                                          SizedBox(height: 6.h),
+                                          Text(
+                                            'Please select both start and end times',
                                             style: TextStyle(
-                                              fontSize: 15.sp,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppColors.textDarkBlue,
+                                              color: Colors.red,
+                                              fontSize: 11.sp,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ] else if (!_isTimeValid()) ...[
+                                          SizedBox(height: 6.h),
+                                          Text(
+                                            'End time must be after start time',
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 11.sp,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                      SizedBox(height: 16.h),
+                                      Divider(height: 1, color: hairline),
+                                      SizedBox(height: 16.h),
+                                      AbsenceWholeDaySwitch(
+                                        value: _wholeDay,
+                                        onChanged: (val) => setState(() {
+                                          _wholeDay = val;
+                                          if (val) {
+                                            _startTime = const TimeOfDay(
+                                              hour: 0,
+                                              minute: 0,
+                                            );
+                                            _endTime = const TimeOfDay(
+                                              hour: 23,
+                                              minute: 59,
+                                            );
+                                          } else {
+                                            _startTime = _defaultStart;
+                                            _endTime = _defaultEnd;
+                                          }
+                                        }),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 12.h),
+                              FadeSlideIn(
+                                delay: const Duration(milliseconds: 80),
+                                child: AbsenceFormCard(
+                                  padding: EdgeInsets.all(18.r),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Text(
+                                        'Reason for absence',
+                                        style: TextStyle(
+                                          fontSize: 17.sp,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -0.2,
+                                          color: theme.dashHeading,
+                                        ),
+                                      ),
+                                      SizedBox(height: 16.h),
+                                      Text(
+                                        'Type',
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.3,
+                                          color: theme.dashSubtitle,
+                                        ),
+                                      ),
+                                      SizedBox(height: 7.h),
+                                      DropdownButtonFormField2<String>(
+                                        value: _selectedReason,
+                                        isExpanded: true,
+                                        decoration: InputDecoration(
+                                          filled: true,
+                                          fillColor: fieldFill,
+                                          contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 14.w,
+                                            vertical: 4.h,
+                                          ),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: hairline,
+                                            ),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color:
+                                                  _showErrors &&
+                                                      _selectedReason == null
+                                                  ? Colors.red
+                                                  : hairline,
+                                            ),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: theme.dashPrimary,
+                                              width: 1.25,
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ),
-                                    if (loadFailed) ...[
-                                      SizedBox(height: 12.h),
-                                      Text(
-                                        'Could not load your absences.',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 13.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color: theme.accent,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 20.h),
-                            FadeSlideIn(
-                              delay: const Duration(milliseconds: 120),
-                              child: showShimmer
-                                  ? Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Pending requests',
+                                        hint: Text(
+                                          'Select',
                                           style: TextStyle(
-                                            fontSize: 17.sp,
-                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14.sp,
                                             color: theme.dashHeading,
                                           ),
                                         ),
-                                        SizedBox(height: 12.h),
-                                        ThemedShimmerBox(
-                                          theme: theme,
-                                          height: 180.h,
-                                          radius: 20,
+                                        iconStyleData: IconStyleData(
+                                          icon: Icon(
+                                            LucideIcons.chevronDown,
+                                            color: const Color(0xFF8A99B0),
+                                            size: 18.sp,
+                                          ),
+                                        ),
+                                        dropdownStyleData: DropdownStyleData(
+                                          decoration: BoxDecoration(
+                                            color: theme.dashCardBg,
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
+                                            border: Border.all(color: hairline),
+                                          ),
+                                        ),
+                                        menuItemStyleData: MenuItemStyleData(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 14.w,
+                                          ),
+                                          height: 42.h,
+                                        ),
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w400,
+                                          color: theme.dashHeading,
+                                        ),
+                                        items: _absenceReasons
+                                            .map(
+                                              (cat) => DropdownMenuItem<String>(
+                                                value: cat,
+                                                child: Text(cat),
+                                              ),
+                                            )
+                                            .toList(),
+                                        onChanged: (val) => setState(
+                                          () => _selectedReason = val,
+                                        ),
+                                      ),
+                                      if (_showErrors &&
+                                          _selectedReason == null) ...[
+                                        SizedBox(height: 6.h),
+                                        Text(
+                                          'Please select an absence reason',
+                                          style: TextStyle(
+                                            color: Colors.red,
+                                            fontSize: 11.sp,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ],
-                                    )
-                                  : MyAbsencesSection(
-                                      records: records,
-                                      loadFailed: loadFailed,
-                                    ),
-                            ),
-                          ],
+                                      SizedBox(height: 16.h),
+                                      Text(
+                                        'Note',
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.3,
+                                          color: theme.dashSubtitle,
+                                        ),
+                                      ),
+                                      SizedBox(height: 7.h),
+                                      AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 220,
+                                        ),
+                                        curve: Curves.easeOutCubic,
+                                        decoration: BoxDecoration(
+                                          color: fieldFill,
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
+                                          border: Border.all(
+                                            color: _descriptionFocused
+                                                ? theme.dashPrimary
+                                                : hairline,
+                                            width: _descriptionFocused
+                                                ? 1.25
+                                                : 1,
+                                          ),
+                                        ),
+                                        child: TextField(
+                                          controller: _descriptionController,
+                                          maxLines: 3,
+                                          onTap: () => setState(
+                                            () => _descriptionFocused = true,
+                                          ),
+                                          onTapOutside: (_) => setState(
+                                            () => _descriptionFocused = false,
+                                          ),
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            height: 1.45,
+                                            color: theme.dashHeading,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: 'Add a note (optional)…',
+                                            hintStyle: TextStyle(
+                                              fontSize: 14.sp,
+                                              color: const Color(0xFF8A99B0),
+                                            ),
+                                            border: InputBorder.none,
+                                            contentPadding: EdgeInsets.fromLTRB(
+                                              14.w,
+                                              13.h,
+                                              14.w,
+                                              40.h,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(height: 16.h),
+                                      Opacity(
+                                        opacity: isSubmitting ? 0.55 : 1,
+                                        child: PressableScale(
+                                          onTap: isSubmitting
+                                              ? null
+                                              : () {
+                                                  if (!_validate()) return;
+                                                  _cubit.submitAbsence(
+                                                    type: _selectedReason!,
+                                                    description:
+                                                        _descriptionController
+                                                            .text
+                                                            .trim(),
+                                                    startDate: _rangeStart,
+                                                    endDate: _rangeEnd,
+                                                    startTime: _startTime,
+                                                    endTime: _endTime,
+                                                    wholeDay: _wholeDay,
+                                                  );
+                                                },
+                                          scale: 0.98,
+                                          child: Container(
+                                            width: double.infinity,
+                                            height: 44.h,
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.accentLime,
+                                              borderRadius:
+                                                  BorderRadius.circular(14.r),
+                                            ),
+                                            child: Text(
+                                              isSubmitting
+                                                  ? 'Submitting...'
+                                                  : 'Submit absence',
+                                              style: TextStyle(
+                                                fontSize: 15.sp,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.textDarkBlue,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      if (loadFailed) ...[
+                                        SizedBox(height: 12.h),
+                                        Text(
+                                          'Could not load your absences.',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: theme.accent,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 20.h),
+                              FadeSlideIn(
+                                delay: const Duration(milliseconds: 120),
+                                child: showShimmer
+                                    ? Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Pending requests',
+                                            style: TextStyle(
+                                              fontSize: 17.sp,
+                                              fontWeight: FontWeight.w700,
+                                              color: theme.dashHeading,
+                                            ),
+                                          ),
+                                          SizedBox(height: 12.h),
+                                          ThemedShimmerBox(
+                                            theme: theme,
+                                            height: 180.h,
+                                            radius: 20,
+                                          ),
+                                        ],
+                                      )
+                                    : MyAbsencesSection(
+                                        records: records,
+                                        loadFailed: loadFailed,
+                                      ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

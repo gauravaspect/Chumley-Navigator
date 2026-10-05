@@ -59,7 +59,9 @@ class VisitCompleteScreen extends StatelessWidget {
                       child: Icon(
                         LucideIcons.check,
                         size: 36.sp,
-                        color: theme.isDark ? AppColors.accentBlue : Colors.white,
+                        color: theme.isDark
+                            ? AppColors.accentBlue
+                            : Colors.white,
                       ),
                     ),
                     SizedBox(height: 18.h),
@@ -127,8 +129,9 @@ class VisitCompleteScreen extends StatelessWidget {
                             ScaffoldMessenger.of(context).clearSnackBars();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                backgroundColor:
-                                    theme.isDark ? theme.surface : null,
+                                backgroundColor: theme.isDark
+                                    ? theme.surface
+                                    : null,
                                 content: Text(
                                   'Appointment copied',
                                   style: TextStyle(
@@ -170,7 +173,11 @@ class VisitCompleteScreen extends StatelessWidget {
               SizedBox(height: 12.h),
               _nextStep(theme, 2, 'The customer receives their visit summary'),
               SizedBox(height: 12.h),
-              _nextStep(theme, 3, 'Points for this visit land in your Points Hub'),
+              _nextStep(
+                theme,
+                3,
+                'Points for this visit land in your Points Hub',
+              ),
             ],
           ),
         ),
@@ -224,7 +231,9 @@ class VisitCompleteScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.w700,
-              color: theme.isDark ? AppColors.accentBlue : AppColors.primaryBlue,
+              color: theme.isDark
+                  ? AppColors.accentBlue
+                  : AppColors.primaryBlue,
             ),
           ),
         ),

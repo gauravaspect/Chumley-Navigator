@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:chumley_navigator/models/fixed_price_submit_payload.dart';
-import 'package:chumley_navigator/models/sa_status.dart';
 import 'package:chumley_navigator/models/vcr_submit_payload.dart';
 import 'package:chumley_navigator/pillar/form_draft_store.dart';
 import 'package:chumley_navigator/pillar/form_kind.dart';
@@ -11,63 +10,66 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('Production Business Flow E2E Scenarios', () {
-    test('Scenario A — Reactive Job State Journey Transition & Step Clamping', () {
-      // 1. Initial Dispatched state
-      final dispatchedTarget = openJob(
-        status: 'Dispatched',
-        kind: FormKind.gas,
-        furthestStep: 0,
-      );
-      expect(dispatchedTarget.phase, ResumePhase.dispatched);
-      expect(dispatchedTarget.screenId, '2205-3809');
+    test(
+      'Scenario A — Reactive Job State Journey Transition & Step Clamping',
+      () {
+        // 1. Initial Dispatched state
+        final dispatchedTarget = openJob(
+          status: 'Dispatched',
+          kind: FormKind.gas,
+          furthestStep: 0,
+        );
+        expect(dispatchedTarget.phase, ResumePhase.dispatched);
+        expect(dispatchedTarget.screenId, '2205-3809');
 
-      // 2. Transition to In Transit
-      final transitTarget = openJob(
-        status: 'In Transit',
-        kind: FormKind.gas,
-        furthestStep: 0,
-      );
-      expect(transitTarget.phase, ResumePhase.transit);
-      expect(transitTarget.screenId, '2205-3953');
+        // 2. Transition to In Transit
+        final transitTarget = openJob(
+          status: 'In Transit',
+          kind: FormKind.gas,
+          furthestStep: 0,
+        );
+        expect(transitTarget.phase, ResumePhase.transit);
+        expect(transitTarget.screenId, '2205-3953');
 
-      // 3. Arrive On Site with progression through 12 form steps
-      final onSiteStep0 = openJob(
-        status: 'On Site',
-        kind: FormKind.gas,
-        furthestStep: 0,
-      );
-      expect(onSiteStep0.phase, ResumePhase.form);
-      expect(onSiteStep0.formStep, 0);
-      expect(onSiteStep0.screenId, '2196-3397');
+        // 3. Arrive On Site with progression through 12 form steps
+        final onSiteStep0 = openJob(
+          status: 'On Site',
+          kind: FormKind.gas,
+          furthestStep: 0,
+        );
+        expect(onSiteStep0.phase, ResumePhase.form);
+        expect(onSiteStep0.formStep, 0);
+        expect(onSiteStep0.screenId, '2196-3397');
 
-      final onSiteStep5 = openJob(
-        status: 'On Site',
-        kind: FormKind.gas,
-        furthestStep: 5,
-      );
-      expect(onSiteStep5.phase, ResumePhase.form);
-      expect(onSiteStep5.formStep, 5);
-      expect(onSiteStep5.screenId, '2196-4116');
+        final onSiteStep5 = openJob(
+          status: 'On Site',
+          kind: FormKind.gas,
+          furthestStep: 5,
+        );
+        expect(onSiteStep5.phase, ResumePhase.form);
+        expect(onSiteStep5.formStep, 5);
+        expect(onSiteStep5.screenId, '2196-4116');
 
-      // 4. Overflows clamped safely to last step
-      final onSiteStepOverflow = openJob(
-        status: 'On Site',
-        kind: FormKind.gas,
-        furthestStep: 99,
-      );
-      expect(onSiteStepOverflow.phase, ResumePhase.form);
-      expect(onSiteStepOverflow.formStep, 11);
-      expect(onSiteStepOverflow.screenId, '2196-5152');
+        // 4. Overflows clamped safely to last step
+        final onSiteStepOverflow = openJob(
+          status: 'On Site',
+          kind: FormKind.gas,
+          furthestStep: 99,
+        );
+        expect(onSiteStepOverflow.phase, ResumePhase.form);
+        expect(onSiteStepOverflow.formStep, 11);
+        expect(onSiteStepOverflow.screenId, '2196-5152');
 
-      // 5. Job Closure & Complete state
-      final completeTarget = openJob(
-        status: 'Visit Complete',
-        kind: FormKind.gas,
-        furthestStep: 11,
-      );
-      expect(completeTarget.phase, ResumePhase.complete);
-      expect(completeTarget.screenId, '2205-4099');
-    });
+        // 5. Job Closure & Complete state
+        final completeTarget = openJob(
+          status: 'Visit Complete',
+          kind: FormKind.gas,
+          furthestStep: 11,
+        );
+        expect(completeTarget.phase, ResumePhase.complete);
+        expect(completeTarget.screenId, '2205-4099');
+      },
+    );
 
     test('Scenario B — Fixed-Price Job Quote & Payload Assembly', () {
       final payload = FixedPriceSubmitPayload.fromWizard(
@@ -77,7 +79,8 @@ void main() {
         tradeId: 'PLUMBING',
         categoryId: 'GENERAL_PLUMBING',
         workTypeId: 'TAP_REPLACEMENT',
-        scopeOfWork: 'Line 1: Arrive on site.\nLine 2: Inspect tap.\nLine 3: Replace valve.\nLine 4: Connect cold line.\nLine 5: Test flow and leaks.',
+        scopeOfWork:
+            'Line 1: Arrive on site.\nLine 2: Inspect tap.\nLine 3: Replace valve.\nLine 4: Connect cold line.\nLine 5: Test flow and leaks.',
         collectionFeeApplicable: false,
         listPriceServiceCode: 'standard',
         operativeMaterialsCost: 45.0,
@@ -116,7 +119,8 @@ void main() {
         'outlet_location': 'Main Boiler Room',
       };
       final draftPhotos = {
-        'boiler_plate': 'https://chumleystorage.blob.core.windows.net/photos/boiler_plate.jpg',
+        'boiler_plate':
+            'https://chumleystorage.blob.core.windows.net/photos/boiler_plate.jpg',
       };
 
       // 1. Save multi-step answers and furthest step
@@ -144,12 +148,19 @@ void main() {
     });
 
     test('Scenario D — Vehicle Inspection Checklist & Payload Contract', () {
-      final file1 = VcrSubmitFile(slotId: 'front_view', file: File('/tmp/vcr1.jpg'));
-      final file2 = VcrSubmitFile(slotId: 'dashboard_mileage', file: File('/tmp/vcr2.jpg'));
+      final file1 = VcrSubmitFile(
+        slotId: 'front_view',
+        file: File('/tmp/vcr1.jpg'),
+      );
+      final file2 = VcrSubmitFile(
+        slotId: 'dashboard_mileage',
+        file: File('/tmp/vcr2.jpg'),
+      );
 
       final vcrPayload = VcrSubmitPayload(
         vehicleId: 'VAN-LDN-04',
-        description: 'Daily morning pre-drive check completed. All tyres and fluids checked.',
+        description:
+            'Daily morning pre-drive check completed. All tyres and fluids checked.',
         internalNotes: 'Minor scratch on rear left bumper noted.',
         inspectionResult: 'PASS',
         files: [file1, file2],

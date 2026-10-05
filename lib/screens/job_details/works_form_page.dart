@@ -178,11 +178,17 @@ class _WorksFormPageState extends State<WorksFormPage> {
                       items: [
                         DropdownMenuItem(
                           value: 'Standard controls',
-                          child: Text('Standard controls', style: TextStyle(color: theme.text)),
+                          child: Text(
+                            'Standard controls',
+                            style: TextStyle(color: theme.text),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: 'Enhanced controls',
-                          child: Text('Enhanced controls', style: TextStyle(color: theme.text)),
+                          child: Text(
+                            'Enhanced controls',
+                            style: TextStyle(color: theme.text),
+                          ),
                         ),
                       ],
                       onChanged: (v) => setState(() => _risk = v),
@@ -246,7 +252,10 @@ class _WorksFormPageState extends State<WorksFormPage> {
                       style: TextStyle(fontSize: 14.sp, color: theme.text),
                     ),
                     SizedBox(height: 12.h),
-                    Text('Risk: ${_risk ?? 'Not recorded'}', style: TextStyle(fontSize: 13.sp, color: theme.textMuted)),
+                    Text(
+                      'Risk: ${_risk ?? 'Not recorded'}',
+                      style: TextStyle(fontSize: 13.sp, color: theme.textMuted),
+                    ),
                     Text(
                       'Parts: ${_parts.text.isEmpty ? 'None' : _parts.text}',
                       style: TextStyle(fontSize: 13.sp, color: theme.textMuted),

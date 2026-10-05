@@ -19,8 +19,16 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 enum CustomerChoice {
-  accept('accept', 'Accept', 'Customer agreed to the attendance and standard rates'),
-  pending('pending', 'Pending - may accept at later date', 'Customer needs to review or decide at a later date'),
+  accept(
+    'accept',
+    'Accept',
+    'Customer agreed to the attendance and standard rates',
+  ),
+  pending(
+    'pending',
+    'Pending - may accept at later date',
+    'Customer needs to review or decide at a later date',
+  ),
   reject('reject', 'Reject', 'Customer declined attendance');
 
   const CustomerChoice(this.key, this.label, this.description);
@@ -216,7 +224,8 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
     final categoryName = _getCategoryName(_selectedCategory);
     final workTypeName = _getWorkTypeName(_selectedWorkType);
     final hourlyRate = _hourlyRateExVat();
-    final refId = 'RJ-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    final refId =
+        'RJ-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
     try {
       await PillarClient.raiseEnquiry(
@@ -250,7 +259,8 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
         context,
         theme: theme,
         title: 'Reactive Job Raised',
-        subtitle: 'The reactive work order has been created and logged with the office.',
+        subtitle:
+            'The reactive work order has been created and logged with the office.',
         referenceId: refId,
         details: {
           'Job Title': _jobTitleController.text.trim(),
@@ -329,7 +339,8 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
           controller: _descriptionController,
           focusNode: _descriptionFocusNode,
           isFocused: _descriptionFocused,
-          hintText: 'Describe the symptoms, issues, and specific tasks to carry out...',
+          hintText:
+              'Describe the symptoms, issues, and specific tasks to carry out...',
           theme: theme,
           isRequired: true,
         ),
@@ -371,7 +382,11 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
             children: [
               Row(
                 children: [
-                  Icon(LucideIcons.fileText, size: 16.sp, color: theme.dashPrimary),
+                  Icon(
+                    LucideIcons.fileText,
+                    size: 16.sp,
+                    color: theme.dashPrimary,
+                  ),
                   SizedBox(width: 8.w),
                   Expanded(
                     child: Text(
@@ -389,7 +404,11 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
               _buildSummaryRow(theme, 'Trade', tradeName),
               _buildSummaryRow(theme, 'Group', groupName),
               _buildSummaryRow(theme, 'Sub-category', subCategoryName),
-              _buildSummaryRow(theme, 'Job Title', _jobTitleController.text.trim()),
+              _buildSummaryRow(
+                theme,
+                'Job Title',
+                _jobTitleController.text.trim(),
+              ),
               Divider(color: theme.border, height: 20.h, thickness: 0.5),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -419,7 +438,10 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
                   ),
                   SizedBox(width: 8.w),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 6.h,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.dashPrimary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8.r),
@@ -494,7 +516,9 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
                             choice.label,
                             style: TextStyle(
                               fontSize: 13.5.sp,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w600,
                               color: isSelected ? theme.text : theme.textMuted,
                             ),
                           ),
@@ -580,7 +604,9 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
                 : 'Next',
             backgroundColor: isValid
                 ? AppColors.primaryBlue
-                : (theme.isDark ? AppColors.darkBorder : AppColors.buttonDisabledBackground),
+                : (theme.isDark
+                      ? AppColors.darkBorder
+                      : AppColors.buttonDisabledBackground),
             onTap: isValid
                 ? () {
                     if (isLastScreen) {
@@ -658,7 +684,9 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
                             loadingWorkTypes: state.loadingWorkTypes,
                             isLoading: state is FixedPriceLoading,
                             isError: state is FixedPriceError,
-                            onRetry: () => context.read<FixedPriceCubit>().loadTrades(forceRefresh: true),
+                            onRetry: () => context
+                                .read<FixedPriceCubit>()
+                                .loadTrades(forceRefresh: true),
                             onTradeChanged: (val) {
                               setState(() {
                                 _selectedTrade = val;
@@ -666,7 +694,9 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
                                 _selectedWorkType = null;
                               });
                               if (val != null) {
-                                context.read<FixedPriceCubit>().loadCategories(val);
+                                context.read<FixedPriceCubit>().loadCategories(
+                                  val,
+                                );
                               }
                             },
                             onCategoryChanged: (val) {
@@ -675,7 +705,9 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
                                 _selectedWorkType = null;
                               });
                               if (val != null) {
-                                context.read<FixedPriceCubit>().loadWorkTypes(val);
+                                context.read<FixedPriceCubit>().loadWorkTypes(
+                                  val,
+                                );
                               }
                             },
                             onWorkTypeChanged: (val) {
@@ -697,7 +729,10 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.surface,
                     border: Border(

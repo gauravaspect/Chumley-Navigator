@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
@@ -34,7 +35,7 @@ class JobSubmissionDialog extends StatelessWidget {
     required Map<String, String> details,
     String buttonLabel = 'Back to Job',
   }) {
-    return showDialog<void>(
+    return showAppDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => JobSubmissionDialog(

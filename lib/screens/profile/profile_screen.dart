@@ -1,4 +1,6 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/core/responsive/responsive_breakpoints.dart';
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
 import 'package:chumley_navigator/core/storage/prefs.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/screens/dashboard/cubit/dashboard_cubit.dart';
@@ -198,152 +200,156 @@ class _ProfileContent extends StatelessWidget {
         return Scaffold(
           backgroundColor: theme.base,
           body: SafeArea(
-            child: Stack(
-              children: [
-                SingleChildScrollView(
-                  controller: scrollController,
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.only(
-                    left: 16.w,
-                    right: 16.w,
-                    top: brandingExpandedHeight + 28,
-                    bottom: 24.h,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      ValueListenableBuilder<double>(
-                        valueListenable: collapseProgress,
-                        builder: (context, progress, _) {
-                          return Opacity(
-                            opacity: (1.0 - progress).clamp(0.0, 1.0),
-                            child: Text(
-                              'User profile',
-                              textAlign: TextAlign.left,
-                              style: TextStyle(
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.6,
-                                color: theme.dashTitle,
+            child: ResponsiveContent(
+              maxWidth: ResponsiveBreakpoints.pageContentMax,
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
+                    controller: scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.only(
+                      left: 16.w,
+                      right: 16.w,
+                      top: brandingExpandedHeight + 28,
+                      bottom: 24.h,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ValueListenableBuilder<double>(
+                          valueListenable: collapseProgress,
+                          builder: (context, progress, _) {
+                            return Opacity(
+                              opacity: (1.0 - progress).clamp(0.0, 1.0),
+                              child: Text(
+                                'User profile',
+                                textAlign: TextAlign.left,
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.6,
+                                  color: theme.dashTitle,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                      SizedBox(height: 14.h),
-                      FadeSlideIn(
-                        child: _ProfileHeroCard(theme: theme, user: user),
-                      ),
-                      SizedBox(height: 10.h),
-                      FadeSlideIn(
-                        delay: const Duration(milliseconds: 50),
-                        child: _SectionLabel(theme: theme, label: 'DETAILS'),
-                      ),
-                      SizedBox(height: 8.h),
-                      ProfileInfoRow(
-                        label: 'Trade',
-                        value: _display(user.bio.trade),
-                      ),
-                      ProfileInfoRow(
-                        label: 'Position',
-                        value: _display(user.position),
-                      ),
-                      if (user.bio.rateTier.trim().isNotEmpty)
-                        ProfileInfoRow(
-                          label: 'Rate tier',
-                          value: user.bio.rateTier.trim(),
+                            );
+                          },
                         ),
-                      if (user.bio.description.trim().isNotEmpty) ...[
+                        SizedBox(height: 14.h),
+                        FadeSlideIn(
+                          child: _ProfileHeroCard(theme: theme, user: user),
+                        ),
+                        SizedBox(height: 10.h),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 50),
+                          child: _SectionLabel(theme: theme, label: 'DETAILS'),
+                        ),
+                        SizedBox(height: 8.h),
+                        ProfileInfoRow(
+                          label: 'Trade',
+                          value: _display(user.bio.trade),
+                        ),
+                        ProfileInfoRow(
+                          label: 'Position',
+                          value: _display(user.position),
+                        ),
+                        if (user.bio.rateTier.trim().isNotEmpty)
+                          ProfileInfoRow(
+                            label: 'Rate tier',
+                            value: user.bio.rateTier.trim(),
+                          ),
+                        if (user.bio.description.trim().isNotEmpty) ...[
+                          SizedBox(height: 6.h),
+                          ProfileInfoRow(
+                            label: 'About',
+                            value: user.bio.description.trim(),
+                          ),
+                        ],
                         SizedBox(height: 6.h),
-                        ProfileInfoRow(
-                          label: 'About',
-                          value: user.bio.description.trim(),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 80),
+                          child: _SectionLabel(theme: theme, label: 'STATS'),
                         ),
-                      ],
-                      SizedBox(height: 6.h),
-                      FadeSlideIn(
-                        delay: const Duration(milliseconds: 80),
-                        child: _SectionLabel(theme: theme, label: 'STATS'),
-                      ),
-                      SizedBox(height: 8.h),
-                      GridView.builder(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 8.h,
-                          crossAxisSpacing: 8.w,
-                          childAspectRatio: 1.08,
+                        SizedBox(height: 8.h),
+                        GridView.builder(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 8.h,
+                                crossAxisSpacing: 8.w,
+                                childAspectRatio: 1.08,
+                              ),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: gridItems.length,
+                          itemBuilder: (context, index) {
+                            final data = gridItems[index];
+                            return FadeSlideIn(
+                              delay: Duration(milliseconds: 35 * index),
+                              offsetY: 8,
+                              child: ProfileStatGridCard(
+                                icon: data.icon,
+                                title: data.title,
+                                body: data.body,
+                              ),
+                            );
+                          },
                         ),
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: gridItems.length,
-                        itemBuilder: (context, index) {
-                          final data = gridItems[index];
-                          return FadeSlideIn(
-                            delay: Duration(milliseconds: 35 * index),
-                            offsetY: 8,
-                            child: ProfileStatGridCard(
-                              icon: data.icon,
-                              title: data.title,
-                              body: data.body,
-                            ),
-                          );
-                        },
-                      ),
-                      SizedBox(height: 6.h),
-                      FadeSlideIn(
-                        delay: const Duration(milliseconds: 120),
-                        child: _AddressTile(
-                          theme: theme,
-                          address: user.bio.address,
-                        ),
-                      ),
-                      FadeSlideIn(
-                        delay: const Duration(milliseconds: 150),
-                        child: _AppearanceToggle(theme: theme),
-                      ),
-                      SizedBox(height: 10.h),
-                      FadeSlideIn(
-                        delay: const Duration(milliseconds: 180),
-                        child: _LogoutButton(theme: theme),
-                      ),
-                    ],
-                  ),
-                ),
-                ValueListenableBuilder<double>(
-                  valueListenable: collapseProgress,
-                  builder: (context, progress, _) {
-                    return Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: AspectBranding(
-                        progress: progress,
-                        expandedHeight: brandingExpandedHeight,
-                        collapsedHeight: brandingCollapsedHeight,
-                        theme: theme,
-                        hasBackButton: true,
-                        title: Text(
-                          'User profile',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.6,
-                            color: theme.dashTitle,
+                        SizedBox(height: 6.h),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 120),
+                          child: _AddressTile(
+                            theme: theme,
+                            address: user.bio.address,
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-                Positioned(
-                  top: 8.h,
-                  left: 16.w,
-                  child: CommandCentreBackButton(
-                    onTap: () => Navigator.of(context).pop(),
-                    semanticsLabel: 'Back to home',
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 150),
+                          child: _AppearanceToggle(theme: theme),
+                        ),
+                        SizedBox(height: 10.h),
+                        FadeSlideIn(
+                          delay: const Duration(milliseconds: 180),
+                          child: _LogoutButton(theme: theme),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  ValueListenableBuilder<double>(
+                    valueListenable: collapseProgress,
+                    builder: (context, progress, _) {
+                      return Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: AspectBranding(
+                          progress: progress,
+                          expandedHeight: brandingExpandedHeight,
+                          collapsedHeight: brandingCollapsedHeight,
+                          theme: theme,
+                          hasBackButton: true,
+                          title: Text(
+                            'User profile',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.6,
+                              color: theme.dashTitle,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    top: 8.h,
+                    left: 16.w,
+                    child: CommandCentreBackButton(
+                      onTap: () => Navigator.of(context).pop(),
+                      semanticsLabel: 'Back to home',
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

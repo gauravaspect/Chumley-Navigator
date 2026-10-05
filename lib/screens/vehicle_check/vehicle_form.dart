@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:chumley_navigator/core/app_constants.dart';
 import 'package:chumley_navigator/core/app_dependencies.dart';
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
+import 'package:chumley_navigator/core/responsive/responsive_layout.dart';
 import 'package:chumley_navigator/models/vcr_submit_payload.dart';
 import 'package:chumley_navigator/models/vehicle_model.dart';
 import 'package:chumley_navigator/screens/vehicle_check/cubit/vcr_examples_cubit.dart';
@@ -250,264 +252,281 @@ class _VehicleFormState extends State<VehicleForm> {
               color: theme.isDark ? theme.base : null,
             ),
             child: SafeArea(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(8.w, 4.h, 16.w, 8.h),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => Navigator.maybePop(context),
-                          icon: Icon(
-                            LucideIcons.chevronLeft,
-                            color: theme.dashPrimary,
-                            size: 22.sp,
+              child: ResponsiveContent.form(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(8.w, 4.h, 16.w, 8.h),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.maybePop(context),
+                            icon: Icon(
+                              LucideIcons.chevronLeft,
+                              color: theme.dashPrimary,
+                              size: 22.sp,
+                            ),
                           ),
-                        ),
-                        Text(
-                          'Vehicle report',
-                          style: TextStyle(
-                            fontSize: 17.sp,
-                            fontWeight: FontWeight.w700,
-                            color: theme.dashHeading,
+                          Text(
+                            'Vehicle report',
+                            style: TextStyle(
+                              fontSize: 17.sp,
+                              fontWeight: FontWeight.w700,
+                              color: theme.dashHeading,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 24.h),
-                      children: [
-                        if (vehicle == null) ...[
-                          const VcrWarningBanner(message: _noVehiclesMessage),
-                          SizedBox(height: 12.h),
                         ],
-                        FadeSlideIn(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              VcrStepIndicator(
-                                totalSteps: vcrSteps.length,
-                                currentStep: _currentStepIndex,
-                                onStepTap: _goToStep,
-                              ),
-                              SizedBox(height: 16.h),
-                              Text(
-                                step.inspectionTitle,
-                                style: TextStyle(
-                                  fontSize: 22.sp,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.5,
-                                  color: theme.dashHeading,
-                                ),
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                'Step ${_currentStepIndex + 1} of ${vcrSteps.length}',
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color: const Color(0xFF8A99B0),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 12.h),
-                        if (_stepComplete)
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 24.h),
+                        children: [
+                          if (vehicle == null) ...[
+                            const VcrWarningBanner(message: _noVehiclesMessage),
+                            SizedBox(height: 12.h),
+                          ],
                           FadeSlideIn(
-                            delay: const Duration(milliseconds: 30),
-                            child: Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 14.w,
-                                vertical: 12.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE9F8EF),
-                                borderRadius: BorderRadius.circular(14.r),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    LucideIcons.circleCheck,
-                                    size: 18.sp,
-                                    color: const Color(0xFF15803D),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                VcrStepIndicator(
+                                  totalSteps: vcrSteps.length,
+                                  currentStep: _currentStepIndex,
+                                  onStepTap: _goToStep,
+                                ),
+                                SizedBox(height: 16.h),
+                                Text(
+                                  step.inspectionTitle,
+                                  style: TextStyle(
+                                    fontSize: 22.sp,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.5,
+                                    color: theme.dashHeading,
                                   ),
-                                  SizedBox(width: 8.w),
-                                  Expanded(
-                                    child: Text(
-                                      isLastStep
-                                          ? 'All areas captured. Ready to submit.'
-                                          : 'All areas captured.',
-                                      style: TextStyle(
-                                        fontSize: 13.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF15803D),
+                                ),
+                                SizedBox(height: 2.h),
+                                Text(
+                                  'Step ${_currentStepIndex + 1} of ${vcrSteps.length}',
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: const Color(0xFF8A99B0),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          if (_stepComplete)
+                            FadeSlideIn(
+                              delay: const Duration(milliseconds: 30),
+                              child: Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 14.w,
+                                  vertical: 12.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE9F8EF),
+                                  borderRadius: BorderRadius.circular(14.r),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      LucideIcons.circleCheck,
+                                      size: 18.sp,
+                                      color: const Color(0xFF15803D),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Expanded(
+                                      child: Text(
+                                        isLastStep
+                                            ? 'All areas captured. Ready to submit.'
+                                            : 'All areas captured.',
+                                        style: TextStyle(
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF15803D),
+                                        ),
                                       ),
                                     ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          SizedBox(height: 12.h),
+                          FadeSlideIn(
+                            delay: const Duration(milliseconds: 50),
+                            child: VcrExamplesSection(theme: theme, step: step),
+                          ),
+                          SizedBox(height: 12.h),
+                          FadeSlideIn(
+                            delay: const Duration(milliseconds: 80),
+                            child: VcrFormCard(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          'Your photos',
+                                          style: TextStyle(
+                                            fontSize: 17.sp,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: -0.2,
+                                            color: theme.dashHeading,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: EdgeInsets.fromLTRB(
+                                          10.w,
+                                          5.h,
+                                          12.w,
+                                          5.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFD8E6FC),
+                                          borderRadius: BorderRadius.circular(
+                                            500.r,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              width: 6.w,
+                                              height: 6.w,
+                                              decoration: BoxDecoration(
+                                                color: theme.dashPrimary,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            SizedBox(width: 6.w),
+                                            Text(
+                                              '$_capturedCount of ${step.captures.length}',
+                                              style: TextStyle(
+                                                fontSize: 12.sp,
+                                                fontWeight: FontWeight.w700,
+                                                color: theme.dashPrimary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      final cols =
+                                          ResponsiveLayout.photoGridColumns(
+                                            constraints.maxWidth,
+                                          );
+                                      final spacing = 10.w;
+                                      final tileW =
+                                          (constraints.maxWidth -
+                                              spacing * (cols - 1)) /
+                                          cols;
+                                      return Wrap(
+                                        spacing: spacing,
+                                        runSpacing: 12.h,
+                                        children: [
+                                          for (final slot in step.captures)
+                                            VcrCaptureSlot(
+                                              width: tileW,
+                                              label: slot.label,
+                                              imageFile: _captures[slot.id],
+                                              onTap: () => _pickPhoto(slot.id),
+                                              isCompressing:
+                                                  _compressingSlots[slot.id] ??
+                                                  false,
+                                            ),
+                                        ],
+                                      );
+                                    },
                                   ),
                                 ],
                               ),
                             ),
                           ),
-                        SizedBox(height: 12.h),
-                        FadeSlideIn(
-                          delay: const Duration(milliseconds: 50),
-                          child: VcrExamplesSection(theme: theme, step: step),
-                        ),
-                        SizedBox(height: 12.h),
-                        FadeSlideIn(
-                          delay: const Duration(milliseconds: 80),
-                          child: VcrFormCard(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        'Your photos',
-                                        style: TextStyle(
-                                          fontSize: 17.sp,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: -0.2,
-                                          color: theme.dashHeading,
-                                        ),
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: EdgeInsets.fromLTRB(
-                                        10.w,
-                                        5.h,
-                                        12.w,
-                                        5.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFD8E6FC),
-                                        borderRadius: BorderRadius.circular(
-                                          500.r,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Container(
-                                            width: 6.w,
-                                            height: 6.w,
-                                            decoration: BoxDecoration(
-                                              color: theme.dashPrimary,
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          SizedBox(width: 6.w),
-                                          Text(
-                                            '$_capturedCount of ${step.captures.length}',
-                                            style: TextStyle(
-                                              fontSize: 12.sp,
-                                              fontWeight: FontWeight.w700,
-                                              color: theme.dashPrimary,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 12.h),
-                                Wrap(
-                                  spacing: 10.w,
-                                  runSpacing: 12.h,
-                                  children: [
-                                    for (final slot in step.captures)
-                                      VcrCaptureSlot(
-                                        label: slot.label,
-                                        imageFile: _captures[slot.id],
-                                        onTap: () => _pickPhoto(slot.id),
-                                        isCompressing:
-                                            _compressingSlots[slot.id] ?? false,
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 12.h),
-                    decoration: BoxDecoration(
-                      color: theme.isDark
-                          ? theme.base.withValues(alpha: 0.92)
-                          : Colors.white.withValues(alpha: 0.92),
-                      border: Border(top: BorderSide(color: hairline)),
-                    ),
-                    child: Row(
-                      children: [
-                        PressableScale(
-                          onTap: _onBack,
-                          child: Container(
-                            height: 44.h,
-                            padding: EdgeInsets.symmetric(horizontal: 18.w),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: theme.isDark
-                                  ? theme.dashSurfaceTint
-                                  : const Color(0xFFE9EDF5),
-                              borderRadius: BorderRadius.circular(14.r),
-                            ),
-                            child: Text(
-                              'Back',
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w700,
-                                color: theme.dashHeading,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: PressableScale(
-                            onTap: _isSubmitting ? null : _onPrimaryAction,
-                            scale: 0.98,
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 12.h),
+                      decoration: BoxDecoration(
+                        color: theme.isDark
+                            ? theme.base.withValues(alpha: 0.92)
+                            : Colors.white.withValues(alpha: 0.92),
+                        border: Border(top: BorderSide(color: hairline)),
+                      ),
+                      child: Row(
+                        children: [
+                          PressableScale(
+                            onTap: _onBack,
                             child: Container(
                               height: 44.h,
+                              padding: EdgeInsets.symmetric(horizontal: 18.w),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: AppColors.accentLime,
+                                color: theme.isDark
+                                    ? theme.dashSurfaceTint
+                                    : const Color(0xFFE9EDF5),
                                 borderRadius: BorderRadius.circular(14.r),
                               ),
-                              child: _isSubmitting
-                                  ? SizedBox(
-                                      width: 18.r,
-                                      height: 18.r,
-                                      child: const CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Color(0xFF0B1F3A),
-                                      ),
-                                    )
-                                  : Text(
-                                      isLastStep
-                                          ? 'Submit report'
-                                          : 'Next step',
-                                      style: TextStyle(
-                                        fontSize: 15.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textDarkBlue,
-                                      ),
-                                    ),
+                              child: Text(
+                                'Back',
+                                style: TextStyle(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.dashHeading,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: PressableScale(
+                              onTap: _isSubmitting ? null : _onPrimaryAction,
+                              scale: 0.98,
+                              child: Container(
+                                height: 44.h,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: AppColors.accentLime,
+                                  borderRadius: BorderRadius.circular(14.r),
+                                ),
+                                child: _isSubmitting
+                                    ? SizedBox(
+                                        width: 18.r,
+                                        height: 18.r,
+                                        child: const CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Color(0xFF0B1F3A),
+                                        ),
+                                      )
+                                    : Text(
+                                        isLastStep
+                                            ? 'Submit report'
+                                            : 'Next step',
+                                        style: TextStyle(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textDarkBlue,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

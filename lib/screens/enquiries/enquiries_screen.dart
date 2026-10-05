@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:chumley_navigator/core/responsive/responsive_breakpoints.dart';
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
@@ -170,76 +172,79 @@ class _EnquiriesScreenState extends State<EnquiriesScreen> {
               color: theme.isDark ? theme.base : null,
             ),
             child: SafeArea(
-              child: ListView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 100.h),
-                children: [
-                  Text(
-                    'Enquiries',
-                    style: TextStyle(
-                      fontSize: 26.sp,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.7,
-                      color: theme.dashHeading,
-                    ),
-                  ),
-                  SizedBox(height: 3.h),
-                  Text(
-                    'Report an issue or track an enquiry',
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w400,
-                      color: theme.dashMuted,
-                    ),
-                  ),
-                  SizedBox(height: 18.h),
-                  FadeSlideIn(
-                    child: _SubmitEnquiryCard(
-                      theme: theme,
-                      categories: _categories,
-                      selectedCategory: _selectedCategory,
-                      onCategoryChanged: (v) =>
-                          setState(() => _selectedCategory = v),
-                      descriptionController: _descriptionController,
-                      descriptionFocused: _descriptionFocused,
-                      onDescriptionFocus: (focused) =>
-                          setState(() => _descriptionFocused = focused),
-                      attachments: _attachments,
-                      onBrowse: () => _pickImage(ImageSource.gallery),
-                      onTakePhoto: () => _pickImage(ImageSource.camera),
-                      onRemoveAttachment: _removeAttachment,
-                      onSubmit: _submit,
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-                  Text(
-                    'Active enquiries',
-                    style: TextStyle(
-                      fontSize: 17.sp,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.2,
-                      color: theme.dashHeading,
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  if (_enquiries.isEmpty)
-                    FadeSlideIn(
-                      delay: const Duration(milliseconds: 40),
-                      child: _EmptyEnquiriesCard(theme: theme),
-                    )
-                  else
-                    for (var i = 0; i < _enquiries.length; i++) ...[
-                      if (i > 0) SizedBox(height: 10.h),
-                      FadeSlideIn(
-                        delay: Duration(milliseconds: 40 + (i * 40)),
-                        child: _EnquiryCard(
-                          theme: theme,
-                          item: _enquiries[i],
-                          stepLabels: _stepLabels,
-                        ),
+              child: ResponsiveContent(
+                maxWidth: ResponsiveBreakpoints.pageContentMax,
+                child: ListView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 100.h),
+                  children: [
+                    Text(
+                      'Enquiries',
+                      style: TextStyle(
+                        fontSize: 26.sp,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.7,
+                        color: theme.dashHeading,
                       ),
-                    ],
-                ],
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      'Report an issue or track an enquiry',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w400,
+                        color: theme.dashMuted,
+                      ),
+                    ),
+                    SizedBox(height: 18.h),
+                    FadeSlideIn(
+                      child: _SubmitEnquiryCard(
+                        theme: theme,
+                        categories: _categories,
+                        selectedCategory: _selectedCategory,
+                        onCategoryChanged: (v) =>
+                            setState(() => _selectedCategory = v),
+                        descriptionController: _descriptionController,
+                        descriptionFocused: _descriptionFocused,
+                        onDescriptionFocus: (focused) =>
+                            setState(() => _descriptionFocused = focused),
+                        attachments: _attachments,
+                        onBrowse: () => _pickImage(ImageSource.gallery),
+                        onTakePhoto: () => _pickImage(ImageSource.camera),
+                        onRemoveAttachment: _removeAttachment,
+                        onSubmit: _submit,
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+                    Text(
+                      'Active enquiries',
+                      style: TextStyle(
+                        fontSize: 17.sp,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
+                        color: theme.dashHeading,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    if (_enquiries.isEmpty)
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 40),
+                        child: _EmptyEnquiriesCard(theme: theme),
+                      )
+                    else
+                      for (var i = 0; i < _enquiries.length; i++) ...[
+                        if (i > 0) SizedBox(height: 10.h),
+                        FadeSlideIn(
+                          delay: Duration(milliseconds: 40 + (i * 40)),
+                          child: _EnquiryCard(
+                            theme: theme,
+                            item: _enquiries[i],
+                            stepLabels: _stepLabels,
+                          ),
+                        ),
+                      ],
+                  ],
+                ),
               ),
             ),
           ),

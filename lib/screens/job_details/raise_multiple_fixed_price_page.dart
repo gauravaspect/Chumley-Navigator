@@ -1,4 +1,5 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/core/app_dependencies.dart';
 import 'package:chumley_navigator/models/appointment.dart';
 import 'package:chumley_navigator/models/fixed_price_job_context.dart';
@@ -18,7 +19,6 @@ import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
 import 'package:chumley_navigator/widgets/ui/outlined_cta_button.dart';
-import 'package:chumley_navigator/widgets/ui/pressable_scale.dart';
 import 'package:chumley_navigator/widgets/ui/primary_cta_button.dart';
 import 'package:chumley_navigator/widgets/ui/screen_title_block.dart';
 import 'package:flutter/material.dart';
@@ -101,7 +101,8 @@ class RaiseMultipleFixedPricePage extends StatefulWidget {
 
 class _RaiseMultipleFixedPricePageState
     extends State<RaiseMultipleFixedPricePage> {
-  int _currentStep = 0; // 0: Catalog, 1: Scope, 2: Pricing, 3: Operative, 4: Confirmation, 5: Review
+  int _currentStep =
+      0; // 0: Catalog, 1: Scope, 2: Pricing, 3: Operative, 4: Confirmation, 5: Review
   final List<SavedFixedPriceJob> _batchedJobs = [];
 
   // Step 1: Trade selection
@@ -356,7 +357,9 @@ class _RaiseMultipleFixedPricePageState
     if (args is FixedPriceJobContext) return args;
     if (args is Appointment) return FixedPriceJobContext.fromAppointment(args);
 
-    final sid = widget.jobId.isNotEmpty ? widget.jobId : '0WO_BATCH_${DateTime.now().millisecondsSinceEpoch}';
+    final sid = widget.jobId.isNotEmpty
+        ? widget.jobId
+        : '0WO_BATCH_${DateTime.now().millisecondsSinceEpoch}';
     return FixedPriceJobContext(
       sourceWorkOrderId: sid,
       workOrderLabel: widget.jobNumber.isNotEmpty ? widget.jobNumber : sid,
@@ -547,7 +550,7 @@ class _RaiseMultipleFixedPricePageState
     final currentSavedJob = _buildSavedJobObject(jobContext);
     final totalBatchedCount = _batchedJobs.length + 1;
 
-    showDialog<void>(
+    showAppDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
@@ -599,10 +602,26 @@ class _RaiseMultipleFixedPricePageState
                 ),
                 child: Column(
                   children: [
-                    _buildDialogSummaryRow(theme, 'Trade', currentSavedJob.tradeName),
-                    _buildDialogSummaryRow(theme, 'Work Type', currentSavedJob.workTypeName),
-                    _buildDialogSummaryRow(theme, 'Total Charges', '£${currentSavedJob.totalCustomerCharges.toStringAsFixed(2)}'),
-                    _buildDialogSummaryRow(theme, 'Choice', currentSavedJob.customerConfirmationChoice),
+                    _buildDialogSummaryRow(
+                      theme,
+                      'Trade',
+                      currentSavedJob.tradeName,
+                    ),
+                    _buildDialogSummaryRow(
+                      theme,
+                      'Work Type',
+                      currentSavedJob.workTypeName,
+                    ),
+                    _buildDialogSummaryRow(
+                      theme,
+                      'Total Charges',
+                      '£${currentSavedJob.totalCustomerCharges.toStringAsFixed(2)}',
+                    ),
+                    _buildDialogSummaryRow(
+                      theme,
+                      'Choice',
+                      currentSavedJob.customerConfirmationChoice,
+                    ),
                   ],
                 ),
               ),
@@ -655,7 +674,11 @@ class _RaiseMultipleFixedPricePageState
     );
   }
 
-  Widget _buildDialogSummaryRow(DashboardTheme theme, String label, String value) {
+  Widget _buildDialogSummaryRow(
+    DashboardTheme theme,
+    String label,
+    String value,
+  ) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 2.5.h),
       child: Row(
@@ -688,7 +711,8 @@ class _RaiseMultipleFixedPricePageState
     if (_batchedJobs.isEmpty || _isSubmitting) return;
     setState(() => _isSubmitting = true);
 
-    final refId = 'MFP-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    final refId =
+        'MFP-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
     double grandTotalNet = 0;
     final List<Map<String, dynamic>> lineItems = [];
 
@@ -739,7 +763,8 @@ class _RaiseMultipleFixedPricePageState
         lineItems: lineItems,
         totalNet: grandTotalNet,
         totalGross: grandTotalNet * 1.20,
-        notes: 'Multiple Fixed Price Batch ($refId): ${_batchedJobs.length} jobs submitted.',
+        notes:
+            'Multiple Fixed Price Batch ($refId): ${_batchedJobs.length} jobs submitted.',
       );
 
       if (!mounted) return;
@@ -750,12 +775,14 @@ class _RaiseMultipleFixedPricePageState
         context,
         theme: theme,
         title: '${_batchedJobs.length} Fixed Price Jobs Submitted',
-        subtitle: 'All ${_batchedJobs.length} Fixed Price agreements have been successfully submitted.',
+        subtitle:
+            'All ${_batchedJobs.length} Fixed Price agreements have been successfully submitted.',
         referenceId: refId,
         details: {
           'Total Jobs': '${_batchedJobs.length} work orders',
           'Grand Total (Net)': '£${grandTotalNet.toStringAsFixed(2)}',
-          'Grand Total (Gross)': '£${(grandTotalNet * 1.20).toStringAsFixed(2)}',
+          'Grand Total (Gross)':
+              '£${(grandTotalNet * 1.20).toStringAsFixed(2)}',
           'Jobs': _batchedJobs.map((j) => j.workTypeName).join(', '),
         },
         buttonLabel: 'Back to Job',
@@ -777,7 +804,10 @@ class _RaiseMultipleFixedPricePageState
     }
   }
 
-  Widget _buildStepContent(DashboardTheme theme, FixedPriceJobContext jobContext) {
+  Widget _buildStepContent(
+    DashboardTheme theme,
+    FixedPriceJobContext jobContext,
+  ) {
     final state = context.watch<FixedPriceCubit>().state;
     final trades = state.trades;
     final categories = state.categories;
@@ -797,7 +827,8 @@ class _RaiseMultipleFixedPricePageState
           loadingWorkTypes: state.loadingWorkTypes,
           isLoading: state is FixedPriceLoading,
           isError: state is FixedPriceError,
-          onRetry: () => context.read<FixedPriceCubit>().loadTrades(forceRefresh: true),
+          onRetry: () =>
+              context.read<FixedPriceCubit>().loadTrades(forceRefresh: true),
           onTradeChanged: (val) {
             setState(() {
               _selectedTrade = val;
@@ -820,11 +851,17 @@ class _RaiseMultipleFixedPricePageState
           onWorkTypeChanged: (val) {
             setState(() {
               _selectedWorkType = val;
-              if (val != null && _selectedTrade != null && _selectedCategory != null) {
+              if (val != null &&
+                  _selectedTrade != null &&
+                  _selectedCategory != null) {
                 final tradeName = _getTradeName(_selectedTrade);
                 final catName = _getCategoryName(_selectedCategory);
                 final wtName = _getWorkTypeName(val);
-                _scopeOfWorkController.text = _generateMockScopeOfWork(tradeName, catName, wtName);
+                _scopeOfWorkController.text = _generateMockScopeOfWork(
+                  tradeName,
+                  catName,
+                  wtName,
+                );
               }
             });
           },
@@ -855,26 +892,35 @@ class _RaiseMultipleFixedPricePageState
         return FixedPricePricingStep(
           theme: theme,
           collectionFeeApplicable: _collectionFeeApplicable,
-          onCollectionFeeApplicableChanged: (val) => setState(() => _collectionFeeApplicable = val),
+          onCollectionFeeApplicableChanged: (val) =>
+              setState(() => _collectionFeeApplicable = val),
           selectedListPriceService: _selectedListPriceService,
-          onListPriceServiceChanged: (val) => setState(() => _selectedListPriceService = val),
+          onListPriceServiceChanged: (val) =>
+              setState(() => _selectedListPriceService = val),
           listPriceServices: _listPriceServices,
           materialCostOperativeController: _materialCostOperativeController,
           materialCostOperativeFocusNode: _materialCostOperativeFocusNode,
           materialCostOperativeFocused: _materialCostOperativeFocused,
-          descriptionMaterialsOperativeController: _descriptionMaterialsOperativeController,
-          descriptionMaterialsOperativeFocusNode: _descriptionMaterialsOperativeFocusNode,
-          descriptionMaterialsOperativeFocused: _descriptionMaterialsOperativeFocused,
+          descriptionMaterialsOperativeController:
+              _descriptionMaterialsOperativeController,
+          descriptionMaterialsOperativeFocusNode:
+              _descriptionMaterialsOperativeFocusNode,
+          descriptionMaterialsOperativeFocused:
+              _descriptionMaterialsOperativeFocused,
           chargeDrainagePatches: _chargeDrainagePatches,
-          onChargeDrainagePatchesChanged: (val) => setState(() => _chargeDrainagePatches = val),
+          onChargeDrainagePatchesChanged: (val) =>
+              setState(() => _chargeDrainagePatches = val),
           materialCostAspectController: _materialCostAspectController,
           materialCostAspectFocusNode: _materialCostAspectFocusNode,
           materialCostAspectFocused: _materialCostAspectFocused,
-          descriptionMaterialsAspectController: _descriptionMaterialsAspectController,
-          descriptionMaterialsAspectFocusNode: _descriptionMaterialsAspectFocusNode,
+          descriptionMaterialsAspectController:
+              _descriptionMaterialsAspectController,
+          descriptionMaterialsAspectFocusNode:
+              _descriptionMaterialsAspectFocusNode,
           descriptionMaterialsAspectFocused: _descriptionMaterialsAspectFocused,
           ulezChargeApplicable: _ulezChargeApplicable,
-          onUlezChargeApplicableChanged: (val) => setState(() => _ulezChargeApplicable = val),
+          onUlezChargeApplicableChanged: (val) =>
+              setState(() => _ulezChargeApplicable = val),
           materialCostError: _materialCostError,
         );
       case 3:
@@ -885,7 +931,8 @@ class _RaiseMultipleFixedPricePageState
           durationHoursFocused: _durationHoursFocused,
           durationHours: _durationHours,
           selectedLabourRate: _selectedLabourRate,
-          onLabourRateChanged: (val) => setState(() => _selectedLabourRate = val),
+          onLabourRateChanged: (val) =>
+              setState(() => _selectedLabourRate = val),
           listPriceServiceCost: _listPriceServiceCost,
           materialsCharge: _materialsCharge,
           attendanceFee: _attendanceFee,
@@ -902,7 +949,8 @@ class _RaiseMultipleFixedPricePageState
           scopeScrollController: _scopeScrollController,
           totalCustomerCharges: _totalCustomerCharges,
           customerConfirmationChoice: _customerConfirmationChoice,
-          onCustomerConfirmationChoiceChanged: (val) => setState(() => _customerConfirmationChoice = val),
+          onCustomerConfirmationChoiceChanged: (val) =>
+              setState(() => _customerConfirmationChoice = val),
         );
       case 5:
         return FixedPriceReviewStep(
@@ -934,11 +982,7 @@ class _RaiseMultipleFixedPricePageState
         children: [
           Row(
             children: [
-              Icon(
-                LucideIcons.layers,
-                size: 14.sp,
-                color: theme.dashPrimary,
-              ),
+              Icon(LucideIcons.layers, size: 14.sp, color: theme.dashPrimary),
               SizedBox(width: 6.w),
               Expanded(
                 child: Text(
@@ -1033,11 +1077,13 @@ class _RaiseMultipleFixedPricePageState
     );
   }
 
-  Widget _buildBottomButtons(DashboardTheme theme, FixedPriceJobContext jobContext) {
+  Widget _buildBottomButtons(
+    DashboardTheme theme,
+    FixedPriceJobContext jobContext,
+  ) {
     final isFirstScreen = _currentStep == 0;
     final isLastScreen = _currentStep == 5;
     final isValid = _isStepValid() && !_isSubmitting;
-    final totalBatchedCount = _batchedJobs.length + 1;
 
     return Row(
       children: [
@@ -1066,8 +1112,8 @@ class _RaiseMultipleFixedPricePageState
             backgroundColor: isValid
                 ? AppColors.primaryBlue
                 : (theme.isDark
-                    ? AppColors.darkBorder
-                    : AppColors.buttonDisabledBackground),
+                      ? AppColors.darkBorder
+                      : AppColors.buttonDisabledBackground),
             onTap: isValid
                 ? () {
                     if (isLastScreen) {
@@ -1137,7 +1183,10 @@ class _RaiseMultipleFixedPricePageState
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.surface,
                     border: Border(

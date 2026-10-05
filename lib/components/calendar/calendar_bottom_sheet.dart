@@ -155,10 +155,7 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
                   _isWeekly
                       ? 'Jobs and absences for the selected week.'
                       : 'Jobs and absences for the selected day.',
-                  style: TextStyle(
-                    fontSize: 12.5.sp,
-                    color: theme.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 12.5.sp, color: theme.textMuted),
                 ),
               ],
             ),
@@ -175,11 +172,7 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
                 border: Border.all(color: theme.border, width: 0.5),
               ),
               alignment: Alignment.center,
-              child: Icon(
-                Icons.close_rounded,
-                size: 16.sp,
-                color: theme.text,
-              ),
+              child: Icon(Icons.close_rounded, size: 16.sp, color: theme.text),
             ),
           ),
         ],
@@ -263,7 +256,11 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
     );
   }
 
-  Widget _tabButton({required DashboardTheme theme, required String label, required int index}) {
+  Widget _tabButton({
+    required DashboardTheme theme,
+    required String label,
+    required int index,
+  }) {
     final active = _selectedTab == index;
     return GestureDetector(
       onTap: () => setState(() => _selectedTab = index),
@@ -288,7 +285,11 @@ class _DashboardBottomSheetState extends State<DashboardBottomSheet> {
     );
   }
 
-  Widget _navButton({required DashboardTheme theme, required IconData icon, required VoidCallback onTap}) {
+  Widget _navButton({
+    required DashboardTheme theme,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(

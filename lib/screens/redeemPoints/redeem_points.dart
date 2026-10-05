@@ -1,4 +1,5 @@
 import 'package:chumley_navigator/components/redeem_points/redeem_cards.dart';
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/components/redeem_points/redeem_points_bottom_model.dart';
 import 'package:chumley_navigator/models/points_model.dart';
 import 'package:chumley_navigator/models/user_model.dart';
@@ -78,7 +79,7 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
                         icon: LucideIcons.clipboardList,
                         onTap: () {
                           if (performanceHistory != null) {
-                            showModalBottomSheet(
+                            showAppModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
                               backgroundColor: Colors.transparent,

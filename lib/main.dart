@@ -1,18 +1,19 @@
 import 'package:chumley_navigator/core/app_dependencies.dart';
+import 'package:chumley_navigator/core/firebase_options.dart';
 import 'package:chumley_navigator/core/log.dart';
+import 'package:chumley_navigator/core/responsive/responsive_breakpoints.dart';
+import 'package:chumley_navigator/core/responsive/responsive_layout.dart';
 import 'package:chumley_navigator/core/storage/prefs.dart';
 import 'package:chumley_navigator/providers/theme_notifier.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/routes.dart';
 import 'package:chumley_navigator/widgets/chumley_ai_floating_button.dart';
 import 'package:chumley_navigator/widgets/theme_scope.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import 'package:firebase_core/firebase_core.dart';
-import 'package:chumley_navigator/core/firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +44,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
+      designSize: const Size(
+        ResponsiveBreakpoints.phoneDesignWidth,
+        ResponsiveBreakpoints.phoneDesignHeight,
+      ),
       minTextAdapt: true,
+      splitScreenMode: true,
+      enableScaleWH: ResponsiveLayout.screenUtilShouldScale,
+      enableScaleText: ResponsiveLayout.screenUtilShouldScale,
       builder: (context, child) {
         return ThemeScope(
           notifier: themeNotifier,
@@ -64,8 +72,19 @@ class MyApp extends StatelessWidget {
                   routes: AppRoutes.routes,
                   initialRoute: AppRoutes.splash,
                   builder: (context, child) {
-                    return ChumleyAiAppOverlay(
-                      child: child ?? const SizedBox.shrink(),
+                    // Keep system text scaling from blowing up phone layouts
+                    // further on large foldables.
+                    final mq = MediaQuery.of(context);
+                    return MediaQuery(
+                      data: mq.copyWith(
+                        textScaler: mq.textScaler.clamp(
+                          minScaleFactor: 0.85,
+                          maxScaleFactor: 1.15,
+                        ),
+                      ),
+                      child: ChumleyAiAppOverlay(
+                        child: child ?? const SizedBox.shrink(),
+                      ),
                     );
                   },
                   theme: ThemeData(

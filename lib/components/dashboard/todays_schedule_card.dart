@@ -1,4 +1,5 @@
 import 'package:chumley_navigator/components/dashboard/compact_schedule_job_card.dart';
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/models/ppm_jobs_models.dart';
 import 'package:chumley_navigator/models/user_model.dart';
 import 'package:chumley_navigator/screens/dashboard/calendar_full_screen.dart';
@@ -307,7 +308,7 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
 
   Future<void> _openFilterSheet(List<String> options) async {
     final theme = DashboardTheme.of(context);
-    final selected = await showModalBottomSheet<String>(
+    final selected = await showAppModalBottomSheet<String>(
       context: context,
       backgroundColor: theme.surface,
       shape: RoundedRectangleBorder(
@@ -341,8 +342,8 @@ class _TodaysScheduleCardState extends State<TodaysScheduleCard> {
                           : FontWeight.w500,
                       color: opt == _filter
                           ? (theme.isDark
-                              ? AppColors.accentBlue
-                              : AppColors.primaryBlue)
+                                ? AppColors.accentBlue
+                                : AppColors.primaryBlue)
                           : theme.dashTitle,
                     ),
                   ),

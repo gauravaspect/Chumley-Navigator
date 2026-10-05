@@ -1,5 +1,6 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/log.dart';
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
 import 'package:chumley_navigator/pillar/jobs_repository.dart';
 import 'package:chumley_navigator/screens/forms/vent_hygiene/models/sub_operative_controllers.dart';
 import 'package:chumley_navigator/screens/forms/vent_hygiene/steps/vent_information_step.dart';
@@ -589,173 +590,175 @@ class _VentHygieneFormPageState extends State<VentHygieneFormPage> {
         return Scaffold(
           backgroundColor: theme.base,
           body: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Stack(
-                    children: [
-                      SingleChildScrollView(
-                        controller: _scrollController,
-                        padding: EdgeInsets.only(
+            child: ResponsiveContent.form(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        SingleChildScrollView(
+                          controller: _scrollController,
+                          padding: EdgeInsets.only(
+                            left: 16.w,
+                            right: 16.w,
+                            top: _brandingExpandedHeight + 12,
+                            bottom: 24.h,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                'Vent Hygiene Forms',
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.dashTitle,
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                'Vent heat loss calculation · BS 8204:2011',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: theme.textMuted,
+                                ),
+                              ),
+                              SizedBox(height: 16.h),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 10.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.surface,
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(
+                                    color: theme.border,
+                                    width: 0.5,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Risk & HSE',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryBlue,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 12.h),
+                              HseRiskSection(
+                                theme: theme,
+                                controller: _hse,
+                                onChanged: () => setState(() {}),
+                              ),
+                              SizedBox(height: 20.h),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 10.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.surface,
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(
+                                    color: theme.border,
+                                    width: 0.5,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Information',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryBlue,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 16.h),
+                              VentInformationStep(
+                                theme: theme,
+                                currency: _currency,
+                                workOrderDisplay: _workOrderDisplay,
+                                selectedAppointment: _selectedAppointment,
+                                appointmentSearchController:
+                                    _appointmentSearchController,
+                                lastServiceClean: _lastServiceClean,
+                                selectedOperative: _selectedOperative,
+                                operativeSearchController:
+                                    _operativeSearchController,
+                                travelHoursController: _travelHoursController,
+                                dateTime: _dateTime,
+                                dateTimeError: _dateTimeError,
+                                leadEngineerCostController:
+                                    _leadEngineerCostController,
+                                hoursWorkedController: _hoursWorkedController,
+                                scopeOfWorkController: _scopeOfWorkController,
+                                subOperativeCount: _subOperativeCount,
+                                subOperatives: _subOperatives,
+                                certificateDescController:
+                                    _certificateDescController,
+                                preCleanPdfUrlController:
+                                    _preCleanPdfUrlController,
+                                onCurrencyChanged: (v) =>
+                                    setState(() => _currency = v),
+                                onAppointmentChanged: (v) =>
+                                    setState(() => _selectedAppointment = v),
+                                onPickLastServiceClean: _pickLastServiceClean,
+                                onOperativeChanged: (v) =>
+                                    setState(() => _selectedOperative = v),
+                                onPickDate: _pickDate,
+                                onPickTime: _pickTime,
+                                onSubOperativeCountChanged: (v) {
+                                  if (v == null) return;
+                                  setState(() {
+                                    _subOperativeCount = v;
+                                    _syncSubOperativeControllers(
+                                      _subOperativeCountValue,
+                                    );
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        ValueListenableBuilder<double>(
+                          valueListenable: _collapseProgress,
+                          builder: (context, progress, _) {
+                            return Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              child: AspectBranding(
+                                progress: progress,
+                                expandedHeight: _brandingExpandedHeight,
+                                collapsedHeight: _brandingCollapsedHeight,
+                                theme: theme,
+                                hasBackButton: true,
+                                title: Text(
+                                  'Vent Hygiene',
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.6,
+                                    color: theme.textBody,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        Positioned(
+                          top: 8.h,
                           left: 16.w,
-                          right: 16.w,
-                          top: _brandingExpandedHeight + 12,
-                          bottom: 24.h,
+                          child: CommandCentreBackButton(onTap: _onCancel),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              'Vent Hygiene Forms',
-                              style: TextStyle(
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.w700,
-                                color: theme.dashTitle,
-                              ),
-                            ),
-                            SizedBox(height: 4.h),
-                            Text(
-                              'Vent heat loss calculation · BS 8204:2011',
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: theme.textMuted,
-                              ),
-                            ),
-                            SizedBox(height: 16.h),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 10.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.surface,
-                                borderRadius: BorderRadius.circular(10.r),
-                                border: Border.all(
-                                  color: theme.border,
-                                  width: 0.5,
-                                ),
-                              ),
-                              child: Text(
-                                'Risk & HSE',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primaryBlue,
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 12.h),
-                            HseRiskSection(
-                              theme: theme,
-                              controller: _hse,
-                              onChanged: () => setState(() {}),
-                            ),
-                            SizedBox(height: 20.h),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 10.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.surface,
-                                borderRadius: BorderRadius.circular(10.r),
-                                border: Border.all(
-                                  color: theme.border,
-                                  width: 0.5,
-                                ),
-                              ),
-                              child: Text(
-                                'Information',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primaryBlue,
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 16.h),
-                            VentInformationStep(
-                              theme: theme,
-                              currency: _currency,
-                              workOrderDisplay: _workOrderDisplay,
-                              selectedAppointment: _selectedAppointment,
-                              appointmentSearchController:
-                                  _appointmentSearchController,
-                              lastServiceClean: _lastServiceClean,
-                              selectedOperative: _selectedOperative,
-                              operativeSearchController:
-                                  _operativeSearchController,
-                              travelHoursController: _travelHoursController,
-                              dateTime: _dateTime,
-                              dateTimeError: _dateTimeError,
-                              leadEngineerCostController:
-                                  _leadEngineerCostController,
-                              hoursWorkedController: _hoursWorkedController,
-                              scopeOfWorkController: _scopeOfWorkController,
-                              subOperativeCount: _subOperativeCount,
-                              subOperatives: _subOperatives,
-                              certificateDescController:
-                                  _certificateDescController,
-                              preCleanPdfUrlController:
-                                  _preCleanPdfUrlController,
-                              onCurrencyChanged: (v) =>
-                                  setState(() => _currency = v),
-                              onAppointmentChanged: (v) =>
-                                  setState(() => _selectedAppointment = v),
-                              onPickLastServiceClean: _pickLastServiceClean,
-                              onOperativeChanged: (v) =>
-                                  setState(() => _selectedOperative = v),
-                              onPickDate: _pickDate,
-                              onPickTime: _pickTime,
-                              onSubOperativeCountChanged: (v) {
-                                if (v == null) return;
-                                setState(() {
-                                  _subOperativeCount = v;
-                                  _syncSubOperativeControllers(
-                                    _subOperativeCountValue,
-                                  );
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      ValueListenableBuilder<double>(
-                        valueListenable: _collapseProgress,
-                        builder: (context, progress, _) {
-                          return Positioned(
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            child: AspectBranding(
-                              progress: progress,
-                              expandedHeight: _brandingExpandedHeight,
-                              collapsedHeight: _brandingCollapsedHeight,
-                              theme: theme,
-                              hasBackButton: true,
-                              title: Text(
-                                'Vent Hygiene',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.6,
-                                  color: theme.textBody,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      Positioned(
-                        top: 8.h,
-                        left: 16.w,
-                        child: CommandCentreBackButton(onTap: _onCancel),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                _buildBottomBar(theme),
-              ],
+                  _buildBottomBar(theme),
+                ],
+              ),
             ),
           ),
         );

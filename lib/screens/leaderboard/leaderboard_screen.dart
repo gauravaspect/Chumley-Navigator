@@ -1,4 +1,7 @@
 import 'package:chumley_navigator/core/app_dependencies.dart';
+import 'package:chumley_navigator/core/responsive/responsive_breakpoints.dart';
+import 'package:chumley_navigator/core/responsive/responsive_content.dart';
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/core/storage/prefs.dart';
 import 'package:chumley_navigator/models/leaderboard_model.dart';
 import 'package:chumley_navigator/models/user_model.dart';
@@ -105,7 +108,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   Future<void> _pickPeriod() async {
     final theme = DashboardTheme.of(context);
-    final selected = await showModalBottomSheet<String>(
+    final selected = await showAppModalBottomSheet<String>(
       context: context,
       backgroundColor: theme.surface,
       shape: RoundedRectangleBorder(
@@ -137,8 +140,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           : FontWeight.w500,
                       color: option == _period
                           ? (theme.isDark
-                              ? AppColors.accentBlue
-                              : AppColors.primaryBlue)
+                                ? AppColors.accentBlue
+                                : AppColors.primaryBlue)
                           : theme.dashTitle,
                     ),
                   ),
@@ -219,152 +222,166 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       color: theme.isDark ? theme.base : null,
                     ),
                     child: SafeArea(
-                      child: RefreshIndicator(
-                        color: theme.dashPrimary,
-                        onRefresh: _cubit.refresh,
-                        child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(
-                            parent: BouncingScrollPhysics(),
-                          ),
-                          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 100.h),
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'Leaderboard',
-                                    style: TextStyle(
-                                      fontSize: 28.sp,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: -0.8,
-                                      color: theme.dashHeading,
-                                    ),
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: _pickPeriod,
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 14.w,
-                                      vertical: 9.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: theme.dashPrimary,
-                                      borderRadius: BorderRadius.circular(11.r),
-                                    ),
-                                    child: Text(
-                                      _period,
-                                      style: TextStyle(
-                                        fontSize: 13.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                      child: ResponsiveContent(
+                        maxWidth: ResponsiveBreakpoints.pageContentMax,
+                        child: RefreshIndicator(
+                          color: theme.dashPrimary,
+                          onRefresh: _cubit.refresh,
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
                             ),
-                            SizedBox(height: 16.h),
-                            if (showShimmer)
-                              LeaderboardShimmer(theme: theme)
-                            else if (users.isEmpty)
-                              _LeaderboardEmpty(theme: theme)
-                            else ...[
-                              if (me != null) ...[
-                                FadeSlideIn(
-                                  child: _StandingCard(
-                                    theme: theme,
-                                    ordinal: _ordinal(me.rank),
-                                    delta: _deltaFor(me.rank),
-                                  ),
-                                ),
-                                SizedBox(height: 16.h),
-                              ],
-                              FadeSlideIn(
-                                delay: const Duration(milliseconds: 40),
-                                child: _TopThreePodium(
-                                  theme: theme,
-                                  first: top1,
-                                  second: top2,
-                                  third: top3,
-                                  initialsOf: _initials,
-                                  firstNameOf: _firstName,
-                                ),
-                              ),
-                              SizedBox(height: 20.h),
+                            padding: EdgeInsets.fromLTRB(
+                              20.w,
+                              12.h,
+                              20.w,
+                              100.h,
+                            ),
+                            children: [
                               Row(
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      'Full ranking',
+                                      'Leaderboard',
                                       style: TextStyle(
-                                        fontSize: 16.sp,
-                                        fontWeight: FontWeight.w700,
+                                        fontSize: 28.sp,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -0.8,
                                         color: theme.dashHeading,
                                       ),
                                     ),
                                   ),
-                                  Text(
-                                    'KPI score',
-                                    style: TextStyle(
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w400,
-                                      color: theme.dashMuted,
+                                  GestureDetector(
+                                    onTap: _pickPeriod,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 14.w,
+                                        vertical: 9.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: theme.dashPrimary,
+                                        borderRadius: BorderRadius.circular(
+                                          11.r,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        _period,
+                                        style: TextStyle(
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 10.h),
-                              if (ranking.isEmpty)
-                                Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                                  child: Text(
-                                    'No additional rankings yet.',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      color: theme.dashMuted,
+                              SizedBox(height: 16.h),
+                              if (showShimmer)
+                                LeaderboardShimmer(theme: theme)
+                              else if (users.isEmpty)
+                                _LeaderboardEmpty(theme: theme)
+                              else ...[
+                                if (me != null) ...[
+                                  FadeSlideIn(
+                                    child: _StandingCard(
+                                      theme: theme,
+                                      ordinal: _ordinal(me.rank),
+                                      delta: _deltaFor(me.rank),
                                     ),
                                   ),
-                                )
-                              else
-                                Container(
-                                  width: double.infinity,
-                                  decoration: theme.dashCardDecoration(
-                                    radius: 18,
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      for (
-                                        var i = 0;
-                                        i < ranking.length;
-                                        i++
-                                      ) ...[
-                                        if (i > 0)
-                                          Divider(
-                                            height: 1,
-                                            color: theme.dashBorderLight
-                                                .withValues(alpha: 0.35),
-                                          ),
-                                        FadeSlideIn(
-                                          delay: Duration(milliseconds: 30 * i),
-                                          offsetY: 6,
-                                          child: _RankRow(
-                                            theme: theme,
-                                            user: ranking[i],
-                                            isMe: _isMe(ranking[i]),
-                                            initials: _initials(
-                                              ranking[i].name,
-                                            ),
-                                            delta: _deltaFor(ranking[i].rank),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
+                                  SizedBox(height: 16.h),
+                                ],
+                                FadeSlideIn(
+                                  delay: const Duration(milliseconds: 40),
+                                  child: _TopThreePodium(
+                                    theme: theme,
+                                    first: top1,
+                                    second: top2,
+                                    third: top3,
+                                    initialsOf: _initials,
+                                    firstNameOf: _firstName,
                                   ),
                                 ),
+                                SizedBox(height: 20.h),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Full ranking',
+                                        style: TextStyle(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: theme.dashHeading,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      'KPI score',
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w400,
+                                        color: theme.dashMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 10.h),
+                                if (ranking.isEmpty)
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 16.h,
+                                    ),
+                                    child: Text(
+                                      'No additional rankings yet.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: theme.dashMuted,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    width: double.infinity,
+                                    decoration: theme.dashCardDecoration(
+                                      radius: 18,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        for (
+                                          var i = 0;
+                                          i < ranking.length;
+                                          i++
+                                        ) ...[
+                                          if (i > 0)
+                                            Divider(
+                                              height: 1,
+                                              color: theme.dashBorderLight
+                                                  .withValues(alpha: 0.35),
+                                            ),
+                                          FadeSlideIn(
+                                            delay: Duration(
+                                              milliseconds: 30 * i,
+                                            ),
+                                            offsetY: 6,
+                                            child: _RankRow(
+                                              theme: theme,
+                                              user: ranking[i],
+                                              isMe: _isMe(ranking[i]),
+                                              initials: _initials(
+                                                ranking[i].name,
+                                              ),
+                                              delta: _deltaFor(ranking[i].rank),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
                     ),

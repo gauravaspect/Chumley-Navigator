@@ -211,7 +211,8 @@ class _RaiseFollowOnView extends StatelessWidget {
                   _OptionTile(
                     icon: LucideIcons.layers,
                     title: 'Raise multiple fixed price job',
-                    subtitle: 'Raise several Fixed Price work orders for this site',
+                    subtitle:
+                        'Raise several Fixed Price work orders for this site',
                     onTap: () async {
                       final result = await RaiseMultipleFixedPricePage.open(
                         context,
@@ -808,8 +809,9 @@ class _VisitCompleteView extends StatelessWidget {
                           Clipboard.setData(ClipboardData(text: job.jobNumber));
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              backgroundColor:
-                                  theme.isDark ? theme.surface : null,
+                              backgroundColor: theme.isDark
+                                  ? theme.surface
+                                  : null,
                               content: Text(
                                 'Appointment ID copied to clipboard',
                                 style: TextStyle(
@@ -852,11 +854,23 @@ class _VisitCompleteView extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 16.h),
-                  _stepRow(theme, 1, 'Your report goes to the office for review'),
+                  _stepRow(
+                    theme,
+                    1,
+                    'Your report goes to the office for review',
+                  ),
                   SizedBox(height: 14.h),
-                  _stepRow(theme, 2, 'The customer receives their visit summary'),
+                  _stepRow(
+                    theme,
+                    2,
+                    'The customer receives their visit summary',
+                  ),
                   SizedBox(height: 14.h),
-                  _stepRow(theme, 3, 'Points for this visit land in your Points Hub'),
+                  _stepRow(
+                    theme,
+                    3,
+                    'Points for this visit land in your Points Hub',
+                  ),
                 ],
               ),
             ),
@@ -909,7 +923,9 @@ class _VisitCompleteView extends StatelessWidget {
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w700,
-              color: theme.isDark ? AppColors.accentBlue : NavigatorTokens.brandNavy,
+              color: theme.isDark
+                  ? AppColors.accentBlue
+                  : NavigatorTokens.brandNavy,
             ),
           ),
         ),

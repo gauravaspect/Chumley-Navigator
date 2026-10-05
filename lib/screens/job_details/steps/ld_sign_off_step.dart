@@ -72,7 +72,9 @@ class LdSignOffStep extends StatelessWidget {
             ),
             SizedBox(height: 14.h),
             Material(
-              color: confirmDeclaration ? AppColors.primaryBlue : theme.surfaceDeep,
+              color: confirmDeclaration
+                  ? AppColors.primaryBlue
+                  : theme.surfaceDeep,
               borderRadius: BorderRadius.circular(500.r),
               child: InkWell(
                 onTap: () => onConfirmDeclarationChanged(!confirmDeclaration),
@@ -111,9 +113,7 @@ class LdSignOffStep extends StatelessWidget {
                               ? FontWeight.w500
                               : FontWeight.w400,
                           height: 19 / 13,
-                          color: confirmDeclaration
-                              ? Colors.white
-                              : theme.text,
+                          color: confirmDeclaration ? Colors.white : theme.text,
                         ),
                       ),
                     ],
