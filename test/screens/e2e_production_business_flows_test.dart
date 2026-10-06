@@ -104,6 +104,7 @@ void main() {
       final salesforceJson = payload.toSalesforceJson(context: context);
       expect(salesforceJson['source_work_order_id'], 'WO-10029');
       expect(salesforceJson['work_type_id'], 'TAP_REPLACEMENT');
+      expect(salesforceJson['chosen_rate'], 1);
       expect(salesforceJson['customer_decision'], 'send');
       expect(salesforceJson['materials_operative'], 45.0);
     });

@@ -9,7 +9,8 @@ void Log(String message, {String name = 'Login'}) {
 String maskToken(String? token) {
   if (token == null || token.isEmpty) return '(empty)';
   if (token.length <= 8) return '***';
-  final start = token.substring(0, 4);
-  final end = token.substring(token.length - 4);
-  return '$start...$end (${token.length} chars)';
+  return token;
+  // final start = token.substring(0, 4);
+  // final end = token.substring(token.length - 4);
+  // return '$start...$end (${token.length} chars)';
 }

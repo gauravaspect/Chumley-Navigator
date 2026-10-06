@@ -25,6 +25,8 @@ class ApiEndpoints {
   static const getFixedPriceCategories = "/api/work-orders/catalog/categories";
   static const getFixedPriceWorkTypes = "/api/work-orders/catalog/work-types";
   static const submitWorkOrder = '/api/work-orders';
+  static const submitReactiveWorkOrder = '/api/work-orders/reactive';
+  static const submitMultipleWorkOrders = '/api/work-orders/multiple';
   static const getPpmJobs = '/api/demo/ppm-tasks';
   static const engineerAppointments = '/api/engineer/appointments';
   static String engineerAppointment(String saId) =>

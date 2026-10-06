@@ -1,10 +1,12 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
 import 'package:chumley_navigator/core/app_dependencies.dart';
+import 'package:chumley_navigator/core/storage/prefs.dart';
 import 'package:chumley_navigator/models/appointment.dart';
 import 'package:chumley_navigator/models/fixed_price_job_context.dart';
 import 'package:chumley_navigator/models/fixed_price_model.dart';
 import 'package:chumley_navigator/models/fixed_price_submit_payload.dart';
+import 'package:chumley_navigator/models/multiple_fixed_price_submit_payload.dart';
 import 'package:chumley_navigator/screens/job_details/cubit/fixed_price_cubit.dart';
 import 'package:chumley_navigator/screens/job_details/cubit/fixed_price_state.dart';
 import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_catalog_step.dart';
@@ -13,6 +15,7 @@ import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_op
 import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_pricing_step.dart';
 import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_review_step.dart';
 import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_scope_step.dart';
+import 'package:chumley_navigator/screens/job_details/service/fixed_price_api_service.dart';
 import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
 import 'package:chumley_navigator/screens/job_details/widgets/job_submission_dialog.dart';
 import 'package:chumley_navigator/utils/colors.dart';
@@ -514,6 +517,7 @@ class _RaiseMultipleFixedPricePageState
   }
 
   void _resetFormForNextJob() {
+    context.read<FixedPriceCubit>().clearCatalogSelection();
     setState(() {
       _currentStep = 0;
       _selectedTrade = null;
@@ -548,7 +552,13 @@ class _RaiseMultipleFixedPricePageState
   void _showAddAnotherOrSubmitDialog(FixedPriceJobContext jobContext) {
     final theme = DashboardTheme.of(context);
     final currentSavedJob = _buildSavedJobObject(jobContext);
-    final totalBatchedCount = _batchedJobs.length + 1;
+    // Include the job being finished; avoid double-counting if a prior failed
+    // submit already appended this job to the batch.
+    final jobsToSubmit = _jobsIncludingCurrent(currentSavedJob);
+    final totalBatchedCount = jobsToSubmit.length;
+    final atMaxJobs =
+        totalBatchedCount >= MultipleFixedPriceSubmitPayload.maxJobs;
+    final jobsLabel = totalBatchedCount == 1 ? 'Job' : 'Jobs';
 
     showAppDialog<void>(
       context: context,
@@ -627,7 +637,9 @@ class _RaiseMultipleFixedPricePageState
               ),
               SizedBox(height: 14.h),
               Text(
-                'Would you like to add another Fixed Price job to this batch or submit now?',
+                atMaxJobs
+                    ? 'Maximum of ${MultipleFixedPriceSubmitPayload.maxJobs} jobs reached. Submit this batch now.'
+                    : 'Would you like to add another Fixed Price job to this batch or submit now?',
                 style: TextStyle(
                   fontSize: 12.5.sp,
                   fontWeight: FontWeight.w600,
@@ -637,41 +649,63 @@ class _RaiseMultipleFixedPricePageState
             ],
           ),
           actions: [
-            OutlinedCtaButton(
-              label: '+ Add Another Job',
-              onTap: () {
-                Navigator.of(ctx).pop();
-                setState(() {
-                  _batchedJobs.add(currentSavedJob);
-                });
-                _resetFormForNextJob();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Added Job #${_batchedJobs.length} to batch. Starting Job #${_batchedJobs.length + 1}',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+            if (!atMaxJobs) ...[
+              OutlinedCtaButton(
+                label: '+ Add Another Job',
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  setState(() {
+                    if (!_isSameSavedJob(
+                      _batchedJobs.isEmpty ? null : _batchedJobs.last,
+                      currentSavedJob,
+                    )) {
+                      _batchedJobs.add(currentSavedJob);
+                    }
+                  });
+                  _resetFormForNextJob();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Added Job #${_batchedJobs.length} to batch. Starting Job #${_batchedJobs.length + 1}',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      backgroundColor: const Color(0xFF22C55E),
+                      behavior: SnackBarBehavior.floating,
                     ),
-                    backgroundColor: const Color(0xFF22C55E),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-            ),
-            SizedBox(height: 8.h),
+                  );
+                },
+              ),
+              SizedBox(height: 8.h),
+            ],
             PrimaryCtaButton(
-              label: 'Submit All ($totalBatchedCount Jobs)',
+              label: 'Submit All ($totalBatchedCount $jobsLabel)',
               onTap: () {
                 Navigator.of(ctx).pop();
-                setState(() {
-                  _batchedJobs.add(currentSavedJob);
-                });
-                _submitAllBatchedJobs(jobContext);
+                _submitAllBatchedJobs(jobContext, jobs: jobsToSubmit);
               },
             ),
           ],
         );
       },
     );
+  }
+
+  bool _isSameSavedJob(SavedFixedPriceJob? a, SavedFixedPriceJob b) {
+    if (a == null) return false;
+    return a.workTypeId == b.workTypeId &&
+        a.scopeOfWork == b.scopeOfWork &&
+        a.totalCustomerCharges == b.totalCustomerCharges &&
+        a.customerConfirmationChoice == b.customerConfirmationChoice;
+  }
+
+  List<SavedFixedPriceJob> _jobsIncludingCurrent(SavedFixedPriceJob current) {
+    if (_isSameSavedJob(
+      _batchedJobs.isEmpty ? null : _batchedJobs.last,
+      current,
+    )) {
+      return List<SavedFixedPriceJob>.from(_batchedJobs);
+    }
+    return [..._batchedJobs, current];
   }
 
   Widget _buildDialogSummaryRow(
@@ -707,8 +741,57 @@ class _RaiseMultipleFixedPricePageState
     );
   }
 
-  Future<void> _submitAllBatchedJobs(FixedPriceJobContext jobContext) async {
-    if (_batchedJobs.isEmpty || _isSubmitting) return;
+  MultipleFixedPriceSubmitPayload _buildMultiplePayload({
+    required FixedPriceJobContext jobContext,
+    required String userId,
+    required List<SavedFixedPriceJob> jobs,
+  }) {
+    final salesforce = jobContext.toSalesforceContext();
+    final lastChoice = jobs.last.customerConfirmationChoice;
+    final decision = lastChoice.toLowerCase().contains('reject')
+        ? 'reject'
+        : 'send';
+
+    return MultipleFixedPriceSubmitPayload(
+      sourceWorkOrderId: jobContext.sourceWorkOrderId,
+      userId: userId,
+      customerDecision: decision,
+      rejectionReason: decision == 'reject'
+          ? MultipleFixedPriceSubmitPayload.defaultRejectionReason
+          : '',
+      jobs: [
+        for (var i = 0; i < jobs.length; i++)
+          MultipleFixedPriceJobPayload(
+            workTypeId: jobs[i].workTypeId,
+            scopeOfWorks: jobs[i].payload.mergedScopeOfWorks,
+            durationHours: jobs[i].payload.durationHours ?? 0,
+            chosenRate: MultipleFixedPriceJobPayload.chosenRateFromLabourLevel(
+              jobs[i].payload.labourRateLevel,
+            ),
+            ulezChargeApplicable: jobs[i].payload.ulezChargeApplicable,
+            useAsMainJobType: i == jobs.length - 1,
+            rates: FixedPriceEstimateRates(
+              operativeSharePct: salesforce.operativeSharePct,
+              zonedRates: FixedPriceSubmitPayload.defaultZonedRates,
+            ),
+            breakdown: MultipleFixedPriceJobBreakdown(
+              collectionFee: jobs[i].payload.pricingSummary.collectionFee,
+              ulez: jobs[i].payload.pricingSummary.ulezCharge,
+              materialsWithMarkup:
+                  jobs[i].payload.pricingSummary.materialsCharge,
+              adminFeePercentage: salesforce.resolvedServiceFeePct,
+              materialsMarkupBandPercent: salesforce.resolvedMarkupPct,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _submitAllBatchedJobs(
+    FixedPriceJobContext jobContext, {
+    required List<SavedFixedPriceJob> jobs,
+  }) async {
+    if (jobs.isEmpty || _isSubmitting) return;
     setState(() => _isSubmitting = true);
 
     final refId =
@@ -716,74 +799,96 @@ class _RaiseMultipleFixedPricePageState
     double grandTotalNet = 0;
     final List<Map<String, dynamic>> lineItems = [];
 
+    for (final job in jobs) {
+      grandTotalNet += job.totalCustomerCharges;
+      lineItems.add({
+        'title': job.workTypeName,
+        'description': job.scopeOfWork,
+        'trade': job.tradeName,
+        'total_net': job.totalCustomerCharges,
+        'choice': job.customerConfirmationChoice,
+      });
+    }
+
     try {
       final cubit = context.read<FixedPriceCubit>();
-      final salesforceContext = jobContext.toSalesforceContext();
-
-      for (int i = 0; i < _batchedJobs.length; i++) {
-        final job = _batchedJobs[i];
-        grandTotalNet += job.totalCustomerCharges;
-
-        lineItems.add({
-          'title': job.workTypeName,
-          'description': job.scopeOfWork,
-          'trade': job.tradeName,
-          'total_net': job.totalCustomerCharges,
-          'choice': job.customerConfirmationChoice,
-        });
-
-        // Submit to API
-        await cubit.submitWorkOrder(
-          payload: job.payload,
-          context: salesforceContext,
-        );
-
-        // Also push enquiry record to Firestore
-        await PillarClient.raiseEnquiry(
-          category: 'MULTIPLE_FIXED_PRICE',
-          description: job.scopeOfWork,
-          details: {
-            'job_id': jobContext.sourceWorkOrderId,
-            'job_number': jobContext.workOrderLabel,
-            'batch_reference': refId,
-            'batch_index': i + 1,
-            'batch_total': _batchedJobs.length,
-            'trade_name': job.tradeName,
-            'category_name': job.categoryName,
-            'work_type_name': job.workTypeName,
-            'total_customer_charges': job.totalCustomerCharges,
-            'customer_choice': job.customerConfirmationChoice,
-          },
-        );
+      final authUser = await Prefs.getAuthUser();
+      final userId = authUser?.workOrderUserId ?? '';
+      final batchPayload = _buildMultiplePayload(
+        jobContext: jobContext,
+        userId: userId,
+        jobs: jobs,
+      );
+      final errors = [
+        ...jobContext.validate(),
+        ...batchPayload.validate(),
+      ];
+      if (errors.isNotEmpty) {
+        if (!mounted) return;
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errors.first)));
+        return;
       }
 
-      // Commit consolidated estimate to PillarClient
-      await PillarClient.submitFpEstimate(
-        jobId: jobContext.sourceWorkOrderId,
-        lineItems: lineItems,
-        totalNet: grandTotalNet,
-        totalGross: grandTotalNet * 1.20,
-        notes:
-            'Multiple Fixed Price Batch ($refId): ${_batchedJobs.length} jobs submitted.',
-      );
+      await cubit.submitMultipleFixedPriceWorkOrders(payload: batchPayload);
+
+      try {
+        for (int i = 0; i < jobs.length; i++) {
+          final job = jobs[i];
+          await PillarClient.raiseEnquiry(
+            category: 'MULTIPLE_FIXED_PRICE',
+            description: job.scopeOfWork,
+            details: {
+              'job_id': jobContext.sourceWorkOrderId,
+              'job_number': jobContext.workOrderLabel,
+              'batch_reference': refId,
+              'batch_index': i + 1,
+              'batch_total': jobs.length,
+              'trade_name': job.tradeName,
+              'category_name': job.categoryName,
+              'work_type_name': job.workTypeName,
+              'total_customer_charges': job.totalCustomerCharges,
+              'customer_choice': job.customerConfirmationChoice,
+            },
+          );
+        }
+
+        await PillarClient.submitFpEstimate(
+          jobId: jobContext.sourceWorkOrderId,
+          lineItems: lineItems,
+          totalNet: grandTotalNet,
+          totalGross: grandTotalNet * 1.20,
+          notes:
+              'Multiple Fixed Price Batch ($refId): ${jobs.length} jobs submitted.',
+        );
+      } catch (_) {
+        // API create succeeded; Pillar is side-write only.
+      }
 
       if (!mounted) return;
-      setState(() => _isSubmitting = false);
+      setState(() {
+        _isSubmitting = false;
+        _batchedJobs
+          ..clear()
+          ..addAll(jobs);
+      });
 
       final theme = DashboardTheme.of(context);
       await JobSubmissionDialog.show(
         context,
         theme: theme,
-        title: '${_batchedJobs.length} Fixed Price Jobs Submitted',
+        title: '${jobs.length} Fixed Price Jobs Submitted',
         subtitle:
-            'All ${_batchedJobs.length} Fixed Price agreements have been successfully submitted.',
+            'All ${jobs.length} Fixed Price agreements have been successfully submitted.',
         referenceId: refId,
         details: {
-          'Total Jobs': '${_batchedJobs.length} work orders',
+          'Total Jobs': '${jobs.length} work orders',
           'Grand Total (Net)': '£${grandTotalNet.toStringAsFixed(2)}',
           'Grand Total (Gross)':
               '£${(grandTotalNet * 1.20).toStringAsFixed(2)}',
-          'Jobs': _batchedJobs.map((j) => j.workTypeName).join(', '),
+          'Jobs': jobs.map((j) => j.workTypeName).join(', '),
         },
         buttonLabel: 'Back to Job',
       );
@@ -794,9 +899,12 @@ class _RaiseMultipleFixedPricePageState
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
+        final message = e is FixedPriceApiException
+            ? e.message
+            : e.toString();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to submit batch: $e'),
+            content: Text(message),
             backgroundColor: Colors.red,
           ),
         );
@@ -816,6 +924,7 @@ class _RaiseMultipleFixedPricePageState
     switch (_currentStep) {
       case 0:
         return FixedPriceCatalogStep(
+          key: ValueKey('multi-fp-catalog-${_batchedJobs.length}'),
           theme: theme,
           selectedTrade: _selectedTrade,
           selectedCategory: _selectedCategory,
@@ -1077,6 +1186,74 @@ class _RaiseMultipleFixedPricePageState
     );
   }
 
+  Future<bool> _confirmDiscardProgress() async {
+    final theme = DashboardTheme.of(context);
+    final result = await showAppDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: theme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+            side: BorderSide(color: theme.border, width: 0.8),
+          ),
+          title: Text(
+            'Discard progress?',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w700,
+              color: theme.text,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to discard all the progress? All progress will be discarded.',
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: theme.textMuted,
+              height: 1.35,
+            ),
+          ),
+          actions: [
+            OutlinedCtaButton(
+              label: 'Keep editing',
+              onTap: () => Navigator.of(ctx).pop(false),
+            ),
+            SizedBox(height: 8.h),
+            PrimaryCtaButton(
+              label: 'Discard',
+              backgroundColor: Colors.red,
+              onTap: () => Navigator.of(ctx).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+    return result == true;
+  }
+
+  Future<void> _handleExitRequest() async {
+    if (_isSubmitting) return;
+    final shouldDiscard = await _confirmDiscardProgress();
+    if (shouldDiscard && mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _handleWizardBack() {
+    if (_currentStep == 0) {
+      _handleExitRequest();
+    } else if (_currentStep == 3) {
+      setState(() => _currentStep = 2);
+    } else if (_currentStep == 4) {
+      setState(() => _currentStep = 3);
+    } else if (_currentStep == 5) {
+      setState(() => _currentStep = 4);
+    } else {
+      setState(() => _currentStep--);
+    }
+  }
+
   Widget _buildBottomButtons(
     DashboardTheme theme,
     FixedPriceJobContext jobContext,
@@ -1090,19 +1267,7 @@ class _RaiseMultipleFixedPricePageState
         Expanded(
           child: OutlinedCtaButton(
             label: isFirstScreen ? 'Cancel' : 'Back',
-            onTap: () {
-              if (isFirstScreen) {
-                Navigator.of(context).pop();
-              } else if (_currentStep == 3) {
-                setState(() => _currentStep = 2);
-              } else if (_currentStep == 4) {
-                setState(() => _currentStep = 3);
-              } else if (_currentStep == 5) {
-                setState(() => _currentStep = 4);
-              } else {
-                setState(() => _currentStep--);
-              }
-            },
+            onTap: _handleWizardBack,
           ),
         ),
         SizedBox(width: 12.w),
@@ -1140,7 +1305,17 @@ class _RaiseMultipleFixedPricePageState
     final jobContext = _resolveJobContext();
     final currentJobNumber = _batchedJobs.length + 1;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || _isSubmitting) return;
+        if (_currentStep == 0) {
+          _handleExitRequest();
+        } else {
+          _handleWizardBack();
+        }
+      },
+      child: Scaffold(
       backgroundColor: theme.base,
       body: SafeArea(
         child: Stack(
@@ -1208,24 +1383,13 @@ class _RaiseMultipleFixedPricePageState
               top: 12.h,
               left: 16.w,
               child: CommandCentreBackButton(
-                onTap: () {
-                  if (_currentStep == 0) {
-                    Navigator.of(context).pop();
-                  } else if (_currentStep == 3) {
-                    setState(() => _currentStep = 2);
-                  } else if (_currentStep == 4) {
-                    setState(() => _currentStep = 3);
-                  } else if (_currentStep == 5) {
-                    setState(() => _currentStep = 4);
-                  } else {
-                    setState(() => _currentStep--);
-                  }
-                },
+                onTap: _handleWizardBack,
               ),
             ),
           ],
         ),
       ),
+    ),
     );
   }
 }

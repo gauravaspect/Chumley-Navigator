@@ -103,6 +103,14 @@ class FixedPriceSubmitPayload extends Equatable {
     }
   }
 
+  /// Maps wizard labour rate labels to API `chosen_rate` (1|2|3).
+  static int chosenRateFromLabourLevel(String labourRateLevel) {
+    final n = labourRateLevel.trim().toLowerCase();
+    if (n.contains('3')) return 3;
+    if (n.contains('2')) return 2;
+    return 1;
+  }
+
   /// Labour charge = duration_hours × selected zoned hourly rate.
   static double labourCharge({
     required String labourRateLevel,
@@ -253,22 +261,46 @@ class FixedPriceSubmitPayload extends Equatable {
     FixedPriceZonedRates zonedRates = defaultZonedRates,
   }) => toSubmitJson(context: context, zonedRates: zonedRates);
 
+  /// Applies [resolvedMarkupPct] to a materials cost.
+  /// API requires explicit with_markup values (no silent fallback to cost).
+  static double materialsWithMarkup(double cost, double resolvedMarkupPct) {
+    final markedUp = cost * (1 + resolvedMarkupPct / 100);
+    return double.parse(markedUp.toStringAsFixed(2));
+  }
+
+  /// Default reason when the customer rejects on site (API requires explicit text).
+  static const String defaultRejectionReason =
+      'Customer declined the fixed price estimate.';
+
   /// POST /api/work-orders submission body.
   Map<String, dynamic> toSubmitJson({
     required FixedPriceSalesforceContext context,
     FixedPriceZonedRates zonedRates = defaultZonedRates,
   }) {
     final breakdown = buildEstimateBreakdown(context, zonedRates: zonedRates);
+    final markupPct = context.resolvedMarkupPct;
+    final customerDecision = _customerDecisionForSalesforce();
 
     return {
       'source_work_order_id': sourceWorkOrderId ?? workOrderId,
       'work_type_id': workTypeId,
       if (durationHours != null) 'duration_hours': durationHours,
+      'chosen_rate': chosenRateFromLabourLevel(labourRateLevel),
       'scope_of_works': mergedScopeOfWorks,
       'drainage_patches': chargeDrainagePatches ? drainagePatchesFee : 0.0,
       'materials_operative': operativeMaterials.cost,
       'materials_aspect': aspectMaterials.cost,
-      'customer_decision': _customerDecisionForSalesforce(),
+      'materials_operative_with_markup': materialsWithMarkup(
+        operativeMaterials.cost,
+        markupPct,
+      ),
+      'materials_aspect_with_markup': materialsWithMarkup(
+        aspectMaterials.cost,
+        markupPct,
+      ),
+      'customer_decision': customerDecision,
+      if (customerDecision == 'reject')
+        'rejection_reason': defaultRejectionReason,
       'estimate': FixedPriceEstimate(
         context: FixedPriceEstimateContext(
           siteId: context.siteId,

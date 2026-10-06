@@ -42,9 +42,14 @@ class JobDetailPage extends StatefulWidget {
 
   const JobDetailPage({super.key, required this.appointment});
 
-  static void open(BuildContext context, Appointment appointment) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
+  /// Opens job detail. Returns the latest [Appointment] when the page is closed
+  /// so callers (e.g. dashboard) can refresh schedule status immediately.
+  static Future<Appointment?> open(
+    BuildContext context,
+    Appointment appointment,
+  ) {
+    return Navigator.of(context).push<Appointment>(
+      MaterialPageRoute<Appointment>(
         builder: (_) => JobDetailPage(appointment: appointment),
       ),
     );
@@ -201,6 +206,15 @@ class _JobDetailPageState extends State<JobDetailPage>
     } else if (SaStatus.isVisitComplete(status)) {
       _postSubmitPhase ??= PostSubmitPhase.visitComplete;
     }
+  }
+
+  void _popWithAppointment() {
+    if (!mounted) return;
+    final latest = _appointment.copyWith(
+      status: _currentStatus.isNotEmpty ? _currentStatus : _appointment.status,
+      allowedNextStatuses: _allowedNextStatuses,
+    );
+    Navigator.of(context).pop(latest);
   }
 
   bool get _areRequiredFormsCompleted {
@@ -751,22 +765,30 @@ class _JobDetailPageState extends State<JobDetailPage>
   }
 
   Future<void> _openReactiveJob() async {
+    final contextArgs = FixedPriceJobContext.fromAppointment(_appointment);
     await RaiseReactiveJobPage.open(
       context,
-      jobId: _jobId,
+      jobId: contextArgs.sourceWorkOrderId.isNotEmpty
+          ? contextArgs.sourceWorkOrderId
+          : _jobId,
       jobNumber: _appointment.appointmentNumber,
       customerName: _appointment.customerName,
       postcode: _appointment.sitePostcode,
+      contextArgs: contextArgs,
     );
   }
 
   Future<void> _openMultipleFixedPrice() async {
+    final contextArgs = FixedPriceJobContext.fromAppointment(_appointment);
     await RaiseMultipleFixedPricePage.open(
       context,
-      jobId: _jobId,
+      jobId: contextArgs.sourceWorkOrderId.isNotEmpty
+          ? contextArgs.sourceWorkOrderId
+          : _jobId,
       jobNumber: _appointment.appointmentNumber,
       customerName: _appointment.customerName,
       postcode: _appointment.sitePostcode,
+      contextArgs: contextArgs,
     );
   }
 
@@ -909,7 +931,7 @@ class _JobDetailPageState extends State<JobDetailPage>
         postSubmitBack = () =>
             setState(() => _postSubmitPhase = PostSubmitPhase.jobClosed);
       case PostSubmitPhase.jobCompleted:
-        postSubmitBack = () => Navigator.of(context).pop();
+        postSubmitBack = _popWithAppointment;
     }
 
     Widget brandingHeader({required VoidCallback onBack}) {
@@ -940,7 +962,13 @@ class _JobDetailPageState extends State<JobDetailPage>
       );
     }
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _popWithAppointment();
+      },
+      child: Scaffold(
       backgroundColor: (showOnSiteWizard || showPostSubmit)
           ? (theme.isDark ? theme.base : const Color(0xFFF4F9FF))
           : theme.base,
@@ -980,7 +1008,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                             );
                           }
                         },
-                        onBackToHome: () => Navigator.of(context).pop(),
+                        onBackToHome: _popWithAppointment,
                         onRaiseEstimate: () async {
                           await _openFixedPrice();
                           if (mounted) {
@@ -1028,7 +1056,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                 children: [
                   Column(
                     children: [
-                      brandingHeader(onBack: () => Navigator.of(context).pop()),
+                      brandingHeader(onBack: _popWithAppointment),
                       Expanded(
                         child: ResponsiveContent(
                           maxWidth: ResponsiveBreakpoints.pageContentMax,
@@ -1135,6 +1163,7 @@ class _JobDetailPageState extends State<JobDetailPage>
                   ),
                 ],
               ),
+      ),
       ),
     );
   }

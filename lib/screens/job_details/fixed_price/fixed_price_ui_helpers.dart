@@ -5,6 +5,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class FixedPriceUiHelpers {
+  /// DropdownButton asserts unless [value] matches exactly one item.
+  static String? resolvedDropdownValue(String? value, List<String> items) {
+    if (value == null) return null;
+    var matches = 0;
+    for (final item in items) {
+      if (item == value) matches++;
+      if (matches > 1) return null;
+    }
+    return matches == 1 ? value : null;
+  }
+
+  static List<String> uniqueDropdownItems(List<String> items) {
+    final seen = <String>{};
+    return [for (final item in items) if (seen.add(item)) item];
+  }
+
   static Widget buildDropdownField({
     required String label,
     required String? value,
@@ -14,8 +30,13 @@ class FixedPriceUiHelpers {
     required DashboardTheme theme,
     String Function(String)? itemLabelBuilder,
     TextEditingController? searchController,
+    Key? key,
   }) {
+    final uniqueItems = uniqueDropdownItems(items);
+    final safeValue = resolvedDropdownValue(value, uniqueItems);
+
     return Column(
+      key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -28,7 +49,7 @@ class FixedPriceUiHelpers {
         ),
         SizedBox(height: 8.h),
         DropdownButtonFormField2<String>(
-          value: value,
+          value: safeValue,
           isExpanded: true,
           decoration: InputDecoration(
             filled: true,
@@ -84,7 +105,7 @@ class FixedPriceUiHelpers {
             fontWeight: FontWeight.w500,
             color: theme.text,
           ),
-          items: items
+          items: uniqueItems
               .map(
                 (item) => DropdownMenuItem<String>(
                   value: item,

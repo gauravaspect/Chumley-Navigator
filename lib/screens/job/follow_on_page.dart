@@ -192,12 +192,17 @@ class _RaiseFollowOnView extends StatelessWidget {
                     title: 'Raise a reactive job',
                     subtitle: 'Raise an urgent reactive task or callback',
                     onTap: () async {
+                      final contextArgs =
+                          FixedPriceJobContext.fromVisitJob(job);
                       final result = await RaiseReactiveJobPage.open(
                         context,
-                        jobId: job.id,
+                        jobId: contextArgs.sourceWorkOrderId.isNotEmpty
+                            ? contextArgs.sourceWorkOrderId
+                            : job.id,
                         jobNumber: job.jobNumber,
                         customerName: job.customerName,
                         postcode: job.siteAddress,
+                        contextArgs: contextArgs,
                       );
                       if (result == true && context.mounted) {
                         _goToJobClosed(context);

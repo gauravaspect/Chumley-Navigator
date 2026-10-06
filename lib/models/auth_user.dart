@@ -20,6 +20,16 @@ class AuthUser extends Equatable {
   final String engineerId;
   final List<String> tradeGroups;
 
+  /// Salesforce Id for work-order create APIs (`user_id`).
+  /// Auth exchange `id` is an email slug; [engineerId] is ServiceResource.Id.
+  String get workOrderUserId => engineerId.trim();
+
+  /// Salesforce Ids are 15 chars, or 18 with checksum suffix.
+  static bool isSalesforceId(String value) {
+    final trimmed = value.trim();
+    return RegExp(r'^[a-zA-Z0-9]{15}([a-zA-Z0-9]{3})?$').hasMatch(trimmed);
+  }
+
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
       id: (json['id'] ?? '').toString(),

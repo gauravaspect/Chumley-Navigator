@@ -13,7 +13,9 @@ import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_op
 import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_pricing_step.dart';
 import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_review_step.dart';
 import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_scope_step.dart';
+import 'package:chumley_navigator/screens/job_details/service/fixed_price_api_service.dart';
 import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
+import 'package:chumley_navigator/screens/job_details/widgets/job_submission_dialog.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:chumley_navigator/widgets/ui/command_centre_back_button.dart';
@@ -427,22 +429,48 @@ class _FixedPricePageState extends State<FixedPricePage> {
       }
 
       if (!mounted) return;
-      Navigator.of(context).pop(true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _customerConfirmationChoice == 'Reject'
-                ? 'Fixed price estimate rejected and submitted.'
-                : 'Fixed Price Agreement created & submitted to Firestore spine.',
-          ),
-          backgroundColor: const Color(0xFF22C55E),
-        ),
+
+      final theme = DashboardTheme.of(context);
+      final isRejected = _customerConfirmationChoice == 'Reject';
+      final refId =
+          'FP-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+      final totalNet = _totalCustomerCharges;
+      final totalGross = totalNet * 1.20;
+
+      await JobSubmissionDialog.show(
+        context,
+        theme: theme,
+        title: isRejected
+            ? 'Fixed Price Estimate Rejected'
+            : 'Fixed Price Job Raised',
+        subtitle: isRejected
+            ? 'The fixed price estimate was rejected and submitted.'
+            : 'The fixed price agreement has been created successfully.',
+        referenceId: refId,
+        details: {
+          'Work Order': jobContext.workOrderLabel.isNotEmpty
+              ? jobContext.workOrderLabel
+              : jobContext.sourceWorkOrderId,
+          'Trade': _getTradeName(_selectedTrade),
+          'Work Type': _getWorkTypeName(_selectedWorkType),
+          'Total (Net)': '£${totalNet.toStringAsFixed(2)}',
+          'Total (Gross)': '£${totalGross.toStringAsFixed(2)}',
+          'Customer Choice': _customerConfirmationChoice ?? '',
+        },
+        buttonLabel: 'Back to Job',
       );
+
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      final message = error is FixedPriceApiException
+          ? error.message
+          : error.toString();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -783,13 +811,80 @@ class _FixedPricePageState extends State<FixedPricePage> {
     }
   }
 
+  Future<bool> _confirmDiscardProgress() async {
+    final theme = DashboardTheme.of(context);
+    final result = await showAppDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: theme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+            side: BorderSide(color: theme.border, width: 0.8),
+          ),
+          title: Text(
+            'Discard progress?',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w700,
+              color: theme.text,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to discard all the progress? All progress will be discarded.',
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: theme.textMuted,
+              height: 1.35,
+            ),
+          ),
+          actions: [
+            OutlinedCtaButton(
+              label: 'Keep editing',
+              onTap: () => Navigator.of(ctx).pop(false),
+            ),
+            SizedBox(height: 8.h),
+            PrimaryCtaButton(
+              label: 'Discard',
+              backgroundColor: Colors.red,
+              onTap: () => Navigator.of(ctx).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+    return result == true;
+  }
+
+  Future<void> _handleExitRequest({required bool isSubmitting}) async {
+    if (isSubmitting) return;
+    final shouldDiscard = await _confirmDiscardProgress();
+    if (shouldDiscard && mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _handleWizardBack({required bool isSubmitting}) {
+    if (_currentStep == 0) {
+      _handleExitRequest(isSubmitting: isSubmitting);
+    } else if (_currentStep == 3) {
+      setState(() => _currentStep = 2);
+    } else if (_currentStep == 4) {
+      setState(() => _currentStep = 3);
+    } else if (_currentStep == 5) {
+      setState(() => _currentStep = 4);
+    } else {
+      setState(() => _currentStep--);
+    }
+  }
+
   // Navigation button block builder
   Widget _buildBottomButtons(
     DashboardTheme theme,
     FixedPriceJobContext? jobContext,
     bool isSubmitting,
   ) {
-    final isFirstScreen = _currentStep == 0;
     final isLastScreen = _currentStep == 5;
     final isValid = _isStepValid() && !isSubmitting;
 
@@ -797,20 +892,8 @@ class _FixedPricePageState extends State<FixedPricePage> {
       children: [
         Expanded(
           child: OutlinedCtaButton(
-            label: 'Back',
-            onTap: () {
-              if (isFirstScreen) {
-                Navigator.of(context).pop();
-              } else if (_currentStep == 3) {
-                setState(() => _currentStep = 2);
-              } else if (_currentStep == 4) {
-                setState(() => _currentStep = 3);
-              } else if (_currentStep == 5) {
-                setState(() => _currentStep = 4);
-              } else {
-                setState(() => _currentStep--);
-              }
-            },
+            label: _currentStep == 0 ? 'Cancel' : 'Back',
+            onTap: () => _handleWizardBack(isSubmitting: isSubmitting),
           ),
         ),
         SizedBox(width: 12.w),
@@ -854,7 +937,17 @@ class _FixedPricePageState extends State<FixedPricePage> {
     final jobContext = _resolveJobContext();
     final isSubmitting = context.watch<FixedPriceCubit>().state.isSubmitting;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || isSubmitting) return;
+        if (_currentStep == 0) {
+          _handleExitRequest(isSubmitting: isSubmitting);
+        } else {
+          _handleWizardBack(isSubmitting: isSubmitting);
+        }
+      },
+      child: Scaffold(
       backgroundColor: theme.base,
       body: SafeArea(
         child: ResponsiveContent.form(
@@ -922,25 +1015,14 @@ class _FixedPricePageState extends State<FixedPricePage> {
                 top: 12.h,
                 left: 16.w,
                 child: CommandCentreBackButton(
-                  onTap: () {
-                    if (_currentStep == 0) {
-                      Navigator.of(context).pop();
-                    } else if (_currentStep == 3) {
-                      setState(() => _currentStep = 2);
-                    } else if (_currentStep == 4) {
-                      setState(() => _currentStep = 3);
-                    } else if (_currentStep == 5) {
-                      setState(() => _currentStep = 4);
-                    } else {
-                      setState(() => _currentStep--);
-                    }
-                  },
+                  onTap: () => _handleWizardBack(isSubmitting: isSubmitting),
                 ),
               ),
             ],
           ),
         ),
       ),
+    ),
     );
   }
 }

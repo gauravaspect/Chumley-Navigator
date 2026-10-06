@@ -1,6 +1,8 @@
 import 'package:chumley_navigator/core/storage/prefs.dart';
 import 'package:chumley_navigator/models/fixed_price_model.dart';
 import 'package:chumley_navigator/models/fixed_price_submit_payload.dart';
+import 'package:chumley_navigator/models/multiple_fixed_price_submit_payload.dart';
+import 'package:chumley_navigator/models/reactive_work_order_submit_payload.dart';
 import 'package:chumley_navigator/screens/job_details/service/fixed_price_api_service.dart';
 
 class FixedPriceRepository {
@@ -48,6 +50,26 @@ class FixedPriceRepository {
     return _apiService.submitFixedPriceWorkOrder(
       payload: payload,
       context: context,
+      dryRun: dryRun,
+    );
+  }
+
+  Future<Map<String, dynamic>> submitReactiveWorkOrder({
+    required ReactiveWorkOrderSubmitPayload payload,
+    bool dryRun = false,
+  }) {
+    return _apiService.submitReactiveWorkOrder(
+      payload: payload,
+      dryRun: dryRun,
+    );
+  }
+
+  Future<Map<String, dynamic>> submitMultipleFixedPriceWorkOrders({
+    required MultipleFixedPriceSubmitPayload payload,
+    bool dryRun = false,
+  }) {
+    return _apiService.submitMultipleFixedPriceWorkOrders(
+      payload: payload,
       dryRun: dryRun,
     );
   }

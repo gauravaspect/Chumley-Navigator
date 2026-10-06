@@ -1,4 +1,9 @@
+import 'package:chumley_navigator/core/storage/prefs.dart';
+import 'package:chumley_navigator/models/auth_user.dart';
 import 'package:chumley_navigator/models/fixed_price_model.dart';
+import 'package:chumley_navigator/models/fixed_price_submit_payload.dart';
+import 'package:chumley_navigator/models/multiple_fixed_price_submit_payload.dart';
+import 'package:chumley_navigator/models/reactive_work_order_submit_payload.dart';
 import 'package:chumley_navigator/screens/job_details/cubit/fixed_price_cubit.dart';
 import 'package:chumley_navigator/screens/job_details/raise_multiple_fixed_price_page.dart';
 import 'package:chumley_navigator/screens/job_details/raise_reactive_job_page.dart';
@@ -10,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeFixedPriceRepository implements FixedPriceRepository {
   @override
@@ -45,7 +51,23 @@ class FakeFixedPriceRepository implements FixedPriceRepository {
   }
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  Future<Map<String, dynamic>> submitFixedPriceWorkOrder({
+    required FixedPriceSubmitPayload payload,
+    required FixedPriceSalesforceContext context,
+    bool dryRun = false,
+  }) async => {'status': 'created', 'created': true};
+
+  @override
+  Future<Map<String, dynamic>> submitReactiveWorkOrder({
+    required ReactiveWorkOrderSubmitPayload payload,
+    bool dryRun = false,
+  }) async => {'status': 'created', 'created': true};
+
+  @override
+  Future<Map<String, dynamic>> submitMultipleFixedPriceWorkOrders({
+    required MultipleFixedPriceSubmitPayload payload,
+    bool dryRun = false,
+  }) async => {'status': 'created', 'created': true};
 }
 
 Widget _wrapTestWidget(Widget child, {FixedPriceCubit? cubit}) {
@@ -97,6 +119,14 @@ void main() {
           tester.view.resetPhysicalSize();
           tester.view.resetDevicePixelRatio();
         });
+
+        SharedPreferences.setMockInitialValues({});
+        await Prefs.saveAuthUser(
+          const AuthUser(
+            id: 'navigatorengineer_aspect_co_uk',
+            engineerId: '0HnWS000000APMv0AO',
+          ),
+        );
 
         final fakeRepo = FakeFixedPriceRepository();
         final cubit = FixedPriceCubit(fakeRepo);
@@ -281,7 +311,7 @@ void main() {
         // Dialog should appear
         expect(find.text('Job #1 Ready'), findsOneWidget);
         expect(find.text('+ Add Another Job'), findsOneWidget);
-        expect(find.text('Submit All (1 Jobs)'), findsOneWidget);
+        expect(find.text('Submit All (1 Job)'), findsOneWidget);
 
         // Tap + Add Another Job
         await tester.tap(find.text('+ Add Another Job'));

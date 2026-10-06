@@ -1,3 +1,4 @@
+import 'package:chumley_navigator/models/appointment.dart';
 import 'package:chumley_navigator/models/ppm_jobs_models.dart';
 import 'package:chumley_navigator/screens/dashboard/cubit/dashboard_state.dart';
 import 'package:chumley_navigator/screens/dashboard/repo/dashboard_repository.dart';
@@ -81,6 +82,75 @@ class DashboardCubit extends Cubit<DashboardState> {
   }
 
   Future<void> refresh() => load();
+
+  /// Patch a single appointment in the current schedule (e.g. after status change).
+  void upsertAppointment(Appointment updated) {
+    final id = updated.id.trim();
+    if (id.isEmpty) return;
+
+    List<Appointment> merge(List<Appointment> current) {
+      final index = current.indexWhere((a) => a.id.trim() == id);
+      if (index < 0) return current;
+      final next = List<Appointment>.of(current);
+      next[index] = updated;
+      return next;
+    }
+
+    switch (state) {
+      case DashboardLoaded(
+        :final user,
+        :final performanceHistory,
+        :final ppmTasks,
+        :final appointments,
+      ):
+        final next = merge(appointments);
+        if (identical(next, appointments)) return;
+        emit(
+          DashboardLoaded(
+            user: user,
+            performanceHistory: performanceHistory,
+            ppmTasks: ppmTasks,
+            appointments: next,
+          ),
+        );
+      case DashboardError(
+        :final message,
+        :final cachedUser,
+        :final cachedPoints,
+        :final cachedPpmTasks,
+        :final cachedAppointments,
+      ):
+        final next = merge(cachedAppointments);
+        if (identical(next, cachedAppointments)) return;
+        emit(
+          DashboardError(
+            message: message,
+            cachedUser: cachedUser,
+            cachedPoints: cachedPoints,
+            cachedPpmTasks: cachedPpmTasks,
+            cachedAppointments: next,
+          ),
+        );
+      case DashboardLoading(
+        :final cachedUser,
+        :final cachedPoints,
+        :final cachedPpmTasks,
+        :final cachedAppointments,
+      ):
+        final next = merge(cachedAppointments);
+        if (identical(next, cachedAppointments)) return;
+        emit(
+          DashboardLoading(
+            cachedUser: cachedUser,
+            cachedPoints: cachedPoints,
+            cachedPpmTasks: cachedPpmTasks,
+            cachedAppointments: next,
+          ),
+        );
+      default:
+        break;
+    }
+  }
 
   /// Re-fetch schedule appointments without a full dashboard reload.
   Future<void> refreshAppointments() async {

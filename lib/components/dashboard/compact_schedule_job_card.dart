@@ -1,10 +1,12 @@
 import 'package:chumley_navigator/models/ppm_jobs_models.dart';
 import 'package:chumley_navigator/models/user_model.dart';
+import 'package:chumley_navigator/screens/dashboard/cubit/dashboard_cubit.dart';
 import 'package:chumley_navigator/screens/job_details/job_detail_page.dart';
 import 'package:chumley_navigator/screens/job_details/ppm_job_detail_page.dart';
 import 'package:chumley_navigator/utils/colors.dart';
 import 'package:chumley_navigator/utils/dashboard_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -63,7 +65,20 @@ class CompactScheduleJobCard extends StatelessWidget {
         : 'Upcoming';
 
     return InkWell(
-      onTap: () => JobDetailPage.open(context, appointment),
+      onTap: () async {
+        final updated = await JobDetailPage.open(context, appointment);
+        if (!context.mounted) return;
+        DashboardCubit? cubit;
+        try {
+          cubit = context.read<DashboardCubit>();
+        } catch (_) {
+          return;
+        }
+        if (updated != null) {
+          cubit.upsertAppointment(updated);
+        }
+        await cubit.refreshAppointments();
+      },
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 14.h),
         child: Row(

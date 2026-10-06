@@ -1,10 +1,15 @@
 import 'package:chumley_navigator/components/common/aspect_branding.dart';
 import 'package:chumley_navigator/core/app_dependencies.dart';
+import 'package:chumley_navigator/core/responsive/responsive_overlays.dart';
+import 'package:chumley_navigator/core/storage/prefs.dart';
+import 'package:chumley_navigator/models/fixed_price_job_context.dart';
 import 'package:chumley_navigator/models/fixed_price_model.dart';
+import 'package:chumley_navigator/models/reactive_work_order_submit_payload.dart';
 import 'package:chumley_navigator/screens/job_details/cubit/fixed_price_cubit.dart';
 import 'package:chumley_navigator/screens/job_details/cubit/fixed_price_state.dart';
 import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_catalog_step.dart';
 import 'package:chumley_navigator/screens/job_details/fixed_price/fixed_price_ui_helpers.dart';
+import 'package:chumley_navigator/screens/job_details/service/fixed_price_api_service.dart';
 import 'package:chumley_navigator/screens/job_details/service/pillar_client.dart';
 import 'package:chumley_navigator/screens/job_details/widgets/job_submission_dialog.dart';
 import 'package:chumley_navigator/utils/colors.dart';
@@ -44,12 +49,14 @@ class RaiseReactiveJobPage extends StatefulWidget {
     this.jobNumber = '',
     this.customerName,
     this.postcode,
+    this.contextArgs,
   });
 
   final String jobId;
   final String jobNumber;
   final String? customerName;
   final String? postcode;
+  final FixedPriceJobContext? contextArgs;
 
   static Future<bool?> open(
     BuildContext context, {
@@ -57,6 +64,7 @@ class RaiseReactiveJobPage extends StatefulWidget {
     String jobNumber = '',
     String? customerName,
     String? postcode,
+    FixedPriceJobContext? contextArgs,
   }) {
     return Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -67,6 +75,7 @@ class RaiseReactiveJobPage extends StatefulWidget {
             jobNumber: jobNumber,
             customerName: customerName,
             postcode: postcode,
+            contextArgs: contextArgs,
           ),
         ),
       ),
@@ -228,28 +237,63 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
         'RJ-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
     try {
-      await PillarClient.raiseEnquiry(
-        category: 'REACTIVE_ATTENDANCE',
+      final authUser = await Prefs.getAuthUser();
+      final userId = authUser?.workOrderUserId ?? '';
+      final sourceId =
+          widget.contextArgs?.sourceWorkOrderId.trim().isNotEmpty == true
+          ? widget.contextArgs!.sourceWorkOrderId
+          : widget.jobId;
+
+      final payload = ReactiveWorkOrderSubmitPayload(
+        sourceWorkOrderId: sourceId,
+        userId: userId,
+        workTypeId: _selectedWorkType ?? '',
+        jobTitle: _jobTitleController.text.trim(),
         description: _descriptionController.text.trim(),
-        details: {
-          'job_id': widget.jobId,
-          'job_number': widget.jobNumber,
-          'job_title': _jobTitleController.text.trim(),
-          'trade_id': _selectedTrade,
-          'trade_name': tradeName,
-          'category_id': _selectedCategory,
-          'group': categoryName,
-          'work_type_id': _selectedWorkType,
-          'sub_category': workTypeName,
-          'access_notes': _accessNotesController.text.trim(),
-          'hourly_rate_ex_vat': hourlyRate,
-          'customer_choice': _selectedCustomerChoice?.key ?? 'accept',
-          'reference_id': refId,
-        },
-        jobId: widget.jobId,
-        customerName: widget.customerName,
-        postcode: widget.postcode,
+        accessNotes: _accessNotesController.text.trim(),
+        customerDecision: _selectedCustomerChoice?.key ?? '',
       );
+
+      final errors = payload.validate();
+      if (errors.isNotEmpty) {
+        if (!mounted) return;
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errors.first)));
+        return;
+      }
+
+      await context.read<FixedPriceCubit>().submitReactiveWorkOrder(
+        payload: payload,
+      );
+
+      try {
+        await PillarClient.raiseEnquiry(
+          category: 'REACTIVE_ATTENDANCE',
+          description: payload.description,
+          details: {
+            'job_id': sourceId,
+            'job_number': widget.jobNumber,
+            'job_title': payload.jobTitle,
+            'trade_id': _selectedTrade,
+            'trade_name': tradeName,
+            'category_id': _selectedCategory,
+            'group': categoryName,
+            'work_type_id': payload.workTypeId,
+            'sub_category': workTypeName,
+            'access_notes': payload.accessNotes,
+            'hourly_rate_ex_vat': hourlyRate,
+            'customer_choice': payload.customerDecision,
+            'reference_id': refId,
+          },
+          jobId: sourceId,
+          customerName: widget.customerName,
+          postcode: widget.postcode,
+        );
+      } catch (_) {
+        // API create succeeded; Pillar is side-write only.
+      }
 
       if (!mounted) return;
       setState(() => _isSubmitting = false);
@@ -263,7 +307,7 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
             'The reactive work order has been created and logged with the office.',
         referenceId: refId,
         details: {
-          'Job Title': _jobTitleController.text.trim(),
+          'Job Title': payload.jobTitle,
           'Trade': tradeName,
           'Category': categoryName,
           'Rate (ex. VAT)': hourlyRate,
@@ -278,9 +322,12 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
+        final message = e is FixedPriceApiException
+            ? e.message
+            : e.toString();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to raise reactive job: $e'),
+            content: Text(message),
             backgroundColor: Colors.red,
           ),
         );
@@ -577,6 +624,68 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
     );
   }
 
+  Future<bool> _confirmDiscardProgress() async {
+    final theme = DashboardTheme.of(context);
+    final result = await showAppDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: theme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+            side: BorderSide(color: theme.border, width: 0.8),
+          ),
+          title: Text(
+            'Discard progress?',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w700,
+              color: theme.text,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to discard all the progress? All progress will be discarded.',
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: theme.textMuted,
+              height: 1.35,
+            ),
+          ),
+          actions: [
+            OutlinedCtaButton(
+              label: 'Keep editing',
+              onTap: () => Navigator.of(ctx).pop(false),
+            ),
+            SizedBox(height: 8.h),
+            PrimaryCtaButton(
+              label: 'Discard',
+              backgroundColor: Colors.red,
+              onTap: () => Navigator.of(ctx).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+    return result == true;
+  }
+
+  Future<void> _handleExitRequest() async {
+    if (_isSubmitting) return;
+    final shouldDiscard = await _confirmDiscardProgress();
+    if (shouldDiscard && mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _handleWizardBack() {
+    if (_currentStep == 0) {
+      _handleExitRequest();
+    } else {
+      setState(() => _currentStep--);
+    }
+  }
+
   Widget _buildBottomButtons(DashboardTheme theme) {
     final isFirstScreen = _currentStep == 0;
     final isLastScreen = _currentStep == 2;
@@ -587,13 +696,7 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
         Expanded(
           child: OutlinedCtaButton(
             label: isFirstScreen ? 'Cancel' : 'Back',
-            onTap: () {
-              if (isFirstScreen) {
-                Navigator.of(context).pop();
-              } else {
-                setState(() => _currentStep--);
-              }
-            },
+            onTap: _handleWizardBack,
           ),
         ),
         SizedBox(width: 12.w),
@@ -635,7 +738,13 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
     final categories = state.categories;
     final workTypes = state.workTypes;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || _isSubmitting) return;
+        _handleWizardBack();
+      },
+      child: Scaffold(
       backgroundColor: theme.base,
       body: SafeArea(
         child: Stack(
@@ -754,18 +863,13 @@ class _RaiseReactiveJobPageState extends State<RaiseReactiveJobPage> {
               top: 12.h,
               left: 16.w,
               child: CommandCentreBackButton(
-                onTap: () {
-                  if (_currentStep == 0) {
-                    Navigator.of(context).pop();
-                  } else {
-                    setState(() => _currentStep--);
-                  }
-                },
+                onTap: _handleWizardBack,
               ),
             ),
           ],
         ),
       ),
+    ),
     );
   }
 }

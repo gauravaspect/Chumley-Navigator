@@ -41,8 +41,10 @@ class AppDependencies {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
-  static final RouteObserver<ModalRoute<void>> routeObserver =
-      RouteObserver<ModalRoute<void>>();
+  // Must be ModalRoute<dynamic>: named Home routes are MaterialPageRoute<dynamic>.
+  // RouteObserver<ModalRoute<void>> never fires didPopNext for those routes.
+  static final RouteObserver<ModalRoute<dynamic>> routeObserver =
+      RouteObserver<ModalRoute<dynamic>>();
 
   static final ApiClient apiClient = ApiClient();
   static final AzureAuthService azureAuthService = AzureAuthService(

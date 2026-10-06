@@ -44,13 +44,24 @@ class ApiResponseHelper {
       final message = map['message']?.toString().trim();
       if (message != null && message.isNotEmpty) return message;
 
-      final detail = map['detail']?.toString().trim();
-      if (detail != null && detail.isNotEmpty) {
-        final match = RegExp(r"'message':\s*'([^']+)'").firstMatch(detail);
-        if (match != null && match.group(1) != null) {
-          return match.group(1)!;
+      final detailRaw = map['detail'];
+      if (detailRaw is Map) {
+        final detailMap = Map<String, dynamic>.from(detailRaw);
+        final validationErrors = _validationErrors(detailMap);
+        if (validationErrors != null) return validationErrors;
+        final detailMessage = detailMap['message']?.toString().trim();
+        if (detailMessage != null && detailMessage.isNotEmpty) {
+          return detailMessage;
         }
-        return detail;
+      } else if (detailRaw != null) {
+        final detail = detailRaw.toString().trim();
+        if (detail.isNotEmpty) {
+          final match = RegExp(r"'message':\s*'([^']+)'").firstMatch(detail);
+          if (match != null && match.group(1) != null) {
+            return match.group(1)!;
+          }
+          return detail;
+        }
       }
 
       final error = map['error']?.toString().trim();
@@ -58,9 +69,20 @@ class ApiResponseHelper {
 
       final nested = map['data'];
       if (nested is Map) {
-        final nestedMessage = Map<String, dynamic>.from(
-          nested,
-        )['message']?.toString().trim();
+        final nestedMap = Map<String, dynamic>.from(nested);
+        final nestedDetail = nestedMap['detail'];
+        if (nestedDetail is Map) {
+          final nestedDetailMap = Map<String, dynamic>.from(nestedDetail);
+          final nestedValidationErrors = _validationErrors(nestedDetailMap);
+          if (nestedValidationErrors != null) return nestedValidationErrors;
+          final nestedDetailMessage = nestedDetailMap['message']
+              ?.toString()
+              .trim();
+          if (nestedDetailMessage != null && nestedDetailMessage.isNotEmpty) {
+            return nestedDetailMessage;
+          }
+        }
+        final nestedMessage = nestedMap['message']?.toString().trim();
         if (nestedMessage != null && nestedMessage.isNotEmpty) {
           return nestedMessage;
         }
@@ -70,6 +92,19 @@ class ApiResponseHelper {
       }
     }
     return fallback;
+  }
+
+  static String? _validationErrors(Map<String, dynamic> detailMap) {
+    final validation = detailMap['validation'];
+    if (validation is! Map) return null;
+    final errors = Map<String, dynamic>.from(validation)['errors'];
+    if (errors is! List) return null;
+    final parts = errors
+        .map((e) => e?.toString().trim() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return null;
+    return parts.join('\n');
   }
 
   static bool readIsReporter(dynamic data) {

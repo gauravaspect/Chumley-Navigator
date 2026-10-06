@@ -6,6 +6,8 @@ import 'package:chumley_navigator/core/network/api_response_helper.dart';
 import 'package:chumley_navigator/core/network/network_exceptions.dart';
 import 'package:chumley_navigator/models/fixed_price_model.dart';
 import 'package:chumley_navigator/models/fixed_price_submit_payload.dart';
+import 'package:chumley_navigator/models/multiple_fixed_price_submit_payload.dart';
+import 'package:chumley_navigator/models/reactive_work_order_submit_payload.dart';
 import 'package:dio/dio.dart';
 
 class FixedPriceApiService {
@@ -164,6 +166,126 @@ class FixedPriceApiService {
           'submitFixedPriceWorkOrder error status: ${e.response?.statusCode}',
         );
         log('submitFixedPriceWorkOrder error data: ${e.response?.data}');
+      }
+      throw FixedPriceApiException(NetworkExceptions.getError(e));
+    } catch (e) {
+      throw FixedPriceApiException(e.toString());
+    }
+  }
+
+  Future<Map<String, dynamic>> submitReactiveWorkOrder({
+    required ReactiveWorkOrderSubmitPayload payload,
+    bool dryRun = false,
+  }) async {
+    if (!ApiEndpoints.isConfigured) {
+      throw const FixedPriceApiException(
+        'API server URL is not configured. Set API_BASE_URL when running the app.',
+      );
+    }
+
+    final validationErrors = payload.validate();
+    if (validationErrors.isNotEmpty) {
+      throw FixedPriceApiException(validationErrors.first);
+    }
+
+    try {
+      final requestBody = payload.toSubmitJson();
+      log('submitReactiveWorkOrder request dry_run=$dryRun');
+      log('submitReactiveWorkOrder request body: $requestBody');
+
+      final response = await _apiClient.post(
+        ApiEndpoints.submitReactiveWorkOrder,
+        requestBody,
+        queryParameters: {'dry_run': dryRun},
+      );
+      log('submitReactiveWorkOrder response status: ${response.statusCode}');
+      log('submitReactiveWorkOrder response data: ${response.data}');
+
+      final body = ApiResponseHelper.toMap(response.data);
+
+      if (body['success'] == false) {
+        throw FixedPriceApiException(
+          ApiResponseHelper.extractMessage(
+            body,
+            fallback: 'Unable to submit reactive work order.',
+            statusCode: response.statusCode,
+          ),
+        );
+      }
+
+      return body;
+    } on FixedPriceApiException {
+      rethrow;
+    } on DioException catch (e) {
+      log('submitReactiveWorkOrder error: ${NetworkExceptions.getError(e)}');
+      if (e.response != null) {
+        log(
+          'submitReactiveWorkOrder error status: ${e.response?.statusCode}',
+        );
+        log('submitReactiveWorkOrder error data: ${e.response?.data}');
+      }
+      throw FixedPriceApiException(NetworkExceptions.getError(e));
+    } catch (e) {
+      throw FixedPriceApiException(e.toString());
+    }
+  }
+
+  Future<Map<String, dynamic>> submitMultipleFixedPriceWorkOrders({
+    required MultipleFixedPriceSubmitPayload payload,
+    bool dryRun = true,
+  }) async {
+    if (!ApiEndpoints.isConfigured) {
+      throw const FixedPriceApiException(
+        'API server URL is not configured. Set API_BASE_URL when running the app.',
+      );
+    }
+
+    final validationErrors = payload.validate();
+    if (validationErrors.isNotEmpty) {
+      throw FixedPriceApiException(validationErrors.first);
+    }
+
+    try {
+      final requestBody = payload.toSubmitJson();
+      log('submitMultipleFixedPriceWorkOrders request dry_run=$dryRun');
+      log('submitMultipleFixedPriceWorkOrders request body: $requestBody');
+
+      final response = await _apiClient.post(
+        ApiEndpoints.submitMultipleWorkOrders,
+        requestBody,
+        queryParameters: {'dry_run': dryRun},
+      );
+      log(
+        'submitMultipleFixedPriceWorkOrders response status: ${response.statusCode}',
+      );
+      log('submitMultipleFixedPriceWorkOrders response data: ${response.data}');
+
+      final body = ApiResponseHelper.toMap(response.data);
+
+      if (body['success'] == false) {
+        throw FixedPriceApiException(
+          ApiResponseHelper.extractMessage(
+            body,
+            fallback: 'Unable to submit multiple fixed price work orders.',
+            statusCode: response.statusCode,
+          ),
+        );
+      }
+
+      return body;
+    } on FixedPriceApiException {
+      rethrow;
+    } on DioException catch (e) {
+      log(
+        'submitMultipleFixedPriceWorkOrders error: ${NetworkExceptions.getError(e)}',
+      );
+      if (e.response != null) {
+        log(
+          'submitMultipleFixedPriceWorkOrders error status: ${e.response?.statusCode}',
+        );
+        log(
+          'submitMultipleFixedPriceWorkOrders error data: ${e.response?.data}',
+        );
       }
       throw FixedPriceApiException(NetworkExceptions.getError(e));
     } catch (e) {
